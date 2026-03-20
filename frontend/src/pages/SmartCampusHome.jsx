@@ -1,70 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-
-/* ─── GLOBAL STYLES injected once ─── */
-const GLOBAL_CSS = `
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { background: #000; overflow-x: hidden; }
-  #root { margin: 0; padding: 0; }
-  ::-webkit-scrollbar { width: 5px; background: #0a0a0a; }
-  ::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
-
-  @keyframes blob1   { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(24px,-20px) scale(1.06)} }
-  @keyframes blob2   { 0%,100%{transform:translate(0,0)}          50%{transform:translate(-20px,24px) scale(0.95)} }
-  @keyframes shimmer { from{background-position:200% center}       to{background-position:-200% center} }
-  @keyframes fadeUp  { from{opacity:0;transform:translateY(40px)}  to{opacity:1;transform:translateY(0)} }
-  @keyframes pulse   { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.78)} }
-  @keyframes dropIn  { from{opacity:0;transform:translateY(-10px) scale(.96)} to{opacity:1;transform:translateY(0) scale(1)} }
-  @keyframes float   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-  @keyframes ticker  { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-
-  .sc-reveal {
-    opacity: 0;
-    transform: translateY(48px);
-    transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1);
-  }
-  .sc-reveal.sc-visible { opacity: 1; transform: translateY(0); }
-
-  .sc-reveal-left {
-    opacity: 0; transform: translateX(-48px);
-    transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1);
-  }
-  .sc-reveal-left.sc-visible { opacity: 1; transform: translateX(0); }
-
-  .sc-reveal-right {
-    opacity: 0; transform: translateX(48px);
-    transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1);
-  }
-  .sc-reveal-right.sc-visible { opacity: 1; transform: translateX(0); }
-
-  .sc-reveal-scale {
-    opacity: 0; transform: scale(.9);
-    transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1);
-  }
-  .sc-reveal-scale.sc-visible { opacity: 1; transform: scale(1); }
-
-  .feat-card { transition: background .35s, border-color .35s, transform .35s; }
-  .feat-card:hover { background: rgba(255,255,255,.07) !important; border-color: rgba(255,255,255,.16) !important; transform: translateY(-6px) !important; }
-
-  .step-card { transition: background .3s, border-color .3s, transform .3s; }
-  .step-card:hover { background: rgba(255,255,255,.06) !important; transform: translateY(-4px) !important; }
-
-  .foot-link { color: rgba(255,255,255,.32); text-decoration: none; font-size: .79rem; transition: color .2s; display: block; }
-  .foot-link:hover { color: rgba(255,255,255,.72); }
-
-  .drop-item { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:9px; cursor:pointer; color:rgba(255,255,255,.7); font-size:.82rem; transition:background .15s, color .15s; }
-  .drop-item:hover { background:rgba(255,255,255,.08); color:#fff; }
-  .drop-danger { color: rgba(255,85,85,.8) !important; }
-  .drop-danger:hover { color: #ff6b6b !important; }
-
-  .mega-item { display:flex; align-items:flex-start; gap:12px; padding:11px 13px; border-radius:11px; cursor:pointer; transition:background .15s; text-decoration:none; }
-  .mega-item:hover { background:rgba(255,255,255,.07); }
-
-  .nav-pill:hover { background: rgba(255,255,255,.07) !important; color: #fff !important; }
-
-  .ticker-track { display:flex; width:max-content; animation: ticker 28s linear infinite; }
-  .ticker-track:hover { animation-play-state: paused; }
-`;
+import "../index.css";
 
 /* ─── HOOKS ─── */
 function useInView(threshold = 0.13) {
@@ -129,7 +64,228 @@ function useActiveSection(ids) {
   return active;
 }
 
-/* ─── PRIMITIVES ─── */
+/* ─── GOOGLE ICON ─── */
+const GoogleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
+    <path
+      fill="#4285F4"
+      d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"
+    />
+    <path
+      fill="#34A853"
+      d="M6.3 14.7l7 5.1C15.1 16 19.2 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2c-7.7 0-14.4 4.4-17.7 10.7z"
+      opacity=".9"
+    />
+    <path
+      fill="#FBBC05"
+      d="M24 46c5.9 0 10.9-2 14.5-5.4l-6.7-5.5C29.8 36.9 27 38 24 38c-6.1 0-11.3-4.1-13.1-9.7l-7.1 5.5C7.4 41.5 15.1 46 24 46z"
+      opacity=".9"
+    />
+    <path
+      fill="#EA4335"
+      d="M44.5 20H24v8.5h11.8c-.9 2.6-2.6 4.8-4.9 6.4l6.7 5.5C41.8 37.1 45 31 45 24c0-1.3-.2-2.7-.5-4z"
+      opacity=".9"
+    />
+  </svg>
+);
+
+/* ─── GOOGLE LOGIN MODAL ─── */
+function GoogleLoginModal({ isOpen, onClose }) {
+  const [hov, setHov] = useState(false);
+
+  useEffect(() => {
+    const h = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      document.addEventListener("keydown", h);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.removeEventListener("keydown", h);
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 200,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(0,0,0,.7)",
+        backdropFilter: "blur(18px) saturate(160%)",
+        animation: "fadeIn .2s ease",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: "relative",
+          width: 420,
+          maxWidth: "92vw",
+          borderRadius: 28,
+          padding: "52px 44px 44px",
+          background: "rgba(255,255,255,.08)",
+          backdropFilter: "blur(40px) saturate(200%)",
+          border: "1px solid rgba(255,255,255,.18)",
+          boxShadow:
+            "0 40px 100px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.06) inset",
+          animation: "slideUp .3s cubic-bezier(.16,1,.3,1)",
+        }}
+      >
+        {/* Glow top */}
+        <div
+          style={{
+            position: "absolute",
+            top: -80,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: 280,
+            height: 120,
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle,rgba(10,132,255,.22) 0%,transparent 70%)",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Close */}
+        <button
+          onClick={onClose}
+          style={{
+            position: "absolute",
+            top: 18,
+            right: 18,
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,.1)",
+            border: "1px solid rgba(255,255,255,.15)",
+            color: "rgba(255,255,255,.6)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 13,
+            transition: "all .15s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,.2)";
+            e.currentTarget.style.color = "#fff";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,.1)";
+            e.currentTarget.style.color = "rgba(255,255,255,.6)";
+          }}
+        >
+          ✕
+        </button>
+
+        {/* Header — no logo */}
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
+          <h2
+            style={{
+              fontSize: "1.55rem",
+              fontWeight: 700,
+              color: "#fff",
+              letterSpacing: "-.03em",
+              marginBottom: 10,
+              lineHeight: 1.2,
+            }}
+          >
+            Sign in to SmartCampus
+          </h2>
+          <p
+            style={{
+              fontSize: ".88rem",
+              color: "rgba(255,255,255,.5)",
+              lineHeight: 1.5,
+            }}
+          >
+            Use your SLIIT Google account to continue
+          </p>
+        </div>
+
+        {/* Google Button */}
+        <button
+          onClick={() => {
+            window.location.href = "/oauth2/authorization/google";
+          }}
+          onMouseEnter={() => setHov(true)}
+          onMouseLeave={() => setHov(false)}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 12,
+            background: hov ? "#f0f0f0" : "#fff",
+            color: "#1a1a1a",
+            border: "none",
+            borderRadius: 16,
+            padding: "16px 24px",
+            fontSize: ".97rem",
+            fontWeight: 600,
+            fontFamily: "inherit",
+            cursor: "pointer",
+            transition: "all .2s",
+            transform: hov ? "translateY(-2px)" : "translateY(0)",
+            boxShadow: hov
+              ? "0 12px 32px rgba(0,0,0,.35)"
+              : "0 4px 16px rgba(0,0,0,.25)",
+            letterSpacing: "-.01em",
+          }}
+        >
+          <GoogleIcon />
+          Continue with Google
+        </button>
+
+        {/* Footer note */}
+        <div style={{ marginTop: 28, textAlign: "center" }}>
+          <p
+            style={{
+              fontSize: ".76rem",
+              color: "rgba(255,255,255,.3)",
+              lineHeight: 1.7,
+            }}
+          >
+            By continuing, you agree to our{" "}
+            <span style={{ color: "rgba(100,180,255,.8)", cursor: "pointer" }}>
+              Terms of Service
+            </span>{" "}
+            and{" "}
+            <span style={{ color: "rgba(100,180,255,.8)", cursor: "pointer" }}>
+              Privacy Policy
+            </span>
+          </p>
+        </div>
+
+        {/* Bottom accent line */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: "15%",
+            right: "15%",
+            height: 1,
+            background:
+              "linear-gradient(90deg,transparent,rgba(10,132,255,.5),transparent)",
+            borderRadius: "0 0 28px 28px",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ─── BTN ─── */
 function Btn({
   children,
   variant = "primary",
@@ -189,6 +345,7 @@ function Btn({
   );
 }
 
+/* ─── COUNTER ─── */
 function Counter({ target, suffix = "", delay = 0 }) {
   const [ref, visible] = useInView();
   const [n, setN] = useState(0);
@@ -483,7 +640,6 @@ function UserMenu({ onLogout }) {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-      {/* Bell */}
       <div ref={notifRef} style={{ position: "relative" }}>
         <div
           onClick={() => setNotif((o) => !o)}
@@ -519,7 +675,6 @@ function UserMenu({ onLogout }) {
         </div>
         {notif && <NotifPanel onClose={() => setNotif(false)} />}
       </div>
-      {/* Avatar */}
       <div ref={menuRef} style={{ position: "relative" }}>
         <div
           onClick={() => setOpen((o) => !o)}
@@ -660,11 +815,13 @@ function FeatureCard({ icon, color, title, desc, delay }) {
       ref={ref}
       className="feat-card"
       style={{
-        background: "rgba(255,255,255,.04)",
-        border: "1px solid rgba(255,255,255,.08)",
+        background: "rgba(255,255,255,.055)",
+        border: "1px solid rgba(255,255,255,.12)",
         borderRadius: 20,
         padding: "1.6rem",
-        backdropFilter: "blur(10px)",
+        backdropFilter: "blur(28px) saturate(180%)",
+        boxShadow:
+          "0 4px 24px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.04) inset",
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(44px)",
         transition: `opacity .75s cubic-bezier(.16,1,.3,1) ${delay}s, transform .75s cubic-bezier(.16,1,.3,1) ${delay}s, background .35s, border-color .35s`,
@@ -709,6 +866,33 @@ function FeatureCard({ icon, color, title, desc, delay }) {
   );
 }
 
+/* ─── SOCIAL BTN ─── */
+function SocialBtn({ children }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        width: 32,
+        height: 32,
+        borderRadius: "50%",
+        cursor: "pointer",
+        background: hov ? "rgba(255,255,255,.12)" : "rgba(255,255,255,.06)",
+        border: "1px solid rgba(255,255,255,.1)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "rgba(255,255,255,.5)",
+        fontSize: ".74rem",
+        transition: "all .2s",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════
    MAIN COMPONENT
 ══════════════════════════════════════════ */
@@ -719,6 +903,7 @@ export default function SmartCampusHome() {
   const [progress, setProgress] = useState(0);
   const [loggedIn, setLoggedIn] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
   const activeSection = useActiveSection(SECTION_IDS);
   useScrollReveal();
 
@@ -767,20 +952,6 @@ export default function SmartCampusHome() {
       title: "Live Notifications",
       desc: "Instant alerts for booking approvals, rejections, and all ticket status changes.",
       delay: 0.2,
-    },
-    {
-      icon: "🔐",
-      color: "#FF375F",
-      title: "OAuth 2.0 Login",
-      desc: "Sign in with Google. Role-based access for users, admins, and technicians.",
-      delay: 0.25,
-    },
-    {
-      icon: "📊",
-      color: "#64D2FF",
-      title: "Admin Dashboard",
-      desc: "Full campus oversight — approve, assign, and manage everything from one unified view.",
-      delay: 0.3,
     },
   ];
 
@@ -836,8 +1007,10 @@ export default function SmartCampusHome() {
 
   return (
     <>
-      {/* Inject global CSS once */}
-      <style>{GLOBAL_CSS}</style>
+      <GoogleLoginModal
+        isOpen={loginOpen}
+        onClose={() => setLoginOpen(false)}
+      />
 
       <div
         style={{
@@ -845,11 +1018,38 @@ export default function SmartCampusHome() {
           background: "#000",
           color: "#fff",
           fontFamily:
-            "'-apple-system',BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif",
+            "-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif",
           position: "relative",
         }}
       >
-        {/* Scroll progress bar */}
+        {/* Full-page frosted glass overlay */}
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 0,
+            pointerEvents: "none",
+            background: "rgba(255,255,255,.018)",
+            backdropFilter: "blur(0px)",
+          }}
+        />
+
+        {/* Glass noise texture overlay */}
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 0,
+            pointerEvents: "none",
+            background: `
+            radial-gradient(ellipse 80% 50% at 20% 40%, rgba(10,132,255,.07) 0%, transparent 60%),
+            radial-gradient(ellipse 60% 40% at 80% 20%, rgba(191,90,242,.06) 0%, transparent 55%),
+            radial-gradient(ellipse 70% 60% at 50% 80%, rgba(48,209,88,.04) 0%, transparent 60%)
+          `,
+          }}
+        />
+
+        {/* Scroll progress */}
         <div
           style={{
             position: "fixed",
@@ -865,7 +1065,7 @@ export default function SmartCampusHome() {
           }}
         />
 
-        {/* Right-side section dots */}
+        {/* Section dots */}
         <div
           style={{
             position: "fixed",
@@ -908,25 +1108,39 @@ export default function SmartCampusHome() {
         >
           {[
             {
-              top: "-18%",
-              left: "5%",
-              w: 600,
-              c: "rgba(10,132,255,.12)",
+              top: "-20%",
+              left: "-5%",
+              w: 750,
+              c: "rgba(10,132,255,.15)",
               a: "blob1 12s ease-in-out infinite",
             },
             {
-              top: "20%",
-              right: "-8%",
-              w: 520,
-              c: "rgba(191,90,242,.09)",
+              top: "15%",
+              right: "-10%",
+              w: 650,
+              c: "rgba(191,90,242,.12)",
               a: "blob2 15s ease-in-out infinite",
             },
             {
-              bottom: "4%",
-              left: "26%",
-              w: 460,
-              c: "rgba(48,209,88,.07)",
+              bottom: "-5%",
+              left: "20%",
+              w: 600,
+              c: "rgba(48,209,88,.09)",
               a: "blob1 19s ease-in-out infinite reverse",
+            },
+            {
+              top: "45%",
+              left: "-8%",
+              w: 480,
+              c: "rgba(255,159,10,.07)",
+              a: "blob2 22s ease-in-out infinite",
+            },
+            {
+              top: "60%",
+              right: "5%",
+              w: 420,
+              c: "rgba(10,132,255,.08)",
+              a: "blob1 17s ease-in-out infinite reverse",
             },
           ].map((b, i) => (
             <div
@@ -962,7 +1176,6 @@ export default function SmartCampusHome() {
             transition: "all .4s ease",
           }}
         >
-          {/* Logo */}
           <div
             onClick={() => go("hero")}
             style={{
@@ -976,9 +1189,7 @@ export default function SmartCampusHome() {
             Smart<span style={{ color: "#0A84FF" }}>Campus</span>
           </div>
 
-          {/* Center */}
           <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
-            {/* Platform dropdown */}
             <div
               style={{ position: "relative" }}
               onMouseLeave={() => setMegaOpen(false)}
@@ -1024,12 +1235,11 @@ export default function SmartCampusHome() {
             </div>
 
             {[
-              "About|stats",
-              "Features|features",
-              "How it works|howitworks",
-              "Get started|cta",
-            ].map((s) => {
-              const [label, id] = s.split("|");
+              ["About", "stats"],
+              ["Features", "features"],
+              ["How it works", "howitworks"],
+              ["Get started", "cta"],
+            ].map(([label, id]) => {
               const isActive = activeSection === id;
               return (
                 <div
@@ -1069,7 +1279,6 @@ export default function SmartCampusHome() {
             })}
           </div>
 
-          {/* Right */}
           <div
             style={{
               display: "flex",
@@ -1081,14 +1290,13 @@ export default function SmartCampusHome() {
             {loggedIn ? (
               <UserMenu onLogout={() => setLoggedIn(false)} />
             ) : (
-              <>
-                <Btn variant="ghost" size="sm" onClick={() => go("cta")}>
-                  Sign in
-                </Btn>
-                <Btn variant="primary" size="sm" onClick={() => go("cta")}>
-                  Get started
-                </Btn>
-              </>
+              <Btn
+                variant="primary"
+                size="sm"
+                onClick={() => setLoginOpen(true)}
+              >
+                Log in
+              </Btn>
             )}
           </div>
         </nav>
@@ -1113,13 +1321,13 @@ export default function SmartCampusHome() {
               display: "inline-flex",
               alignItems: "center",
               gap: 7,
-              background: "rgba(10,132,255,.13)",
-              border: "1px solid rgba(10,132,255,.3)",
+              background: "rgba(10,132,255,.15)",
+              border: "1px solid rgba(10,132,255,.35)",
               borderRadius: 980,
               padding: "5px 15px",
               marginBottom: 28,
               fontSize: ".74rem",
-              color: "rgba(255,255,255,.75)",
+              color: "rgba(255,255,255,.8)",
               letterSpacing: ".04em",
               animation: "fadeUp .8s ease .1s both",
             }}
@@ -1146,29 +1354,16 @@ export default function SmartCampusHome() {
               margin: "0 0 22px",
               maxWidth: 820,
               animation: "fadeUp .8s ease .2s both",
-              fontFamily: "'-apple-system',BlinkMacSystemFont,sans-serif",
             }}
           >
-            The smarter way to{"\u00A0"}
-            <span
-              style={{
-                background: "linear-gradient(90deg,#0A84FF,#BF5AF2,#0A84FF)",
-                backgroundSize: "200% auto",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                animation: "shimmer 4s linear infinite",
-              }}
-            >
-              run campus
-            </span>
-            {"\u00A0"}operations.
+            The smarter way to <span className="shimmer-text">run campus</span>{" "}
+            operations.
           </h1>
 
           <p
             style={{
               fontSize: "1.05rem",
-              color: "rgba(255,255,255,.5)",
+              color: "rgba(255,255,255,.55)",
               maxWidth: 500,
               margin: "0 auto 40px",
               lineHeight: 1.65,
@@ -1188,7 +1383,7 @@ export default function SmartCampusHome() {
               animation: "fadeUp .8s ease .5s both",
             }}
           >
-            <Btn variant="primary" size="lg">
+            <Btn variant="primary" size="lg" onClick={() => setLoginOpen(true)}>
               Get started free
             </Btn>
             <Btn variant="ghost" size="lg" onClick={() => go("features")}>
@@ -1196,7 +1391,6 @@ export default function SmartCampusHome() {
             </Btn>
           </div>
 
-          {/* Trust pills */}
           <div
             style={{
               display: "flex",
@@ -1218,12 +1412,13 @@ export default function SmartCampusHome() {
                   display: "flex",
                   alignItems: "center",
                   gap: 7,
-                  background: "rgba(255,255,255,.055)",
-                  border: "1px solid rgba(255,255,255,.09)",
+                  background: "rgba(255,255,255,.08)",
+                  border: "1px solid rgba(255,255,255,.14)",
                   borderRadius: 980,
                   padding: "7px 16px",
                   fontSize: ".77rem",
-                  color: "rgba(255,255,255,.6)",
+                  color: "rgba(255,255,255,.7)",
+                  backdropFilter: "blur(8px)",
                 }}
               >
                 <span style={{ color: "#30D158" }}>✓</span>
@@ -1317,14 +1512,16 @@ export default function SmartCampusHome() {
           <div
             className="sc-reveal"
             style={{
-              background: "rgba(255,255,255,.03)",
-              border: "1px solid rgba(255,255,255,.08)",
+              background: "rgba(255,255,255,.055)",
+              border: "1px solid rgba(255,255,255,.12)",
               borderRadius: 24,
               padding: "44px 32px",
-              backdropFilter: "blur(12px)",
+              backdropFilter: "blur(28px) saturate(180%)",
               display: "grid",
               gridTemplateColumns: "repeat(4,1fr)",
               gap: 20,
+              boxShadow:
+                "0 8px 40px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.04) inset",
             }}
           >
             {[
@@ -1389,7 +1586,6 @@ export default function SmartCampusHome() {
                 fontWeight: 700,
                 letterSpacing: "-.03em",
                 lineHeight: 1.1,
-                fontFamily: "'-apple-system',BlinkMacSystemFont,sans-serif",
               }}
             >
               Everything your campus needs.
@@ -1442,7 +1638,6 @@ export default function SmartCampusHome() {
                 fontWeight: 700,
                 letterSpacing: "-.03em",
                 lineHeight: 1.1,
-                fontFamily: "'-apple-system',BlinkMacSystemFont,sans-serif",
               }}
             >
               How it works
@@ -1460,12 +1655,15 @@ export default function SmartCampusHome() {
                 key={s.title}
                 className={`step-card ${s.dir}`}
                 style={{
-                  background: "rgba(255,255,255,.03)",
-                  border: "1px solid rgba(255,255,255,.08)",
+                  background: "rgba(255,255,255,.055)",
+                  border: "1px solid rgba(255,255,255,.12)",
                   borderRadius: 20,
                   padding: "2rem 1.6rem",
                   textAlign: "center",
                   transitionDelay: `${s.delay}s`,
+                  backdropFilter: "blur(28px) saturate(180%)",
+                  boxShadow:
+                    "0 4px 24px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.04) inset",
                 }}
               >
                 <div
@@ -1532,7 +1730,6 @@ export default function SmartCampusHome() {
               margin: "0 auto",
             }}
           >
-            {/* Background gradient */}
             <div
               style={{
                 position: "absolute",
@@ -1550,7 +1747,6 @@ export default function SmartCampusHome() {
                 borderRadius: 32,
               }}
             />
-            {/* Glow orbs inside */}
             <div
               style={{
                 position: "absolute",
@@ -1577,7 +1773,6 @@ export default function SmartCampusHome() {
                 pointerEvents: "none",
               }}
             />
-
             <div
               style={{
                 position: "relative",
@@ -1608,7 +1803,6 @@ export default function SmartCampusHome() {
                     letterSpacing: "-.03em",
                     lineHeight: 1.12,
                     margin: "0 0 16px",
-                    fontFamily: "'-apple-system',BlinkMacSystemFont,sans-serif",
                   }}
                 >
                   Modernise your campus operations today.
@@ -1634,33 +1828,14 @@ export default function SmartCampusHome() {
                   flexShrink: 0,
                 }}
               >
-                <Btn variant="white" size="lg">
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 48 48"
-                    style={{ flexShrink: 0 }}
-                  >
-                    <path
-                      fill="#4285F4"
-                      d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M6.3 14.7l7 5.1C15.1 16 19.2 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2c-7.7 0-14.4 4.4-17.7 10.7z"
-                      opacity=".9"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M24 46c5.9 0 10.9-2 14.5-5.4l-6.7-5.5C29.8 36.9 27 38 24 38c-6.1 0-11.3-4.1-13.1-9.7l-7.1 5.5C7.4 41.5 15.1 46 24 46z"
-                      opacity=".9"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M44.5 20H24v8.5h11.8c-.9 2.6-2.6 4.8-4.9 6.4l6.7 5.5C41.8 37.1 45 31 45 24c0-1.3-.2-2.7-.5-4z"
-                      opacity=".9"
-                    />
-                  </svg>
+                <Btn
+                  variant="white"
+                  size="lg"
+                  onClick={() => {
+                    window.location.href = "/oauth2/authorization/google";
+                  }}
+                >
+                  <GoogleIcon />
                   Sign in with Google
                 </Btn>
                 <Btn variant="ghost" size="lg" onClick={() => go("features")}>
@@ -1801,31 +1976,5 @@ export default function SmartCampusHome() {
         </footer>
       </div>
     </>
-  );
-}
-
-function SocialBtn({ children }) {
-  const [hov, setHov] = useState(false);
-  return (
-    <div
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        width: 32,
-        height: 32,
-        borderRadius: "50%",
-        cursor: "pointer",
-        background: hov ? "rgba(255,255,255,.12)" : "rgba(255,255,255,.06)",
-        border: "1px solid rgba(255,255,255,.1)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "rgba(255,255,255,.5)",
-        fontSize: ".74rem",
-        transition: "all .2s",
-      }}
-    >
-      {children}
-    </div>
   );
 }
