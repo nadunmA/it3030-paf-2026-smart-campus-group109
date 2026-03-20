@@ -1,10 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { GoogleOAuthProvider } from "@react-oauth/google"; // මේක අලුතින් එකතු කළා
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import "./index.css";
 import App from "./App.jsx";
 
-// Environment variable එකෙන් Client ID එක ගන්නවා
+// Environment variable
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 createRoot(document.getElementById("root")).render(
