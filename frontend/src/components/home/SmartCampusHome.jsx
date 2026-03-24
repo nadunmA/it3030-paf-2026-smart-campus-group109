@@ -102,66 +102,8 @@ export default function SmartCampusHome() {
           ))}
         </div>
 
-        {/* Ambient blobs */}
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            pointerEvents: "none",
-            zIndex: 0,
-            overflow: "hidden",
-          }}
-        >
-          {[
-            {
-              top: "-20%",
-              left: "-5%",
-              w: 750,
-              c: "rgba(10,132,255,.15)",
-              a: "blob1 12s ease-in-out infinite",
-            },
-            {
-              top: "15%",
-              right: "-10%",
-              w: 650,
-              c: "rgba(191,90,242,.12)",
-              a: "blob2 15s ease-in-out infinite",
-            },
-            {
-              bottom: "-5%",
-              left: "20%",
-              w: 600,
-              c: "rgba(48,209,88,.09)",
-              a: "blob1 19s ease-in-out infinite reverse",
-            },
-            {
-              top: "45%",
-              left: "-8%",
-              w: 480,
-              c: "rgba(255,159,10,.07)",
-              a: "blob2 22s ease-in-out infinite",
-            },
-            {
-              top: "60%",
-              right: "5%",
-              w: 420,
-              c: "rgba(10,132,255,.08)",
-              a: "blob1 17s ease-in-out infinite reverse",
-            },
-          ].map((b, i) => (
-            <div
-              key={i}
-              style={{
-                position: "absolute",
-                ...b,
-                height: b.w,
-                borderRadius: "50%",
-                background: `radial-gradient(circle,${b.c} 0%,transparent 70%)`,
-                animation: b.a,
-              }}
-            />
-          ))}
-        </div>
+        {/* Animated Background */}
+        <AnimatedBackground />
 
         {/* Navbar */}
         <Navbar
