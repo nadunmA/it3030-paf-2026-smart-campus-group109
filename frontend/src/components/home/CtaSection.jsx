@@ -9,7 +9,7 @@ export default function CtaSection({ onGoTo }) {
         position: "relative",
         zIndex: 1,
         padding: "0 max(28px,8vw) 80px",
-        marginTop: 40,
+        marginTop: 35,
       }}
     >
       <div

@@ -149,7 +149,7 @@ export default function HeroSection({ onLoginOpen, onGoTo }) {
             flexDirection: "column",
             alignItems: "center",
             gap: 8,
-            color: "rgba(255,255,255,.18)",
+            color: "rgba(255,255,255,.45)",
             fontSize: ".65rem",
             letterSpacing: ".13em",
             animation: "fadeUp 1s ease 1.3s both",
@@ -160,7 +160,7 @@ export default function HeroSection({ onLoginOpen, onGoTo }) {
               width: 1,
               height: 36,
               background:
-                "linear-gradient(to bottom,rgba(255,255,255,.18),transparent)",
+                "linear-gradient(to bottom,rgba(255,255,255,.55),transparent)",
             }}
           />
           SCROLL
@@ -174,7 +174,6 @@ export default function HeroSection({ onLoginOpen, onGoTo }) {
           zIndex: 1,
           overflow: "hidden",
           padding: "18px 0",
-          marginBottom: 100,
           borderTop: "1px solid rgba(255,255,255,.06)",
           borderBottom: "1px solid rgba(255,255,255,.06)",
           background: "rgba(255,255,255,.02)",
