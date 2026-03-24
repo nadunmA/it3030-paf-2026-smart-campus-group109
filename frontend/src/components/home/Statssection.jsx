@@ -15,7 +15,6 @@ export default function StatsSection() {
         position: "relative",
         zIndex: 1,
         padding: "80px max(28px,8vw) 110px",
-        marginTop: 120,
       }}
     >
       <div

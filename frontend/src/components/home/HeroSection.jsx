@@ -174,6 +174,7 @@ export default function HeroSection({ onLoginOpen, onGoTo }) {
           zIndex: 1,
           overflow: "hidden",
           padding: "18px 0",
+          marginBottom: 100,
           borderTop: "1px solid rgba(255,255,255,.06)",
           borderBottom: "1px solid rgba(255,255,255,.06)",
           background: "rgba(255,255,255,.02)",
