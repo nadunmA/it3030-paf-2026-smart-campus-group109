@@ -11,7 +11,12 @@ export default function StatsSection() {
   return (
     <section
       id="stats"
-      style={{ position: "relative", zIndex: 1, padding: "60px max(28px,8vw)" }}
+      style={{
+        position: "relative",
+        zIndex: 1,
+        padding: "80px max(28px,8vw) 110px",
+        marginTop: 120,
+      }}
     >
       <div
         className="sc-reveal"

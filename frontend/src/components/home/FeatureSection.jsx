@@ -33,6 +33,7 @@ const FEATURES = [
 
 function FeatureCard({ icon, color, title, desc, delay }) {
   const [ref, visible] = useInView();
+
   return (
     <div
       ref={ref}
@@ -66,6 +67,7 @@ function FeatureCard({ icon, color, title, desc, delay }) {
       >
         {icon}
       </div>
+
       <div
         style={{
           fontSize: ".95rem",
@@ -76,6 +78,7 @@ function FeatureCard({ icon, color, title, desc, delay }) {
       >
         {title}
       </div>
+
       <div
         style={{
           fontSize: ".79rem",
@@ -96,12 +99,12 @@ export default function FeaturesSection() {
       style={{
         position: "relative",
         zIndex: 1,
-        padding: "0 max(28px,8vw) 80px",
+        padding: "120px max(28px,8vw) 160px",
       }}
     >
       <div
         className="sc-reveal"
-        style={{ textAlign: "center", marginBottom: 48 }}
+        style={{ textAlign: "center", marginBottom: 56 }}
       >
         <p
           style={{
@@ -114,6 +117,7 @@ export default function FeaturesSection() {
         >
           Platform features
         </p>
+
         <h2
           style={{
             fontSize: "clamp(1.8rem,4vw,2.9rem)",
@@ -127,11 +131,12 @@ export default function FeaturesSection() {
           <span style={{ color: "rgba(255,255,255,.28)" }}>In one place.</span>
         </h2>
       </div>
+
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit,minmax(270px,1fr))",
-          gap: 16,
+          gap: 20,
         }}
       >
         {FEATURES.map((f) => (

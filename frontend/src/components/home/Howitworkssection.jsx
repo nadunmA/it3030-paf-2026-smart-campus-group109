@@ -44,7 +44,7 @@ export default function HowItWorksSection() {
       style={{
         position: "relative",
         zIndex: 1,
-        padding: "0 max(28px,8vw) 80px",
+        padding: "20px max(28px,8vw) 100px",
       }}
     >
       <div

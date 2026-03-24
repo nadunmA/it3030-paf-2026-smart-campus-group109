@@ -2,18 +2,33 @@ import { useState, useEffect } from "react";
 
 export function useActiveSection(ids) {
   const [active, setActive] = useState(ids[0]);
+
   useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => { if (e.isIntersecting) setActive(e.target.id); });
-      },
-      { threshold: 0.4 }
-    );
-    ids.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) obs.observe(el);
-    });
-    return () => obs.disconnect();
-  }, []);
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+
+      let current = ids[0];
+
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        const top = el.offsetTop - 120; // navbar offset
+        const bottom = top + el.offsetHeight;
+
+        if (scrollY >= top && scrollY < bottom) {
+          current = id;
+        }
+      });
+
+      setActive(current);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [ids]);
+
   return active;
 }
