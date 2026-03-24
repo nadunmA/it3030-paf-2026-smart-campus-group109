@@ -61,6 +61,8 @@ export default function Footer() {
         borderTop: "1px solid rgba(255,255,255,.07)",
         padding: "56px max(28px,8vw) 36px",
         marginTop: 20,
+        background: "rgba(255,255,255,.02)",
+        backdropFilter: "blur(12px)",
       }}
     >
       <div
@@ -71,23 +73,24 @@ export default function Footer() {
           marginBottom: 48,
         }}
       >
+        {/* Brand */}
         <div className="sc-reveal-left">
           <div
             style={{
-              fontSize: "1rem",
+              fontSize: "1.1rem",
               fontWeight: 700,
               letterSpacing: "-.02em",
-              marginBottom: 12,
+              marginBottom: 14,
             }}
           >
             Smart<span style={{ color: "#0A84FF" }}>Campus</span>
           </div>
           <p
             style={{
-              fontSize: ".79rem",
-              color: "rgba(255,255,255,.33)",
-              lineHeight: 1.72,
-              maxWidth: 240,
+              fontSize: ".85rem",
+              color: "rgba(255,255,255,.5)",
+              lineHeight: 1.75,
+              maxWidth: 260,
               marginBottom: 20,
             }}
           >
@@ -101,6 +104,7 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Link columns */}
         {FOOTER_COLS.map((col, i) => (
           <div
             key={col.head}
@@ -111,17 +115,22 @@ export default function Footer() {
               style={{
                 fontSize: ".72rem",
                 fontWeight: 600,
-                color: "rgba(255,255,255,.42)",
+                color: "rgba(255,255,255,.55)",
                 letterSpacing: ".08em",
                 textTransform: "uppercase",
-                marginBottom: 14,
+                marginBottom: 16,
               }}
             >
               {col.head}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {col.links.map((l) => (
-                <a key={l} href="#" className="foot-link">
+                <a
+                  key={l}
+                  href="#"
+                  className="foot-link"
+                  style={{ fontSize: ".84rem" }}
+                >
                   {l}
                 </a>
               ))}
@@ -130,10 +139,11 @@ export default function Footer() {
         ))}
       </div>
 
+      {/* Bottom bar */}
       <div
         style={{
           borderTop: "1px solid rgba(255,255,255,.06)",
-          paddingTop: 22,
+          paddingTop: 24,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -141,11 +151,11 @@ export default function Footer() {
           gap: 12,
         }}
       >
-        <span style={{ fontSize: ".72rem", color: "rgba(255,255,255,.2)" }}>
+        <span style={{ fontSize: ".76rem", color: "rgba(255,255,255,.28)" }}>
           © 2026 SmartCampus · IT3030 PAF Assignment · Faculty of Computing,
           SLIIT
         </span>
-        <span style={{ fontSize: ".72rem", color: "rgba(255,255,255,.16)" }}>
+        <span style={{ fontSize: ".76rem", color: "rgba(255,255,255,.22)" }}>
           Built with Spring Boot + React
         </span>
       </div>
