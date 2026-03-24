@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import SmartCampusHome from "./pages/SmartCampusHome";
+import SmartCampusHome from "./components/home/SmartCampusHome";
 import "./App.css";
 
 export default function App() {
