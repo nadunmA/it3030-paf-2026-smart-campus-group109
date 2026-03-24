@@ -14,7 +14,7 @@ export default function StatsSection() {
       style={{
         position: "relative",
         zIndex: 1,
-        padding: "80px max(28px,8vw) 110px",
+        padding: "50px max(28px,8vw) 110px",
       }}
     >
       <div
