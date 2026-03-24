@@ -45,6 +45,7 @@ export default function HowItWorksSection() {
         position: "relative",
         zIndex: 1,
         padding: "20px max(28px,8vw) 100px",
+        marginTop: 40,
       }}
     >
       <div

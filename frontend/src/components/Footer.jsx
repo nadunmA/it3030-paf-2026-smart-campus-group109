@@ -60,6 +60,7 @@ export default function Footer() {
         zIndex: 1,
         borderTop: "1px solid rgba(255,255,255,.07)",
         padding: "56px max(28px,8vw) 36px",
+        marginTop: 20,
       }}
     >
       <div
