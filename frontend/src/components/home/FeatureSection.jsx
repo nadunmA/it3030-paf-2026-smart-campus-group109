@@ -99,7 +99,7 @@ export default function FeaturesSection() {
       style={{
         position: "relative",
         zIndex: 1,
-        padding: "50px max(28px,8vw) 80px",
+        padding: "50px max(28px,8vw) 145px",
       }}
     >
       <div
