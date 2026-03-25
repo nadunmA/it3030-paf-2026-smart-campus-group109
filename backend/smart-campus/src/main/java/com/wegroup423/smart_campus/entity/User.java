@@ -1,7 +1,6 @@
 package com.wegroup423.smart_campus.entity;
 
 
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
