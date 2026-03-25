@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useScrollReveal } from "../../hooks/useScrollReveal";
 import { useActiveSection } from "../../hooks/useActiveSection";
-import Navbar from "../navbar/Navbar";
+import Navbar from "../layout/Navbar";
 import HeroSection from "./HeroSection";
 import StatsSection from "../home/Statssection";
 import FeaturesSection from "../home/FeatureSection";
 import HowItWorksSection from "./HowItWorksSection";
 import CtaSection from "./CtaSection";
-import Footer from "../Footer";
+import Footer from "../layout/Footer";
 import GoogleLoginModal from "../common/GoogleLoginModal";
 import AnimatedBackground from "../common/AnimatedBackground";
 
