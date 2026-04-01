@@ -14,6 +14,8 @@ import com.wegroup423.smart_campus.features.booking.model.enums.BookingStatus;
 import com.wegroup423.smart_campus.features.booking.repository.BookingRepository;
 import com.wegroup423.smart_campus.features.booking.service.BookingService;
 import com.wegroup423.smart_campus.features.booking.service.ResourceCapacityProvider;
+import com.wegroup423.smart_campus.features.notification.model.BookingNotificationEvent;
+import com.wegroup423.smart_campus.features.notification.service.NotificationService;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -27,10 +29,16 @@ public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
     private final ResourceCapacityProvider resourceCapacityProvider;
+    private final NotificationService notificationService;
 
-    public BookingServiceImpl(BookingRepository bookingRepository, ResourceCapacityProvider resourceCapacityProvider) {
+    public BookingServiceImpl(
+            BookingRepository bookingRepository,
+            ResourceCapacityProvider resourceCapacityProvider,
+            NotificationService notificationService
+    ) {
         this.bookingRepository = bookingRepository;
         this.resourceCapacityProvider = resourceCapacityProvider;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -55,6 +63,16 @@ public class BookingServiceImpl implements BookingService {
                 .build();
 
         Booking saved = bookingRepository.save(booking);
+        notificationService.notifyBookingEvent(new BookingNotificationEvent(
+            "BOOKING_CREATED",
+            saved.getId(),
+            saved.getResourceId(),
+            saved.getUserId(),
+            saved.getStatus(),
+            currentUserId,
+            null,
+            Instant.now()
+        ));
         return toResponse(saved);
     }
 
@@ -105,6 +123,16 @@ public class BookingServiceImpl implements BookingService {
         booking.setUpdatedAt(Instant.now());
 
         Booking saved = bookingRepository.save(booking);
+        notificationService.notifyBookingEvent(new BookingNotificationEvent(
+            "BOOKING_APPROVED",
+            saved.getId(),
+            saved.getResourceId(),
+            saved.getUserId(),
+            saved.getStatus(),
+            adminUserId,
+            request == null ? null : request.reason(),
+            Instant.now()
+        ));
         return toResponse(saved);
     }
 
@@ -118,6 +146,16 @@ public class BookingServiceImpl implements BookingService {
         booking.setUpdatedAt(Instant.now());
 
         Booking saved = bookingRepository.save(booking);
+        notificationService.notifyBookingEvent(new BookingNotificationEvent(
+            "BOOKING_REJECTED",
+            saved.getId(),
+            saved.getResourceId(),
+            saved.getUserId(),
+            saved.getStatus(),
+            adminUserId,
+            request == null ? null : request.reason(),
+            Instant.now()
+        ));
         return toResponse(saved);
     }
 
@@ -132,6 +170,16 @@ public class BookingServiceImpl implements BookingService {
         booking.setUpdatedAt(Instant.now());
 
         Booking saved = bookingRepository.save(booking);
+        notificationService.notifyBookingEvent(new BookingNotificationEvent(
+            "BOOKING_CANCELLED",
+            saved.getId(),
+            saved.getResourceId(),
+            saved.getUserId(),
+            saved.getStatus(),
+            currentUserId,
+            null,
+            Instant.now()
+        ));
         return toResponse(saved);
     }
 
