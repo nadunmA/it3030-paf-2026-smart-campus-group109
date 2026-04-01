@@ -1,4 +1,4 @@
-package com.wegroup423.smart_campus.security;
+package com.wegroup423.smart_campus.features.auth.security;
 
 
 

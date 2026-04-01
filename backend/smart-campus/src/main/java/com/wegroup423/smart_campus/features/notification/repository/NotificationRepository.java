@@ -1,9 +1,11 @@
-package com.wegroup423.smart_campus.repository;
+package com.wegroup423.smart_campus.features.notification.repository;
 
 
-import com.wegroup423.smart_campus.entity.Notification;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
+
+import com.wegroup423.smart_campus.features.notification.model.Notification;
+
 import java.util.List;
 
 

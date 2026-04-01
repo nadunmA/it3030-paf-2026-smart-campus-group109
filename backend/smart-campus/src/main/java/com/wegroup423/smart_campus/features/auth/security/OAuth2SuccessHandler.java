@@ -1,9 +1,7 @@
-package com.wegroup423.smart_campus.security;
+package com.wegroup423.smart_campus.features.auth.security;
 
 
 
-import com.wegroup423.smart_campus.entity.User;
-import com.wegroup423.smart_campus.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +11,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+
+import com.wegroup423.smart_campus.features.auth.model.User;
+import com.wegroup423.smart_campus.features.auth.repository.UserRepository;
 
 import java.io.IOException;
 

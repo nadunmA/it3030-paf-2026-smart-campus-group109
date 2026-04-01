@@ -1,4 +1,4 @@
-package com.wegroup423.smart_campus.entity;
+package com.wegroup423.smart_campus.features.auth.model;
 
 
 import lombok.AllArgsConstructor;

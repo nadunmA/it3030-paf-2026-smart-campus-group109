@@ -1,12 +1,13 @@
-package com.wegroup423.smart_campus.service;
+package com.wegroup423.smart_campus.features.notification.service;
 
 
 
-import com.wegroup423.smart_campus.entity.Notification;
-import com.wegroup423.smart_campus.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import com.wegroup423.smart_campus.features.notification.model.Notification;
+import com.wegroup423.smart_campus.features.notification.repository.NotificationRepository;
 
 import java.util.List;
 

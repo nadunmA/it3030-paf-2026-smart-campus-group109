@@ -1,10 +1,7 @@
-package com.wegroup423.smart_campus.config;
+package com.wegroup423.smart_campus.features.auth.security;
 
 
 
-import com.wegroup423.smart_campus.security.JwtAuthFilter;
-import com.wegroup423.smart_campus.security.OAuth2SuccessHandler;
-import com.wegroup423.smart_campus.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

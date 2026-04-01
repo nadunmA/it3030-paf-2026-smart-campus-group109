@@ -1,12 +1,13 @@
-package com.wegroup423.smart_campus.controller;
+package com.wegroup423.smart_campus.features.auth.controller;
 
 
-import com.wegroup423.smart_campus.entity.User;
-import com.wegroup423.smart_campus.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import com.wegroup423.smart_campus.features.auth.model.User;
+import com.wegroup423.smart_campus.features.auth.repository.UserRepository;
 
 import java.util.Map;
 

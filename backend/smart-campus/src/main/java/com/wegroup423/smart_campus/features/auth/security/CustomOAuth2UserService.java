@@ -1,9 +1,7 @@
-package com.wegroup423.smart_campus.service;
+package com.wegroup423.smart_campus.features.auth.security;
 
 
 
-import com.wegroup423.smart_campus.entity.User;
-import com.wegroup423.smart_campus.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -11,6 +9,9 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+
+import com.wegroup423.smart_campus.features.auth.model.User;
+import com.wegroup423.smart_campus.features.auth.repository.UserRepository;
 
 import java.time.LocalDateTime;
 

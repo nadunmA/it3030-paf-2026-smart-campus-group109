@@ -1,13 +1,14 @@
-package com.wegroup423.smart_campus.controller;
+package com.wegroup423.smart_campus.features.notification.controller;
 
 
 
-import com.wegroup423.smart_campus.entity.Notification;
-import com.wegroup423.smart_campus.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import com.wegroup423.smart_campus.features.notification.model.Notification;
+import com.wegroup423.smart_campus.features.notification.service.NotificationService;
 
 import java.util.List;
 import java.util.Map;

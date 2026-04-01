@@ -1,9 +1,7 @@
-package com.wegroup423.smart_campus.security;
+package com.wegroup423.smart_campus.features.auth.security;
 
 
 
-import com.wegroup423.smart_campus.entity.User;
-import com.wegroup423.smart_campus.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +12,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.wegroup423.smart_campus.features.auth.model.User;
+import com.wegroup423.smart_campus.features.auth.repository.UserRepository;
 
 import java.io.IOException;
 import java.util.List;

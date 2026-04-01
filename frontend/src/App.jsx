@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import SmartCampusHome from "./components/home/SmartCampusHome";
+import SmartCampusHome from "../src/features/home/pages/SmartCampusHome";
 import "./App.css";
-import AuthCallback from "../src/pages/auth/AuthCallback";
+import AuthCallback from "../src/features/auth/pages/AuthCallback";
 
 export default function App() {
   return (

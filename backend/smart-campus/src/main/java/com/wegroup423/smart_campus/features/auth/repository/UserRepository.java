@@ -1,4 +1,4 @@
-package com.wegroup423.smart_campus.repository;
+package com.wegroup423.smart_campus.features.auth.repository;
 
 
 
@@ -7,14 +7,12 @@ package com.wegroup423.smart_campus.repository;
 
 
 
-
-import com.wegroup423.smart_campus.entity.User;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import org.springframework.stereotype.Repository;
 
-
+import com.wegroup423.smart_campus.features.auth.model.User;
 
 import java.util.Optional;
 
