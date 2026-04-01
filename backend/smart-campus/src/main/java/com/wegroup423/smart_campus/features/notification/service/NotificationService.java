@@ -1,5 +1,5 @@
 package com.wegroup423.smart_campus.features.notification.service;
-
+import com.wegroup423.smart_campus.features.notification.model.BookingNotificationEvent;
 
 
 import lombok.RequiredArgsConstructor;
@@ -85,4 +85,49 @@ public class NotificationService {
         log.info("Notification created for user: {} | type: {}", userId, type);
         return saved;
     }
+
+    //anjitha booking temp
+    public Notification notifyBookingEvent(BookingNotificationEvent event) {
+    String title;
+    String message;
+    Notification.NotificationType type;
+
+    switch (event.action()) {
+        case "BOOKING_CREATED" -> {
+            title = "Booking Created";
+            message = "Your booking for resource " + event.resourceId() + " was created successfully.";
+            type = Notification.NotificationType.GENERAL;
+        }
+        case "BOOKING_APPROVED" -> {
+            title = "Booking Approved";
+            message = "Your booking for resource " + event.resourceId() + " was approved.";
+            type = Notification.NotificationType.BOOKING_APPROVED;
+        }
+        case "BOOKING_REJECTED" -> {
+            title = "Booking Rejected";
+            message = "Your booking for resource " + event.resourceId() + " was rejected."
+                    + (event.reason() != null ? " Reason: " + event.reason() : "");
+            type = Notification.NotificationType.BOOKING_REJECTED;
+        }
+        case "BOOKING_CANCELLED" -> {
+            title = "Booking Cancelled";
+            message = "Your booking for resource " + event.resourceId() + " was cancelled.";
+            type = Notification.NotificationType.BOOKING_CANCELLED;
+        }
+        default -> {
+            title = "Booking Update";
+            message = "Your booking was updated.";
+            type = Notification.NotificationType.GENERAL;
+        }
+    }
+
+    return createNotification(
+            event.ownerUserId(),
+            title,
+            message,
+            type,
+            event.bookingId(),
+            "BOOKING"
+    );
+}
 }
