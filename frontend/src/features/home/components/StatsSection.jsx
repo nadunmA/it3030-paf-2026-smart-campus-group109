@@ -1,4 +1,4 @@
-import Counter from "../common/Counter";
+import Counter from "../../../components/ui/Counter";
 
 const STATS = [
   { target: 200, suffix: "+", label: "Bookable resources", delay: 0 },
