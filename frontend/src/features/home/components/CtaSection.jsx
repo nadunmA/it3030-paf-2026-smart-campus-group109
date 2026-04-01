@@ -1,5 +1,5 @@
-import Btn from "../common/Btn";
-import GoogleIcon from "../common/GoogleIcon";
+import Btn from "/src/components/ui/Btn";
+import GoogleIcon from "/src/features/auth/components/Googleicon";
 
 export default function CtaSection({ onGoTo }) {
   return (

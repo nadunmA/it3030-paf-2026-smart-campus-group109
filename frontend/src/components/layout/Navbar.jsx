@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import Btn from "../common/Btn";
+import Btn from "/src/components/ui/Btn";
 
 const PLATFORM_ITEMS = [
   {
