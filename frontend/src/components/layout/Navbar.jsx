@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Btn from "/src/components/ui/Btn";
 
 const PLATFORM_ITEMS = [
@@ -13,6 +14,7 @@ const PLATFORM_ITEMS = [
     color: "#30D158",
     title: "Bookings",
     desc: "Manage your reservations",
+    path: "/bookings/me",
   },
   {
     icon: "🔧",
@@ -37,6 +39,7 @@ const PLATFORM_ITEMS = [
     color: "#64D2FF",
     title: "Admin Dashboard",
     desc: "Full campus oversight",
+    path: "/bookings/admin",
   },
 ];
 
@@ -62,7 +65,7 @@ function PlatformMega({ onClose }) {
     >
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
         {PLATFORM_ITEMS.map((item) => (
-          <a key={item.title} href="#" className="mega-item">
+          <Link key={item.title} to={item.path || "#"} className="mega-item">
             <div
               style={{
                 width: 40,
@@ -96,7 +99,7 @@ function PlatformMega({ onClose }) {
                 {item.desc}
               </div>
             </div>
-          </a>
+          </Link>
         ))}
       </div>
       <div
@@ -230,6 +233,7 @@ function NotifPanel({ onClose }) {
 }
 
 function UserMenu({ onLogout }) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notif, setNotif] = useState(false);
   const menuRef = useRef(null);
@@ -246,7 +250,9 @@ function UserMenu({ onLogout }) {
 
   const items = [
     { icon: "🏛️", label: "Browse Facilities" },
-    { icon: "📅", label: "My Bookings", sub: "2 pending" },
+    { icon: "📅", label: "My Bookings", sub: "2 pending", path: "/bookings/me" },
+    { icon: "📝", label: "Create Booking", path: "/bookings/create" },
+    { icon: "🛡️", label: "Admin Booking Dashboard", path: "/bookings/admin" },
     { icon: "🔧", label: "My Tickets" },
     { icon: "🔔", label: "Notifications", count: 3 },
     { icon: "👤", label: "Profile" },
@@ -288,6 +294,13 @@ function UserMenu({ onLogout }) {
           >
             3
           </span>
+              onClick={() => {
+                if (item.path) {
+                  navigate(item.path);
+                  setOpen(false);
+                }
+              }}
+              style={item.path ? { cursor: "pointer" } : undefined}
         </div>
         {notif && <NotifPanel onClose={() => setNotif(false)} />}
       </div>
@@ -553,6 +566,24 @@ export default function Navbar({
             </div>
           );
         })}
+
+        <Link
+          to="/bookings/me"
+          className="nav-pill"
+          style={{
+            padding: "5px 11px",
+            borderRadius: 8,
+            fontSize: ".83rem",
+            color: "rgba(255,255,255,.72)",
+            cursor: "pointer",
+            transition: "all .2s",
+            textDecoration: "none",
+            border: "1px solid rgba(48,209,88,.32)",
+            background: "rgba(48,209,88,.08)",
+          }}
+        >
+          Bookings
+        </Link>
       </div>
 
       {/* Right */}
