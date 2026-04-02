@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import BookingFilter from "../components/BookingFilter";
 import BookingTableList from "../components/BookingTableList";
@@ -11,7 +11,8 @@ export default function MyBookingsPage() {
   const [toast, setToast] = useState(null);
   const [actionLoadingId, setActionLoadingId] = useState("");
 
-  const { bookings, loading, error, load } = useBookings(() => bookingApi.getMine());
+  const fetchBookings = useCallback(() => bookingApi.getMine(), []);
+  const { bookings, loading, error, load } = useBookings(fetchBookings);
 
   const applyFilters = async (nextFilters) => {
     setFilters(nextFilters);

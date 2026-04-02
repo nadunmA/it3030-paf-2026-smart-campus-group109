@@ -1,3 +1,4 @@
+import React from "react";
 const STATUS_COLORS = {
   PENDING: { bg: "rgba(255,159,10,.18)", border: "rgba(255,159,10,.5)", text: "#FFB340" },
   APPROVED: { bg: "rgba(48,209,88,.16)", border: "rgba(48,209,88,.5)", text: "#5BDE84" },
