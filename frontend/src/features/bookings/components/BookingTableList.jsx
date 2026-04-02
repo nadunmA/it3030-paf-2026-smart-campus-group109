@@ -7,6 +7,7 @@ export default function BookingTableList({
   onApprove,
   onReject,
   onCancel,
+  actionLoadingId = "",
 }) {
   if (!bookings?.length) {
     return (
@@ -71,13 +72,19 @@ export default function BookingTableList({
                 {showActions ? (
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {onApprove && booking.status === "PENDING" && (
-                      <Btn size="sm" onClick={() => onApprove(booking)}>Approve</Btn>
+                      <Btn size="sm" onClick={() => onApprove(booking)}>
+                        {actionLoadingId === booking.id ? "Processing..." : "Approve"}
+                      </Btn>
                     )}
                     {onReject && booking.status === "PENDING" && (
-                      <Btn size="sm" variant="ghost" onClick={() => onReject(booking)}>Reject</Btn>
+                      <Btn size="sm" variant="ghost" onClick={() => onReject(booking)}>
+                        {actionLoadingId === booking.id ? "Processing..." : "Reject"}
+                      </Btn>
                     )}
                     {onCancel && ["PENDING", "APPROVED"].includes(booking.status) && (
-                      <Btn size="sm" variant="white" onClick={() => onCancel(booking)}>Cancel</Btn>
+                      <Btn size="sm" variant="white" onClick={() => onCancel(booking)}>
+                        {actionLoadingId === booking.id ? "Processing..." : "Cancel"}
+                      </Btn>
                     )}
                   </div>
                 ) : (

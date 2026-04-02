@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import BookingForm from "../components/BookingForm";
+import BookingToast from "../components/BookingToast";
 import { bookingApi } from "../services/bookingApi";
 
 export default function CreateBookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [toast, setToast] = useState(null);
 
   const handleSubmit = async (payload) => {
     setSubmitting(true);
@@ -15,8 +17,10 @@ export default function CreateBookingPage() {
     try {
       await bookingApi.create(payload);
       setSuccess("Booking request submitted and is now pending approval.");
+      setToast({ type: "success", message: "Booking created successfully." });
     } catch (err) {
       setError(err.message || "Failed to create booking.");
+      setToast({ type: "error", message: err.message || "Booking creation failed." });
       throw err;
     } finally {
       setSubmitting(false);
@@ -35,6 +39,7 @@ export default function CreateBookingPage() {
 
         <BookingForm onSubmit={handleSubmit} submitting={submitting} />
       </section>
+      <BookingToast toast={toast} onClose={() => setToast(null)} />
     </main>
   );
 }

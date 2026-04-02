@@ -2,11 +2,15 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import BookingFilter from "../components/BookingFilter";
 import BookingTableList from "../components/BookingTableList";
+import BookingToast from "../components/BookingToast";
 import useBookings from "../hooks/useBookings";
 import { bookingApi } from "../services/bookingApi";
 
 export default function MyBookingsPage() {
   const [filters, setFilters] = useState({});
+  const [toast, setToast] = useState(null);
+  const [actionLoadingId, setActionLoadingId] = useState("");
+
   const { bookings, loading, error, load } = useBookings(() => bookingApi.getMine());
 
   const applyFilters = async (nextFilters) => {
@@ -21,8 +25,21 @@ export default function MyBookingsPage() {
   });
 
   const cancelBooking = async (booking) => {
-    await bookingApi.cancel(booking.id);
-    await load();
+    const shouldCancel = window.confirm(
+      `Cancel booking for ${booking.resourceId} on ${booking.bookingDate}?`,
+    );
+    if (!shouldCancel) return;
+
+    setActionLoadingId(booking.id);
+    try {
+      await bookingApi.cancel(booking.id);
+      await load();
+      setToast({ type: "success", message: "Booking cancelled successfully." });
+    } catch (err) {
+      setToast({ type: "error", message: err.message || "Failed to cancel booking." });
+    } finally {
+      setActionLoadingId("");
+    }
   };
 
   return (
@@ -35,12 +52,22 @@ export default function MyBookingsPage() {
         <BookingFilter onApply={applyFilters} />
 
         {loading && <p style={hintStyle}>Loading bookings...</p>}
-        {error && <p style={errorStyle}>{error}</p>}
+        {!loading && error && <p style={errorStyle}>{error}</p>}
 
         {!loading && !error && (
-          <BookingTableList bookings={filtered} showActions onCancel={cancelBooking} />
+          <BookingTableList
+            bookings={filtered}
+            showActions
+            onCancel={cancelBooking}
+            actionLoadingId={actionLoadingId}
+          />
+        )}
+
+        {!loading && !error && filtered.length === 0 && (
+          <p style={hintStyle}>No bookings match the selected filters.</p>
         )}
       </section>
+      <BookingToast toast={toast} onClose={() => setToast(null)} />
     </main>
   );
 }
