@@ -1,11 +1,5 @@
 import { useEffect, useRef } from "react";
 
-/* ─────────────────────────────────────────
-   All random data generated ONCE at module
-   level — outside any component/hook.
-   This satisfies react-hooks/purity rules.
-───────────────────────────────────────── */
-
 const COLORS = ["#0A84FF", "#BF5AF2", "#30D158", "#FF9F0A", "#64D2FF"];
 
 const STARS = Array.from({ length: 120 }, (_, i) => ({
@@ -100,7 +94,7 @@ const BLOBS = [
   },
 ];
 
-/* ─── Components ─── */
+/* Components */
 
 function StarField() {
   return (
@@ -254,7 +248,7 @@ function MouseGlow() {
   );
 }
 
-/* ─── Main export ─── */
+/* Main export */
 export default function AnimatedBackground() {
   return (
     <>

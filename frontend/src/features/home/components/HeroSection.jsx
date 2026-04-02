@@ -1,5 +1,5 @@
-import Btn from "../common/Btn";
-import GoogleIcon from "../common/GoogleIcon";
+import Btn from "../../../components/ui/Btn";
+import GoogleIcon from "../../auth/components/Googleicon";
 
 export default function HeroSection({ onLoginOpen, onGoTo }) {
   const ticker = [

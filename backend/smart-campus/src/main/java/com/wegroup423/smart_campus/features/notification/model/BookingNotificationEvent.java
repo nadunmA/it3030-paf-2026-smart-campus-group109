@@ -12,5 +12,4 @@ public record BookingNotificationEvent(
         String triggeredBy,
         String reason,
         Instant occurredAt
-) {
-}
+) {}

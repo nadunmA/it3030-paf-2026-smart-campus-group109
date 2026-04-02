@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import { useScrollReveal } from "../../hooks/useScrollReveal";
-import { useActiveSection } from "../../hooks/useActiveSection";
-import Navbar from "../navbar/Navbar";
-import HeroSection from "./HeroSection";
-import StatsSection from "../home/Statssection";
-import FeaturesSection from "../home/FeatureSection";
-import HowItWorksSection from "./HowItWorksSection";
-import CtaSection from "./CtaSection";
-import Footer from "../Footer";
-import GoogleLoginModal from "../common/GoogleLoginModal";
-import AnimatedBackground from "../common/AnimatedBackground";
+import { useScrollReveal } from "../../../hooks/useScrollReveal";
+import { useActiveSection } from "../../../hooks/useActiveSection";
+import Navbar from "../../../components/layout/Navbar";
+import HeroSection from "../components/HeroSection";
+import StatsSection from "../components/StatsSection";
+import FeaturesSection from "../components/FeatureSection";
+import HowItWorksSection from "../components/Howitworkssection";
+import CtaSection from "../components/CtaSection";
+import Footer from "../../../components/layout/Footer";
+import GoogleLoginModal from "../../auth/components/GoogleLoginModal";
+import AnimatedBackground from "../../../components/ui/AnimatedBackground";
 
 const SECTION_IDS = ["hero", "stats", "features", "howitworks", "cta"];
 
