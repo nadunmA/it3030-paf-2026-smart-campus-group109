@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 export default function AuthCallback() {
-  const navigate = useNavigate();
   const [status, setStatus] = useState("Processing login...");
 
   useEffect(() => {
@@ -11,10 +9,9 @@ export default function AuthCallback() {
     const name = params.get("name");
     const email = params.get("email");
     const picture = params.get("picture");
-    const role = params.get("role");
+    const role = (params.get("role") || "USER").toUpperCase();
 
-    if (token) {
-      // Store JWT token in sessionStorage (more secure than localStorage)
+    if (token && token.trim() !== "") {
       sessionStorage.setItem("token", token);
       sessionStorage.setItem(
         "user",
@@ -23,19 +20,21 @@ export default function AuthCallback() {
 
       setTimeout(() => {
         setStatus("Login successful! Redirecting...");
+        setTimeout(() => {
+          if (role === "ADMIN") {
+            window.location.replace("/admin/dashboard");
+          } else {
+            window.location.replace("/dashboard");
+          }
+        }, 700);
       }, 0);
-
-      // Clean URL and redirect to home
-      window.history.replaceState({}, document.title, "/");
-      setTimeout(() => navigate("/"), 800);
     } else {
       setTimeout(() => {
         setStatus("Login failed. Redirecting...");
+        setTimeout(() => window.location.replace("/"), 1500);
       }, 0);
-
-      setTimeout(() => navigate("/"), 2000);
     }
-  }, [navigate]);
+  }, []);
 
   return (
     <div
@@ -48,10 +47,8 @@ export default function AuthCallback() {
         justifyContent: "center",
         flexDirection: "column",
         gap: 16,
-        fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
-      {/* Spinner */}
       <div
         style={{
           width: 48,
@@ -62,9 +59,7 @@ export default function AuthCallback() {
           animation: "spin 0.8s linear infinite",
         }}
       />
-      <p style={{ color: "rgba(255,255,255,.6)", fontSize: ".95rem" }}>
-        {status}
-      </p>
+      <p style={{ color: "rgba(255,255,255,.6)" }}>{status}</p>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
