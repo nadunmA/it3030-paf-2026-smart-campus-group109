@@ -29,6 +29,7 @@ export default function AuthCallback() {
       "USER"
     ).toUpperCase();
     const oauthError = params.get("error") || hashParams.get("error");
+    const oauthMessage = params.get("message") || hashParams.get("message");
     const existingToken = sessionStorage.getItem("token");
     const effectiveToken = token && token.trim() !== "" ? token : existingToken;
 
@@ -53,11 +54,19 @@ export default function AuthCallback() {
       }, 0);
     } else {
       handledRef.current = true;
+      const normalizedError = (oauthError || "").toLowerCase();
+      const friendlyMessage =
+        oauthMessage ||
+        (normalizedError === "account_suspended"
+          ? "Your account is suspended. Please contact an administrator."
+          : null);
       setTimeout(() => {
         setStatus(
-          oauthError
-            ? `Login failed (${oauthError}). Redirecting...`
-            : "Login failed. Redirecting...",
+          friendlyMessage
+            ? `${friendlyMessage} Redirecting...`
+            : oauthError
+              ? `Login failed (${oauthError}). Redirecting...`
+              : "Login failed. Redirecting...",
         );
         setTimeout(() => window.location.replace("/"), 1500);
       }, 0);

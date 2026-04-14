@@ -48,7 +48,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         if (!user.isActive()) {
             log.warn("Blocked OAuth2 login for suspended user: {}", email);
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Your account is suspended. Contact an administrator.");
+            String suspendedRedirect = frontendUrl + "/auth/callback"
+                + "#error=" + encode("account_suspended")
+                + "&message=" + encode("Your account is suspended. Contact an administrator.");
+            getRedirectStrategy().sendRedirect(request, response, suspendedRedirect);
             return;
         }
 
