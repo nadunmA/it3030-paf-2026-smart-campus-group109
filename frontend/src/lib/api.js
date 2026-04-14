@@ -1,14 +1,20 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
-export async function apiGet(path) {
+async function apiRequest(method, path, payload) {
   const token = sessionStorage.getItem("token");
   const headers = {};
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
+  if (payload !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
 
   const res = await fetch(`${BASE_URL}${path}`, {
+    method,
     headers,
+    credentials: "include",
+    body: payload === undefined ? undefined : JSON.stringify(payload),
   });
 
   const contentType = res.headers.get("content-type") || "";
@@ -23,4 +29,12 @@ export async function apiGet(path) {
   }
 
   return body;
+}
+
+export async function apiGet(path) {
+  return apiRequest("GET", path);
+}
+
+export async function apiPatch(path, payload) {
+  return apiRequest("PATCH", path, payload);
 }

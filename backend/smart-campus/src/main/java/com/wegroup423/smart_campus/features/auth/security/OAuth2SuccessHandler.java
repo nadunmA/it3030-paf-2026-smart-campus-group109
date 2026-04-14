@@ -66,17 +66,17 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         log.info("OAuth2 login success for: {} | role: {} | provider: {}", email, user.getRole(), provider);
 
-        // Redirect to frontend with query params
+        // Redirect to frontend with hash params to reduce token leakage in server logs/referrers.
         String redirectUrl = frontendUrl + "/auth/callback"
-                + "?token=" + encode(token)
-                + "&name=" + encode(nullSafe(user.getName()))
-                + "&email=" + encode(nullSafe(user.getEmail()))
-                + "&picture=" + encode(nullSafe(user.getPicture()))
-                + "&role=" + encode(user.getRole().name())
-                + "&provider=" + encode(provider)
-                + "&isOAuthUser=" + isOAuthUser
-                + "&issuedAt=" + encode(issuedAt);
-        log.info("Redirecting to: {}", redirectUrl);
+            + "#token=" + encode(token)
+            + "&name=" + encode(nullSafe(user.getName()))
+            + "&email=" + encode(nullSafe(user.getEmail()))
+            + "&picture=" + encode(nullSafe(user.getPicture()))
+            + "&role=" + encode(user.getRole().name())
+            + "&provider=" + encode(provider)
+            + "&isOAuthUser=" + isOAuthUser
+            + "&issuedAt=" + encode(issuedAt);
+        log.info("Redirecting OAuth2 user to frontend callback");
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 
