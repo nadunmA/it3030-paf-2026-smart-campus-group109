@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiGet } from "../../lib/api";
+import { apiGet, apiPatch } from "../../lib/api";
 
 /* ─────────────────────────────────────────
    SHARED TOKENS
@@ -382,6 +382,9 @@ export default function AdminDashboard() {
   const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [userSearch, setUserSearch] = useState("");
+  const [userActionError, setUserActionError] = useState("");
+  const [userActionBusyId, setUserActionBusyId] = useState("");
 
   const [bookingFilter, setBookingFilter] = useState("All");
   const [ticketFilter, setTicketFilter] = useState("All");
@@ -472,6 +475,64 @@ export default function AdminDashboard() {
     resourceFilter === "All"
       ? resources
       : resources.filter((r) => r.type === resourceFilter);
+
+  const filteredUsers = users.filter((u) => {
+    const q = userSearch.trim().toLowerCase();
+    if (!q) {
+      return true;
+    }
+    return (
+      (u.name || "").toLowerCase().includes(q) ||
+      (u.email || "").toLowerCase().includes(q)
+    );
+  });
+
+  const updateUserInState = (userId, patch) => {
+    setUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, ...patch } : u)),
+    );
+  };
+
+  const handleRoleChange = async (userId, role) => {
+    try {
+      setUserActionError("");
+      setUserActionBusyId(userId);
+      const updated = await apiPatch(`/admin/users/${userId}/role`, { role });
+      updateUserInState(userId, {
+        role: updated?.role || role,
+        active:
+          typeof updated?.active === "boolean"
+            ? updated.active
+            : users.find((u) => u.id === userId)?.active,
+      });
+    } catch (e) {
+      console.error(e);
+      setUserActionError("Failed to update user role.");
+    } finally {
+      setUserActionBusyId("");
+    }
+  };
+
+  const handleToggleActive = async (targetUser) => {
+    try {
+      setUserActionError("");
+      setUserActionBusyId(targetUser.id);
+      const nextActive = !targetUser.active;
+      const updated = await apiPatch(`/admin/users/${targetUser.id}/active`, {
+        active: nextActive,
+      });
+      updateUserInState(targetUser.id, {
+        active:
+          typeof updated?.active === "boolean" ? updated.active : nextActive,
+        role: updated?.role || targetUser.role,
+      });
+    } catch (e) {
+      console.error(e);
+      setUserActionError("Failed to update user status.");
+    } finally {
+      setUserActionBusyId("");
+    }
+  };
 
   const NAV = [
     { id: "overview", icon: "⊞", label: "Overview" },
@@ -1128,9 +1189,26 @@ export default function AdminDashboard() {
           <div>
             <div style={pgTitle}>User Management</div>
             <div style={pgSub}>View and manage registered users</div>
+            {userActionError && (
+              <div
+                style={{
+                  marginBottom: 12,
+                  fontSize: 12,
+                  color: C.red,
+                  background: C.redBg,
+                  border: `1px solid ${C.redBd}`,
+                  borderRadius: 8,
+                  padding: "8px 10px",
+                }}
+              >
+                {userActionError}
+              </div>
+            )}
             <div style={{ marginBottom: 14 }}>
               <input
                 placeholder="Search users by name or email..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
                 style={{
                   width: "100%",
                   maxWidth: 380,
@@ -1146,8 +1224,17 @@ export default function AdminDashboard() {
               />
             </div>
             <Table
-              cols={["User", "Email", "Role", "Bookings", "Tickets", "Joined"]}
-              rows={users.map((u) => [
+              cols={[
+                "User",
+                "Email",
+                "Role",
+                "Status",
+                "Bookings",
+                "Tickets",
+                "Joined",
+                "Actions",
+              ]}
+              rows={filteredUsers.map((u) => [
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div
                     style={{
@@ -1169,10 +1256,56 @@ export default function AdminDashboard() {
                   <span style={{ fontWeight: 600 }}>{u.name}</span>
                 </div>,
                 <span style={{ color: C.muted }}>{u.email}</span>,
-                <Badge type={u.role || "USER"}>{u.role || "USER"}</Badge>,
+                <select
+                  value={u.role || "USER"}
+                  disabled={userActionBusyId === u.id}
+                  onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                  style={{
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 7,
+                    background: C.surface,
+                    color: C.text,
+                    fontSize: 12,
+                    padding: "5px 8px",
+                    fontFamily: "inherit",
+                    cursor:
+                      userActionBusyId === u.id ? "not-allowed" : "pointer",
+                  }}
+                >
+                  <option value="USER">USER</option>
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="TECHNICIAN">TECHNICIAN</option>
+                </select>,
+                u.active === false ? (
+                  <Badge type="CANCELLED">SUSPENDED</Badge>
+                ) : (
+                  <Badge type="ACTIVE">ACTIVE</Badge>
+                ),
                 u.bookings || "—",
                 u.tickets || "—",
                 <span style={{ fontSize: 12, color: C.hint }}>{u.joined}</span>,
+                <button
+                  disabled={userActionBusyId === u.id}
+                  onClick={() => handleToggleActive(u)}
+                  style={{
+                    border:
+                      u.active === false
+                        ? `1px solid ${C.greenBd}`
+                        : `1px solid ${C.redBd}`,
+                    borderRadius: 8,
+                    background: u.active === false ? C.greenBg : C.redBg,
+                    color: u.active === false ? C.green : C.red,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    padding: "5px 10px",
+                    fontFamily: "inherit",
+                    cursor:
+                      userActionBusyId === u.id ? "not-allowed" : "pointer",
+                    opacity: userActionBusyId === u.id ? 0.65 : 1,
+                  }}
+                >
+                  {u.active === false ? "Activate" : "Suspend"}
+                </button>,
               ])}
             />
           </div>
