@@ -35,6 +35,18 @@ export async function apiGet(path) {
   return apiRequest("GET", path);
 }
 
+export async function apiPost(path, payload) {
+  return apiRequest("POST", path, payload);
+}
+
+export async function apiPut(path, payload) {
+  return apiRequest("PUT", path, payload);
+}
+
 export async function apiPatch(path, payload) {
   return apiRequest("PATCH", path, payload);
+}
+
+export async function apiDelete(path) {
+  return apiRequest("DELETE", path);
 }

@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiGet, apiPatch } from "../../lib/api";
 
 /* ── Badge ── */
 function Badge({ type, children }) {
@@ -401,7 +402,9 @@ export default function UserDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [loaded, setLoaded] = useState(false);
-  const [notifs, setNotifs] = useState(MOCK_NOTIFS);
+  const [notifs, setNotifs] = useState([]);
+  const [notifsLoading, setNotifsLoading] = useState(false);
+  const [notifsError, setNotifsError] = useState("");
   const [bookingFilter, setBookingFilter] = useState("All");
   const [ticketFilter, setTicketFilter] = useState("All");
   const [liveUser, setLiveUser] = useState(null);
@@ -414,7 +417,7 @@ export default function UserDashboard() {
     }
   }, []);
 
-  // Fetch fresh profile from /api/auth/me
+  // Fetch fresh profile from /api/auth/me and load notifications
   useEffect(() => {
     if (!sessionUser) {
       navigate("/");
@@ -437,6 +440,36 @@ export default function UserDashboard() {
     setTimeout(() => setLoaded(true), 100);
   }, [sessionUser, navigate]);
 
+  // Load notifications when notifications tab opens
+  useEffect(() => {
+    if (activeTab !== "notifications") return;
+
+    (async () => {
+      try {
+        setNotifsLoading(true);
+        setNotifsError("");
+        const res = await apiGet("/notifications/my");
+        const list = res.notifications || [];
+        setNotifs(
+          list.map((n) => ({
+            type: n.type?.toLowerCase() || "ticket",
+            text: `${n.title} - ${n.message}`,
+            time: n.createdAt
+              ? new Date(n.createdAt).toLocaleDateString()
+              : "now",
+            read: n.read || false,
+            id: n.id,
+          })),
+        );
+      } catch (e) {
+        console.error("Failed to load notifications", e);
+        setNotifsError("Failed to load notifications. Using cached data.");
+      } finally {
+        setNotifsLoading(false);
+      }
+    })();
+  }, [activeTab]);
+
   const handleLogout = () => {
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("user");
@@ -450,8 +483,14 @@ export default function UserDashboard() {
 
   const unreadCount = notifs.filter((n) => !n.read).length;
 
-  const markAllRead = () =>
-    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markAllRead = async () => {
+    try {
+      await apiPatch("/notifications/my/read-all", {});
+      setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (e) {
+      console.error("Failed to mark all as read", e);
+    }
+  };
 
   const filteredBookings =
     bookingFilter === "All"
@@ -981,14 +1020,17 @@ export default function UserDashboard() {
               <div>
                 <div style={pageTitle}>Notifications</div>
                 <div style={{ fontSize: 13, color: "#6B7280" }}>
-                  {unreadCount > 0
-                    ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}`
-                    : "All caught up!"}
+                  {notifsLoading
+                    ? "Loading notifications..."
+                    : unreadCount > 0
+                      ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}`
+                      : "All caught up!"}
                 </div>
               </div>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
+                  disabled={notifsLoading}
                   style={{
                     padding: "8px 18px",
                     borderRadius: 99,
@@ -996,14 +1038,17 @@ export default function UserDashboard() {
                     border: "1px solid #E2E8F0",
                     color: "#6B7280",
                     fontSize: 12,
-                    cursor: "pointer",
+                    cursor: notifsLoading ? "not-allowed" : "pointer",
                     fontFamily: "inherit",
                     fontWeight: 500,
                     transition: "all .15s",
+                    opacity: notifsLoading ? 0.65 : 1,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#94A3B8";
-                    e.currentTarget.style.color = "#1A1D23";
+                    if (!notifsLoading) {
+                      e.currentTarget.style.borderColor = "#94A3B8";
+                      e.currentTarget.style.color = "#1A1D23";
+                    }
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = "#E2E8F0";
@@ -1015,23 +1060,59 @@ export default function UserDashboard() {
               )}
             </div>
 
-            {notifs.some((n) => !n.read) && (
-              <>
-                <div style={sectionLabel}>Unread</div>
-                {notifs
-                  .filter((n) => !n.read)
-                  .map((n, i) => (
-                    <NotifCard key={i} {...n} />
-                  ))}
-              </>
+            {notifsError && (
+              <div
+                style={{
+                  marginBottom: 12,
+                  fontSize: 12,
+                  color: "#DC2626",
+                  background: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  borderRadius: 8,
+                  padding: "8px 10px",
+                }}
+              >
+                {notifsError}
+              </div>
             )}
 
-            <div style={sectionLabel}>Earlier</div>
-            {notifs
-              .filter((n) => n.read)
-              .map((n, i) => (
-                <NotifCard key={i} {...n} />
-              ))}
+            {notifsLoading ? (
+              <div
+                style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}
+              >
+                Loading notifications...
+              </div>
+            ) : notifs.length === 0 ? (
+              <div
+                style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}
+              >
+                No notifications yet.
+              </div>
+            ) : (
+              <>
+                {notifs.some((n) => !n.read) && (
+                  <>
+                    <div style={sectionLabel}>Unread</div>
+                    {notifs
+                      .filter((n) => !n.read)
+                      .map((n, i) => (
+                        <NotifCard key={i} {...n} />
+                      ))}
+                  </>
+                )}
+
+                {notifs.some((n) => n.read) && (
+                  <>
+                    <div style={sectionLabel}>Earlier</div>
+                    {notifs
+                      .filter((n) => n.read)
+                      .map((n, i) => (
+                        <NotifCard key={i} {...n} />
+                      ))}
+                  </>
+                )}
+              </>
+            )}
           </div>
         )}
 

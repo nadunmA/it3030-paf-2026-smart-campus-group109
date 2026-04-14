@@ -86,6 +86,41 @@ public class NotificationService {
         return saved;
     }
 
+    public Notification createSelfNotification(String userId, String title, String message) {
+        String safeTitle = title == null || title.isBlank() ? "General Update" : title.trim();
+        String safeMessage = message == null ? "" : message.trim();
+
+        return createNotification(
+                userId,
+                safeTitle,
+                safeMessage,
+                Notification.NotificationType.GENERAL,
+                null,
+                null
+        );
+    }
+
+    public Notification updateNotification(String notificationId, String userId, String title, String message, Boolean read) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found"));
+
+        if (!notification.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        if (title != null) {
+            notification.setTitle(title.trim());
+        }
+        if (message != null) {
+            notification.setMessage(message.trim());
+        }
+        if (read != null) {
+            notification.setRead(read);
+        }
+
+        return notificationRepository.save(notification);
+    }
+
     //anjitha booking temp
     public Notification notifyBookingEvent(BookingNotificationEvent event) {
     String title;

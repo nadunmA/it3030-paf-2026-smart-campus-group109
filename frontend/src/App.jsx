@@ -3,6 +3,7 @@ import SmartCampusHome from "./features/home/pages/SmartCampusHome";
 import AuthCallback from "./features/auth/pages/AuthCallback";
 import UserDashboard from "./features/user-dashboard/UserDashboard";
 import AdminDashboard from "./features/admin-dashboard/AdminDashboard";
+import TechnicianDashboard from "./features/technician-dashboard/TechnicianDashboard";
 import UserNotifications from "./features/notification/NotificationsPage";
 import ProtectedRoute from "./features/auth/components/ProtectedRoute";
 
@@ -18,8 +19,20 @@ export default function App() {
           <Route path="/dashboard" element={<UserDashboard />} />
         </Route>
 
-        <Route element={<ProtectedRoute allowRoles={["USER", "ADMIN"]} />}>
+        <Route
+          element={
+            <ProtectedRoute allowRoles={["USER", "ADMIN", "TECHNICIAN"]} />
+          }
+        >
           <Route path="/notifications" element={<UserNotifications />} />
+        </Route>
+
+        {/* TECHNICIAN only */}
+        <Route element={<ProtectedRoute allowRoles={["TECHNICIAN"]} />}>
+          <Route
+            path="/technician/dashboard"
+            element={<TechnicianDashboard />}
+          />
         </Route>
 
         {/* ADMIN only */}
