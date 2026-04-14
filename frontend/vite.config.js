@@ -10,13 +10,22 @@ export default defineConfig({
     },
     proxy: {
       "/oauth2": {
-        target: "http://localhost:8080",
+        target: "http://127.0.0.1:8080",
         changeOrigin: true,
         secure: false,
       },
-
+      "/login": {
+        target: "http://127.0.0.1:8080",
+        changeOrigin: true,
+        secure: false,
+      },
+      "/logout": {
+        target: "http://127.0.0.1:8080",
+        changeOrigin: true,
+        secure: false,
+      },
       "/api": {
-        target: "http://localhost:8080",
+        target: "http://127.0.0.1:8080",
         changeOrigin: true,
         secure: false,
       },
