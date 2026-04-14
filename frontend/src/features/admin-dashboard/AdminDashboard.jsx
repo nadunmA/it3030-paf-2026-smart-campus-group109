@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiGet } from "../../lib/api";
 
 /* ─────────────────────────────────────────
    SHARED TOKENS
@@ -369,235 +370,23 @@ function Table({ cols, rows }) {
 }
 
 /* ─────────────────────────────────────────
-   MOCK DATA
-───────────────────────────────────────── */
-const BOOKINGS = [
-  {
-    user: "Asel Kumara",
-    resource: "Meeting Room A3",
-    date: "Apr 15, 10:00 AM",
-    purpose: "Project Meeting",
-    status: "PENDING",
-  },
-  {
-    user: "Nuwan Silva",
-    resource: "Computer Lab B204",
-    date: "Apr 16, 2:00 PM",
-    purpose: "Lab Session",
-    status: "PENDING",
-  },
-  {
-    user: "Dilmi Perera",
-    resource: "Projector #P04",
-    date: "Apr 18, 11:00 AM",
-    purpose: "Lecture",
-    status: "APPROVED",
-  },
-  {
-    user: "Kasun Ranasinghe",
-    resource: "Hall LH-01",
-    date: "Apr 12, 9:00 AM",
-    purpose: "Workshop",
-    status: "REJECTED",
-  },
-  {
-    user: "Tharushi Fernando",
-    resource: "Meeting Room B1",
-    date: "Apr 20, 3:00 PM",
-    purpose: "Team Sync",
-    status: "PENDING",
-  },
-];
-
-const TICKETS = [
-  {
-    title: "AC not working in Lab B204",
-    reporter: "Asel Kumara",
-    priority: "HIGH",
-    status: "IN_PROGRESS",
-    assigned: "Tech. Ravi",
-    updated: "2 hrs ago",
-  },
-  {
-    title: "Projector display issue LH-01",
-    reporter: "Nuwan Silva",
-    priority: "MEDIUM",
-    status: "OPEN",
-    assigned: null,
-    updated: "1 day ago",
-  },
-  {
-    title: "Door lock broken – Room 304",
-    reporter: "Dilmi Perera",
-    priority: "HIGH",
-    status: "RESOLVED",
-    assigned: "Tech. Nimal",
-    updated: "3 days ago",
-  },
-  {
-    title: "Whiteboard marker missing B101",
-    reporter: "Kasun R.",
-    priority: "LOW",
-    status: "OPEN",
-    assigned: null,
-    updated: "4 days ago",
-  },
-  {
-    title: "Network down – Computer Lab C3",
-    reporter: "Tharushi F.",
-    priority: "HIGH",
-    status: "IN_PROGRESS",
-    assigned: "Tech. Ravi",
-    updated: "5 hrs ago",
-  },
-];
-
-const RESOURCES = [
-  {
-    name: "Meeting Room A3",
-    type: "Room",
-    location: "Block A, Floor 3",
-    capacity: "12",
-    status: "ACTIVE",
-  },
-  {
-    name: "Computer Lab B204",
-    type: "Lab",
-    location: "Block B, Floor 2",
-    capacity: "40",
-    status: "ACTIVE",
-  },
-  {
-    name: "Lecture Hall LH-01",
-    type: "Hall",
-    location: "Main Building",
-    capacity: "200",
-    status: "ACTIVE",
-  },
-  {
-    name: "Projector #P04",
-    type: "Equipment",
-    location: "AV Store Room",
-    capacity: "—",
-    status: "OUT_OF_SERVICE",
-  },
-  {
-    name: "Meeting Room B1",
-    type: "Room",
-    location: "Block B, Floor 1",
-    capacity: "8",
-    status: "ACTIVE",
-  },
-  {
-    name: "Camera Kit #C02",
-    type: "Equipment",
-    location: "Media Store",
-    capacity: "—",
-    status: "ACTIVE",
-  },
-];
-
-const USERS = [
-  {
-    name: "Asel Kumara",
-    email: "asel@sliit.lk",
-    role: "USER",
-    initials: "AK",
-    bookings: 4,
-    tickets: 2,
-    joined: "Mar 2026",
-  },
-  {
-    name: "Nuwan Silva",
-    email: "nuwan@sliit.lk",
-    role: "USER",
-    initials: "NS",
-    bookings: 7,
-    tickets: 1,
-    joined: "Feb 2026",
-  },
-  {
-    name: "Dilmi Perera",
-    email: "dilmi@sliit.lk",
-    role: "TECHNICIAN",
-    initials: "DP",
-    bookings: 2,
-    tickets: 5,
-    joined: "Jan 2026",
-  },
-  {
-    name: "Kasun Ranasinghe",
-    email: "kasun@sliit.lk",
-    role: "USER",
-    initials: "KR",
-    bookings: 3,
-    tickets: 1,
-    joined: "Mar 2026",
-  },
-  {
-    name: "Admin User",
-    email: "admin@sliit.lk",
-    role: "ADMIN",
-    initials: "AD",
-    bookings: 0,
-    tickets: 0,
-    joined: "Jan 2026",
-  },
-];
-
-const ACTIVITY = [
-  {
-    color: C.green,
-    text: "Booking #BK-089 approved — Meeting Room A3",
-    time: "2 min ago",
-  },
-  {
-    color: C.orange,
-    text: "Ticket #TK-042 changed to In Progress — Assigned to Tech. Ravi",
-    time: "1 hr ago",
-  },
-  {
-    color: C.blue,
-    text: "New user registered — Tharushi Fernando (tharushi@sliit.lk)",
-    time: "3 hrs ago",
-  },
-  {
-    color: C.red,
-    text: "Booking #BK-085 rejected — Hall LH-01 (scheduling conflict)",
-    time: "5 hrs ago",
-  },
-  {
-    color: C.purple,
-    text: "Resource Projector #P04 set to OUT_OF_SERVICE",
-    time: "1 day ago",
-  },
-  {
-    color: C.green,
-    text: "Ticket #TK-038 resolved and closed by Tech. Nimal",
-    time: "1 day ago",
-  },
-  {
-    color: C.orange,
-    text: "Booking #BK-080 approved — Computer Lab B204",
-    time: "2 days ago",
-  },
-  {
-    color: C.blue,
-    text: "New resource added — Camera Kit #C02 (Media Store)",
-    time: "3 days ago",
-  },
-];
-
-/* ─────────────────────────────────────────
    MAIN COMPONENT
 ───────────────────────────────────────── */
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("overview");
-  const [loaded, setLoaded] = useState(false);
+
+  const [bookings, setBookings] = useState([]);
+  const [tickets, setTickets] = useState([]);
+  const [resources, setResources] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [activity, setActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [bookingFilter, setBookingFilter] = useState("All");
   const [ticketFilter, setTicketFilter] = useState("All");
   const [resourceFilter, setResourceFilter] = useState("All");
+
+  const [activeTab, setActiveTab] = useState("overview");
 
   const user = (() => {
     try {
@@ -612,10 +401,37 @@ export default function AdminDashboard() {
       navigate("/");
       return;
     }
-    setTimeout(() => setLoaded(true), 100);
-  }, []);
+
+    (async () => {
+      try {
+        setLoading(true);
+
+        const [b, t, r, u, a] = await Promise.all([
+          apiGet("/admin/bookings"),
+          apiGet("/admin/tickets"),
+          apiGet("/admin/resources"),
+          apiGet("/admin/users"),
+          apiGet("/admin/activity"),
+        ]);
+
+        setBookings(b || []);
+        setTickets(t || []);
+        setResources(r || []);
+        setUsers(u || []);
+        setActivity(a || []);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [navigate, user]);
 
   if (!user || user.role !== "ADMIN") return null;
+
+  if (loading) {
+    return <div style={{ padding: 24 }}>Loading admin data...</div>;
+  }
 
   const handleLogout = () => {
     sessionStorage.removeItem("token");
@@ -623,20 +439,20 @@ export default function AdminDashboard() {
     navigate("/");
   };
 
-  const pendingBookings = BOOKINGS.filter((b) => b.status === "PENDING").length;
+  const pendingBookings = bookings.filter((b) => b.status === "PENDING").length;
 
   const filteredBookings =
     bookingFilter === "All"
-      ? BOOKINGS
-      : BOOKINGS.filter((b) => b.status === bookingFilter);
+      ? bookings
+      : bookings.filter((b) => b.status === bookingFilter);
   const filteredTickets =
     ticketFilter === "All"
-      ? TICKETS
-      : TICKETS.filter((t) => t.status === ticketFilter);
+      ? tickets
+      : tickets.filter((t) => t.status === ticketFilter);
   const filteredResources =
     resourceFilter === "All"
-      ? RESOURCES
-      : RESOURCES.filter((r) => r.type === resourceFilter);
+      ? resources
+      : resources.filter((r) => r.type === resourceFilter);
 
   const NAV = [
     { id: "overview", icon: "⊞", label: "Overview" },
@@ -686,7 +502,7 @@ export default function AdminDashboard() {
         fontFamily:
           "-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif",
         display: "flex",
-        opacity: loaded ? 1 : 0,
+        opacity: 1,
         transition: "opacity .5s ease",
       }}
     >
@@ -1006,7 +822,7 @@ export default function AdminDashboard() {
                 action="View all →"
                 onAction={() => setActiveTab("bookings")}
               >
-                {BOOKINGS.slice(0, 4).map((b, i) => (
+                {bookings.slice(0, 4).map((b, i) => (
                   <div
                     key={i}
                     style={{
@@ -1049,7 +865,7 @@ export default function AdminDashboard() {
                 action="View all →"
                 onAction={() => setActiveTab("tickets")}
               >
-                {TICKETS.slice(0, 3).map((t, i) => (
+                {tickets.slice(0, 3).map((t, i) => (
                   <div
                     key={i}
                     style={{
@@ -1285,7 +1101,7 @@ export default function AdminDashboard() {
             </div>
             <Table
               cols={["User", "Email", "Role", "Bookings", "Tickets", "Joined"]}
-              rows={USERS.map((u) => [
+              rows={users.map((u) => [
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div
                     style={{
@@ -1321,7 +1137,7 @@ export default function AdminDashboard() {
           <div>
             <div style={pgTitle}>Activity Log</div>
             <div style={pgSub}>Full audit trail of all system events</div>
-            {ACTIVITY.map((a, i) => (
+            {activity.map((a, i) => (
               <div
                 key={i}
                 style={{
