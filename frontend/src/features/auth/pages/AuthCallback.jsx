@@ -1,22 +1,45 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function AuthCallback() {
   const [status, setStatus] = useState("Processing login...");
+  const handledRef = useRef(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    const name = params.get("name");
-    const email = params.get("email");
-    const picture = params.get("picture");
-    const role = (params.get("role") || "USER").toUpperCase();
+    if (handledRef.current) {
+      return;
+    }
 
-    if (token && token.trim() !== "") {
-      sessionStorage.setItem("token", token);
+    const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(
+      window.location.hash.replace(/^#/, ""),
+    );
+    const token =
+      params.get("token") ||
+      params.get("access_token") ||
+      params.get("jwt") ||
+      hashParams.get("token") ||
+      hashParams.get("access_token") ||
+      hashParams.get("jwt");
+    const name = params.get("name") || hashParams.get("name");
+    const email = params.get("email") || hashParams.get("email");
+    const picture = params.get("picture") || hashParams.get("picture");
+    const role = (
+      params.get("role") ||
+      hashParams.get("role") ||
+      "USER"
+    ).toUpperCase();
+    const oauthError = params.get("error") || hashParams.get("error");
+    const existingToken = sessionStorage.getItem("token");
+    const effectiveToken = token && token.trim() !== "" ? token : existingToken;
+
+    if (effectiveToken && effectiveToken.trim() !== "") {
+      handledRef.current = true;
+      sessionStorage.setItem("token", effectiveToken);
       sessionStorage.setItem(
         "user",
         JSON.stringify({ name, email, picture, role }),
       );
+      window.history.replaceState({}, document.title, "/auth/callback");
 
       setTimeout(() => {
         setStatus("Login successful! Redirecting...");
@@ -29,8 +52,13 @@ export default function AuthCallback() {
         }, 700);
       }, 0);
     } else {
+      handledRef.current = true;
       setTimeout(() => {
-        setStatus("Login failed. Redirecting...");
+        setStatus(
+          oauthError
+            ? `Login failed (${oauthError}). Redirecting...`
+            : "Login failed. Redirecting...",
+        );
         setTimeout(() => window.location.replace("/"), 1500);
       }, 0);
     }

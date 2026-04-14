@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import GoogleIcon from "./GoogleIcon";
+import GoogleIcon from "../components/Googleicon";
+
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || "http://127.0.0.1:8080";
 
 export default function GoogleLoginModal({ isOpen, onClose }) {
   const [hov, setHov] = useState(false);
@@ -127,7 +129,9 @@ export default function GoogleLoginModal({ isOpen, onClose }) {
         {/* Google Button */}
         <button
           onClick={() => {
-            window.location.href = "/oauth2/authorization/google";
+            // Hit backend directly so OAuth always starts from Spring Security,
+            // even if local proxy settings or hostnames differ.
+            window.location.href = `${API_ORIGIN}/oauth2/authorization/google`;
           }}
           onMouseEnter={() => setHov(true)}
           onMouseLeave={() => setHov(false)}
