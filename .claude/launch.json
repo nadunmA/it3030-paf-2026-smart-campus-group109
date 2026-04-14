@@ -1,0 +1,25 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Backend (Spring Boot)",
+      "runtimeExecutable": "mvnw.cmd",
+      "runtimeArgs": ["spring-boot:run"],
+      "cwd": "backend/smart-campus",
+      "port": 8080,
+      "env": {
+        "MONGO_URI": "${MONGO_URI}",
+        "GOOGLE_CLIENT_ID": "${GOOGLE_CLIENT_ID}",
+        "GOOGLE_CLIENT_SECRET": "${GOOGLE_CLIENT_SECRET}"
+      },
+      "note": "Requires MONGO_URI, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET environment variables"
+    },
+    {
+      "name": "Frontend (Vite React)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "frontend",
+      "port": 5173
+    }
+  ]
+}
