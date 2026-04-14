@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import Btn from "/src/components/ui/Btn";
+import { useNavigate } from "react-router-dom";
 
 const PLATFORM_ITEMS = [
   {
@@ -233,10 +234,27 @@ function NotifPanel({ onClose }) {
 }
 
 function UserMenu({ onLogout, user }) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notif, setNotif] = useState(false);
   const menuRef = useRef(null);
   const notifRef = useRef(null);
+
+  const handleItemClick = (item) => {
+    setOpen(false);
+
+    if (item.label === "Profile") {
+      if (user?.role === "ADMIN") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+    } else if (item.label === "Notifications") {
+      navigate("/notifications");
+    } else if (item.label === "Settings") {
+      navigate("/settings");
+    }
+  };
 
   useEffect(() => {
     const h = (e) => {
@@ -252,7 +270,7 @@ function UserMenu({ onLogout, user }) {
     { icon: "📅", label: "My Bookings", sub: "2 pending" },
     { icon: "🔧", label: "My Tickets" },
     { icon: "🔔", label: "Notifications", count: 3 },
-    { icon: "👤", label: "Profile" },
+    { icon: "👤", label: "Profile", path: "/dashboard" },
     { icon: "⚙️", label: "Settings" },
   ];
 
@@ -268,6 +286,7 @@ function UserMenu({ onLogout, user }) {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      {/* Notifications Icon */}
       <div ref={notifRef} style={{ position: "relative" }}>
         <div
           onClick={() => setNotif((o) => !o)}
@@ -304,6 +323,7 @@ function UserMenu({ onLogout, user }) {
         {notif && <NotifPanel onClose={() => setNotif(false)} />}
       </div>
 
+      {/* User Profile Avatar & Dropdown */}
       <div ref={menuRef} style={{ position: "relative" }}>
         <div
           onClick={() => setOpen((o) => !o)}
@@ -343,6 +363,7 @@ function UserMenu({ onLogout, user }) {
               animation: "dropIn .2s ease",
             }}
           >
+            {/* User Info Section */}
             <div
               style={{
                 padding: "10px 12px 9px",
@@ -389,8 +410,14 @@ function UserMenu({ onLogout, user }) {
               </div>
             </div>
 
+            {/* Menu Items */}
             {items.map((item) => (
-              <div key={item.label} className="drop-item">
+              <div
+                key={item.label}
+                className="drop-item"
+                onClick={() => handleItemClick(item)}
+                style={{ cursor: "pointer" }}
+              >
                 <span style={{ fontSize: ".95rem" }}>{item.icon}</span>
                 {item.label}
                 {item.sub && (
