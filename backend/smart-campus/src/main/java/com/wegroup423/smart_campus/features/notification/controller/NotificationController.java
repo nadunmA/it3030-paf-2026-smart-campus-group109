@@ -3,6 +3,7 @@ package com.wegroup423.smart_campus.features.notification.controller;
 
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -45,6 +46,37 @@ public class NotificationController {
         ));
     }
 
+        @PostMapping("/my")
+        public ResponseEntity<Notification> createMyNotification(
+            Authentication auth,
+            @RequestBody CreateNotificationRequest request) {
+
+        Notification created = notificationService.createSelfNotification(
+            currentUserId(auth),
+            request.title(),
+            request.message()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        }
+
+        @PutMapping("/{id}")
+        public ResponseEntity<Notification> updateNotification(
+            @PathVariable String id,
+            Authentication auth,
+            @RequestBody UpdateNotificationRequest request) {
+
+        Notification updated = notificationService.updateNotification(
+            id,
+            currentUserId(auth),
+            request.title(),
+            request.message(),
+            request.read()
+        );
+
+        return ResponseEntity.ok(updated);
+        }
+
     @PatchMapping("/my/read-all")
     public ResponseEntity<Map<String, String>> markAllAsRead(Authentication auth) {
         notificationService.markAllAsRead(currentUserId(auth));
@@ -60,5 +92,11 @@ public class NotificationController {
     public ResponseEntity<Map<String, String>> deleteNotification(@PathVariable String id, Authentication auth) {
         notificationService.deleteNotification(id, currentUserId(auth));
         return ResponseEntity.ok(Map.of("message", "Notification deleted"));
+    }
+
+    private record CreateNotificationRequest(String title, String message) {
+    }
+
+    private record UpdateNotificationRequest(String title, String message, Boolean read) {
     }
 }

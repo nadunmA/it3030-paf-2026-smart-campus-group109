@@ -62,20 +62,19 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 user.getRole().name()
         );
 
-        // Optional/extra values (ara danna oni eka wage useful fields)
-        String provider = resolveProvider(authentication);     // e.g., google/github
-        boolean isOAuthUser = true;                            // if needed on frontend
+
+        String provider = resolveProvider(authentication);
+        boolean isOAuthUser = true;
         String issuedAt = DateTimeFormatter.ISO_INSTANT
                 .withZone(ZoneOffset.UTC)
                 .format(Instant.now());
 
-        // (Optional) update last login if you have these fields in User entity
-        // user.setLastLoginAt(Instant.now());
-        // userRepository.save(user);
+
+
 
         log.info("OAuth2 login success for: {} | role: {} | provider: {}", email, user.getRole(), provider);
 
-        // Redirect to frontend with hash params to reduce token leakage in server logs/referrers.
+        // Redirect to frontend with hash params to reduce token leakage in server logs
         String redirectUrl = frontendUrl + "/auth/callback"
             + "#token=" + encode(token)
             + "&name=" + encode(nullSafe(user.getName()))
@@ -91,7 +90,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private String resolveProvider(Authentication authentication) {
         try {
-            // Commonly gives "google", "github", etc.
+
             return authentication.getAuthorities().stream()
                     .findFirst()
                     .map(Object::toString)
