@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 /* ── Badge ── */
 function Badge({ type, children }) {
@@ -342,26 +342,7 @@ const MOCK_BOOKINGS = [
   },
 ];
 
-const MOCK_TICKETS = [
-  {
-    title: "AC not working in Lab B204",
-    priority: "HIGH",
-    status: "IN_PROGRESS",
-    updated: "2 hrs ago",
-  },
-  {
-    title: "Projector display issue in LH-01",
-    priority: "MEDIUM",
-    status: "OPEN",
-    updated: "1 day ago",
-  },
-  {
-    title: "Door lock broken - Room 304",
-    priority: "HIGH",
-    status: "RESOLVED",
-    updated: "3 days ago",
-  },
-];
+// Tickets are now loaded from the real API (see fetchTickets in UserDashboard)
 
 const MOCK_NOTIFS = [
   {
@@ -399,11 +380,17 @@ const MOCK_NOTIFS = [
 /* ══ MAIN DASHBOARD ══ */
 export default function UserDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
   const [loaded, setLoaded] = useState(false);
   const [notifs, setNotifs] = useState(MOCK_NOTIFS);
   const [bookingFilter, setBookingFilter] = useState("All");
   const [ticketFilter, setTicketFilter] = useState("All");
+
+  // Real ticket state
+  const [tickets, setTickets] = useState([]);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [ticketMsg, setTicketMsg] = useState("");
 
   const user = useMemo(() => {
     try {
@@ -413,13 +400,33 @@ export default function UserDashboard() {
     }
   }, []);
 
+  const token = useMemo(() => sessionStorage.getItem("token"), []);
+
+  const fetchTickets = useCallback(async () => {
+    if (!token) return;
+    setTicketsLoading(true);
+    try {
+      const res = await fetch("/api/tickets", { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) setTickets(await res.json());
+    } finally {
+      setTicketsLoading(false);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (!user) {
       navigate("/");
       return;
     }
     setTimeout(() => setLoaded(true), 100);
-  }, [user, navigate]);
+    fetchTickets();
+
+    // Handle redirect from TicketFormPage with success message
+    if (location.state?.tab === "tickets") {
+      setActiveTab("tickets");
+      if (location.state?.message) setTicketMsg(location.state.message);
+    }
+  }, [user, navigate, fetchTickets]);
 
   const handleLogout = () => {
     sessionStorage.removeItem("token");
@@ -441,8 +448,11 @@ export default function UserDashboard() {
 
   const filteredTickets =
     ticketFilter === "All"
-      ? MOCK_TICKETS
-      : MOCK_TICKETS.filter((t) => t.status === ticketFilter);
+      ? tickets
+      : tickets.filter((t) => t.status === ticketFilter);
+
+  const openTicketCount = tickets.filter(t => t.status === "OPEN" || t.status === "IN_PROGRESS").length;
+  const resolvedTicketCount = tickets.filter(t => t.status === "RESOLVED" || t.status === "CLOSED").length;
 
   const NAV = [
     { id: "overview", icon: "⊞", label: "Overview" },
@@ -740,7 +750,7 @@ export default function UserDashboard() {
               <StatCard
                 icon="🔧"
                 label="Open Tickets"
-                value="2"
+                value={openTicketCount}
                 color="#D97706"
                 bgColor="#FFFBEB"
                 delay={160}
@@ -756,7 +766,7 @@ export default function UserDashboard() {
               <StatCard
                 icon="✅"
                 label="Resolved"
-                value="1"
+                value={resolvedTicketCount}
                 color="#059669"
                 bgColor="#ECFDF5"
                 delay={320}
@@ -896,6 +906,12 @@ export default function UserDashboard() {
             <div style={pageTitle}>Incident Tickets</div>
             <div style={pageSub}>Report and track maintenance issues</div>
 
+            {ticketMsg && (
+              <div style={{ background: "#ECFDF5", border: "1px solid #A7F3D0", borderRadius: 8, padding: "10px 14px", marginBottom: 14, fontSize: 13, color: "#059669" }}>
+                ✅ {ticketMsg}
+              </div>
+            )}
+
             <div
               style={{
                 display: "flex",
@@ -924,18 +940,28 @@ export default function UserDashboard() {
               ))}
             </div>
 
-            {filteredTickets.length === 0 ? (
-              <div
-                style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}
-              >
-                No tickets found.
+            {ticketsLoading ? (
+              <div style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}>Loading tickets…</div>
+            ) : filteredTickets.length === 0 ? (
+              <div style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}>
+                No tickets found. Click below to report a new issue.
               </div>
             ) : (
-              filteredTickets.map((t, i) => <TicketCard key={i} {...t} />)
+              filteredTickets.map((t) => (
+                <div key={t.id} onClick={() => navigate(`/tickets/${t.id}`)} style={{ cursor: "pointer" }}>
+                  <TicketCard
+                    title={t.location + (t.category ? ` · ${t.category.replace("_", " ")}` : "")}
+                    priority={t.priority}
+                    status={t.status}
+                    updated={t.updatedAt ? new Date(t.updatedAt).toLocaleDateString() : "-"}
+                  />
+                </div>
+              ))
             )}
 
             <button
               style={{ ...btnPrimary, background: "#D97706" }}
+              onClick={() => navigate("/tickets/new")}
               onMouseEnter={(e) =>
                 (e.currentTarget.style.background = "#B45309")
               }

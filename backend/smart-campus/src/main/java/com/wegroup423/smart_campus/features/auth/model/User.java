@@ -28,6 +28,9 @@ public class User {
     private String picture;
     private String googleId;
 
+    /** Hashed password – null for OAuth-only accounts */
+    private String password;
+
     @Builder.Default
     private Role role = Role.USER;
 

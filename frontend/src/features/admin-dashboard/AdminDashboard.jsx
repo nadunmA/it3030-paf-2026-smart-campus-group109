@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 /* ─────────────────────────────────────────
@@ -599,13 +599,30 @@ export default function AdminDashboard() {
   const [ticketFilter, setTicketFilter] = useState("All");
   const [resourceFilter, setResourceFilter] = useState("All");
 
-  const user = (() => {
+  // Real ticket state
+  const [tickets, setTickets] = useState([]);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+
+  const user = useMemo(() => {
     try {
       return JSON.parse(sessionStorage.getItem("user") || "null");
     } catch {
       return null;
     }
-  })();
+  }, []);
+
+  const token = useMemo(() => sessionStorage.getItem("token"), []);
+
+  const fetchTickets = useCallback(async () => {
+    if (!token) return;
+    setTicketsLoading(true);
+    try {
+      const res = await fetch("/api/tickets", { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) setTickets(await res.json());
+    } finally {
+      setTicketsLoading(false);
+    }
+  }, [token]);
 
   useEffect(() => {
     if (!user || user.role !== "ADMIN") {
@@ -613,6 +630,7 @@ export default function AdminDashboard() {
       return;
     }
     setTimeout(() => setLoaded(true), 100);
+    fetchTickets();
   }, []);
 
   if (!user || user.role !== "ADMIN") return null;
@@ -631,8 +649,11 @@ export default function AdminDashboard() {
       : BOOKINGS.filter((b) => b.status === bookingFilter);
   const filteredTickets =
     ticketFilter === "All"
-      ? TICKETS
-      : TICKETS.filter((t) => t.status === ticketFilter);
+      ? tickets
+      : tickets.filter((t) => t.status === ticketFilter);
+
+  const openTickets = tickets.filter(t => t.status === "OPEN" || t.status === "IN_PROGRESS");
+  const highPriorityCount = tickets.filter(t => t.priority === "HIGH" && (t.status === "OPEN" || t.status === "IN_PROGRESS")).length;
   const filteredResources =
     resourceFilter === "All"
       ? RESOURCES
@@ -891,10 +912,10 @@ export default function AdminDashboard() {
               <StatCard
                 icon="🔧"
                 label="Open Tickets"
-                value="14"
+                value={openTickets.length}
                 color={C.red}
                 bgColor={C.redBg}
-                delta="3 high priority"
+                delta={`${highPriorityCount} high priority`}
                 deltaColor={C.red}
                 delay={240}
               />
@@ -929,7 +950,7 @@ export default function AdminDashboard() {
                 {
                   icon: "🚨",
                   label: "High Priority Tickets",
-                  sub: "3 critical issues",
+                  sub: `${highPriorityCount} critical issues`,
                   bg: C.redBg,
                   tab: "tickets",
                 },
@@ -1049,9 +1070,12 @@ export default function AdminDashboard() {
                 action="View all →"
                 onAction={() => setActiveTab("tickets")}
               >
-                {TICKETS.slice(0, 3).map((t, i) => (
+                {tickets.length === 0 ? (
+                  <div style={{ fontSize: 12, color: C.hint, padding: "8px 0" }}>No tickets yet.</div>
+                ) : tickets.slice(0, 3).map((t, i) => (
                   <div
                     key={i}
+                    onClick={() => navigate(`/admin/tickets/${t.id}`)}
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -1077,7 +1101,7 @@ export default function AdminDashboard() {
                           marginBottom: 2,
                         }}
                       >
-                        {t.title}
+                        {t.location} · {t.category?.replace("_", " ")}
                       </div>
                       <div style={{ fontSize: 11, color: C.hint }}>
                         {t.priority} · {t.status.replace("_", " ")}
@@ -1167,35 +1191,39 @@ export default function AdminDashboard() {
               Assign technicians and manage issue resolution
             </div>
             <FilterPills
-              options={["All", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]}
+              options={["All", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "REJECTED"]}
               active={ticketFilter}
               onChange={setTicketFilter}
               activeColor={C.orange}
             />
-            <Table
-              cols={[
-                "Title",
-                "Reporter",
-                "Priority",
-                "Status",
-                "Assigned To",
-                "Updated",
-              ]}
-              rows={filteredTickets.map((t) => [
-                <span style={{ fontWeight: 600 }}>{t.title}</span>,
-                t.reporter,
-                <Badge type={t.priority}>{t.priority}</Badge>,
-                <Badge type={t.status}>{t.status.replace("_", " ")}</Badge>,
-                t.assigned || (
-                  <span style={{ fontSize: 12, color: C.hint }}>
-                    Unassigned
-                  </span>
-                ),
-                <span style={{ fontSize: 12, color: C.hint }}>
-                  {t.updated}
-                </span>,
-              ])}
-            />
+            {ticketsLoading ? (
+              <div style={{ padding: "20px 0", color: C.hint, fontSize: 13 }}>Loading tickets…</div>
+            ) : filteredTickets.length === 0 ? (
+              <div style={{ padding: "20px 0", color: C.hint, fontSize: 13 }}>No tickets found.</div>
+            ) : (
+              <Table
+                cols={["Location / Category", "Priority", "Status", "Assigned To", "Contact", "Updated", "Action"]}
+                rows={filteredTickets.map((t) => [
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{t.location}</div>
+                    <div style={{ fontSize: 11, color: C.hint }}>{t.category?.replace("_", " ")}</div>
+                  </div>,
+                  <Badge type={t.priority}>{t.priority}</Badge>,
+                  <Badge type={t.status}>{t.status.replace("_", " ")}</Badge>,
+                  t.assignedTechnicianId
+                    ? <span style={{ fontSize: 12, color: C.purple }}>Assigned</span>
+                    : <span style={{ fontSize: 12, color: C.hint }}>Unassigned</span>,
+                  <span style={{ fontSize: 12, color: C.muted }}>{t.preferredContact || "—"}</span>,
+                  <span style={{ fontSize: 11, color: C.hint }}>{t.updatedAt ? new Date(t.updatedAt).toLocaleDateString() : "—"}</span>,
+                  <button
+                    onClick={() => navigate(`/admin/tickets/${t.id}`)}
+                    style={{ padding: "4px 12px", borderRadius: 6, background: C.blue, color: "#fff", border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                  >
+                    View
+                  </button>,
+                ])}
+              />
+            )}
           </div>
         )}
 
