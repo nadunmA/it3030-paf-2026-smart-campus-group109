@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet } from "../../lib/api";
 
@@ -381,6 +381,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const [bookingFilter, setBookingFilter] = useState("All");
   const [ticketFilter, setTicketFilter] = useState("All");
@@ -388,16 +389,18 @@ export default function AdminDashboard() {
 
   const [activeTab, setActiveTab] = useState("overview");
 
-  const user = (() => {
+  const rawUser = sessionStorage.getItem("user") || "null";
+  const user = useMemo(() => {
     try {
-      return JSON.parse(sessionStorage.getItem("user") || "null");
+      return JSON.parse(rawUser);
     } catch {
       return null;
     }
-  })();
+  }, [rawUser]);
+  const isAdmin = user?.role === "ADMIN";
 
   useEffect(() => {
-    if (!user || user.role !== "ADMIN") {
+    if (!isAdmin) {
       navigate("/");
       return;
     }
@@ -405,8 +408,9 @@ export default function AdminDashboard() {
     (async () => {
       try {
         setLoading(true);
+        setLoadError("");
 
-        const [b, t, r, u, a] = await Promise.all([
+        const [b, t, r, u, a] = await Promise.allSettled([
           apiGet("/admin/bookings"),
           apiGet("/admin/tickets"),
           apiGet("/admin/resources"),
@@ -414,20 +418,35 @@ export default function AdminDashboard() {
           apiGet("/admin/activity"),
         ]);
 
-        setBookings(b || []);
-        setTickets(t || []);
-        setResources(r || []);
-        setUsers(u || []);
-        setActivity(a || []);
+        const okValue = (result) =>
+          result.status === "fulfilled" ? result.value : [];
+
+        const toList = (x) =>
+          Array.isArray(x) ? x : Array.isArray(x?.data) ? x.data : [];
+
+        setBookings(toList(okValue(b)));
+        setTickets(toList(okValue(t)));
+        setResources(toList(okValue(r)));
+        setUsers(toList(okValue(u)));
+        setActivity(toList(okValue(a)));
+
+        const failed = [b, t, r, u, a].filter((x) => x.status === "rejected");
+        if (failed.length > 0) {
+          setLoadError(
+            `Some admin data failed to load (${failed.length}/5). Check backend and auth token.`,
+          );
+          failed.forEach((x) => console.error(x.reason));
+        }
       } catch (e) {
         console.error(e);
+        setLoadError("Failed to load admin dashboard data.");
       } finally {
         setLoading(false);
       }
     })();
-  }, [navigate, user]);
+  }, [navigate, isAdmin]);
 
-  if (!user || user.role !== "ADMIN") return null;
+  if (!isAdmin) return null;
 
   if (loading) {
     return <div style={{ padding: 24 }}>Loading admin data...</div>;
@@ -687,10 +706,10 @@ export default function AdminDashboard() {
               <StatCard
                 icon="📅"
                 label="Total Bookings"
-                value="142"
+                value={bookings.length}
                 color={C.blue}
                 bgColor={C.blueBg}
-                delta="↑ 12 this week"
+                delta="↑ updated now"
                 deltaColor={C.green}
                 delay={80}
               />
@@ -707,7 +726,7 @@ export default function AdminDashboard() {
               <StatCard
                 icon="🔧"
                 label="Open Tickets"
-                value="14"
+                value={tickets.filter((t) => t.status === "OPEN").length}
                 color={C.red}
                 bgColor={C.redBg}
                 delta="3 high priority"
@@ -717,10 +736,10 @@ export default function AdminDashboard() {
               <StatCard
                 icon="👥"
                 label="Active Users"
-                value="238"
+                value={users.length}
                 color={C.green}
                 bgColor={C.greenBg}
-                delta="+6 this month"
+                delta="+ new this month"
                 delay={320}
               />
             </div>
@@ -856,7 +875,9 @@ export default function AdminDashboard() {
                         {b.resource} · {b.date}
                       </div>
                     </div>
-                    <Badge type={b.status}>{b.status}</Badge>
+                    <Badge type={b.status || "PENDING"}>
+                      {b.status || "PENDING"}
+                    </Badge>
                   </div>
                 ))}
               </Panel>
@@ -896,10 +917,14 @@ export default function AdminDashboard() {
                         {t.title}
                       </div>
                       <div style={{ fontSize: 11, color: C.hint }}>
-                        {t.priority} · {t.status.replace("_", " ")}
+                        {(t.priority || "MEDIUM") +
+                          " · " +
+                          (t.status || "OPEN").replace("_", " ")}
                       </div>
                     </div>
-                    <Badge type={t.priority}>{t.priority}</Badge>
+                    <Badge type={t.priority || "MEDIUM"}>
+                      {t.priority || "MEDIUM"}
+                    </Badge>
                   </div>
                 ))}
               </Panel>
@@ -912,6 +937,21 @@ export default function AdminDashboard() {
           <div>
             <div style={pgTitle}>Booking Management</div>
             <div style={pgSub}>Review, approve or reject booking requests</div>
+            {loadError && (
+              <div
+                style={{
+                  marginBottom: 12,
+                  fontSize: 12,
+                  color: C.red,
+                  background: C.redBg,
+                  border: `1px solid ${C.redBd}`,
+                  borderRadius: 8,
+                  padding: "8px 10px",
+                }}
+              >
+                {loadError}
+              </div>
+            )}
             <FilterPills
               options={["All", "PENDING", "APPROVED", "REJECTED", "CANCELLED"]}
               active={bookingFilter}
@@ -1000,8 +1040,12 @@ export default function AdminDashboard() {
               rows={filteredTickets.map((t) => [
                 <span style={{ fontWeight: 600 }}>{t.title}</span>,
                 t.reporter,
-                <Badge type={t.priority}>{t.priority}</Badge>,
-                <Badge type={t.status}>{t.status.replace("_", " ")}</Badge>,
+                <Badge type={t.priority || "MEDIUM"}>
+                  {t.priority || "MEDIUM"}
+                </Badge>,
+                <Badge type={t.status || "OPEN"}>
+                  {(t.status || "OPEN").replace("_", " ")}
+                </Badge>,
                 t.assigned || (
                   <span style={{ fontSize: 12, color: C.hint }}>
                     Unassigned
@@ -1061,7 +1105,9 @@ export default function AdminDashboard() {
                 r.type,
                 r.location,
                 r.capacity,
-                <Badge type={r.status}>{r.status.replace("_", " ")}</Badge>,
+                <Badge type={r.status || "ACTIVE"}>
+                  {(r.status || "ACTIVE").replace("_", " ")}
+                </Badge>,
                 <span
                   style={{
                     fontSize: 12,
@@ -1118,12 +1164,12 @@ export default function AdminDashboard() {
                       flexShrink: 0,
                     }}
                   >
-                    {u.initials}
+                    {u.initials || initials(u.name)}
                   </div>
                   <span style={{ fontWeight: 600 }}>{u.name}</span>
                 </div>,
                 <span style={{ color: C.muted }}>{u.email}</span>,
-                <Badge type={u.role}>{u.role}</Badge>,
+                <Badge type={u.role || "USER"}>{u.role || "USER"}</Badge>,
                 u.bookings || "—",
                 u.tickets || "—",
                 <span style={{ fontSize: 12, color: C.hint }}>{u.joined}</span>,
@@ -1137,6 +1183,21 @@ export default function AdminDashboard() {
           <div>
             <div style={pgTitle}>Activity Log</div>
             <div style={pgSub}>Full audit trail of all system events</div>
+            {loadError && (
+              <div
+                style={{
+                  marginBottom: 12,
+                  fontSize: 12,
+                  color: C.red,
+                  background: C.redBg,
+                  border: `1px solid ${C.redBd}`,
+                  borderRadius: 8,
+                  padding: "8px 10px",
+                }}
+              >
+                {loadError}
+              </div>
+            )}
             {activity.map((a, i) => (
               <div
                 key={i}
@@ -1166,15 +1227,15 @@ export default function AdminDashboard() {
                     width: 8,
                     height: 8,
                     borderRadius: "50%",
-                    background: a.color,
+                    background: a.color || C.blue,
                     flexShrink: 0,
                   }}
                 />
                 <span style={{ flex: 1, fontSize: 13, color: C.text }}>
-                  {a.text}
+                  {a.text || "Activity entry"}
                 </span>
                 <span style={{ fontSize: 11, color: C.hint, flexShrink: 0 }}>
-                  {a.time}
+                  {a.time || "now"}
                 </span>
               </div>
             ))}

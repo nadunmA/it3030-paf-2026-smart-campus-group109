@@ -5,11 +5,21 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
+    const hashParams = new URLSearchParams(
+      window.location.hash.replace(/^#/, ""),
+    );
+    const token =
+      params.get("token") ||
+      params.get("access_token") ||
+      params.get("jwt") ||
+      hashParams.get("token") ||
+      hashParams.get("access_token") ||
+      hashParams.get("jwt");
     const name = params.get("name");
     const email = params.get("email");
     const picture = params.get("picture");
     const role = (params.get("role") || "USER").toUpperCase();
+    const oauthError = params.get("error") || hashParams.get("error");
 
     if (token && token.trim() !== "") {
       sessionStorage.setItem("token", token);
@@ -30,7 +40,11 @@ export default function AuthCallback() {
       }, 0);
     } else {
       setTimeout(() => {
-        setStatus("Login failed. Redirecting...");
+        setStatus(
+          oauthError
+            ? `Login failed (${oauthError}). Redirecting...`
+            : "Login failed. Redirecting...",
+        );
         setTimeout(() => window.location.replace("/"), 1500);
       }, 0);
     }
