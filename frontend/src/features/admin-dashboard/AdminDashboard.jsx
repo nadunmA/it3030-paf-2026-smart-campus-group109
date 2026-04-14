@@ -1,24 +1,1370 @@
-export default function AdminDashboard() {
-  const user = JSON.parse(sessionStorage.getItem("user") || "null");
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-  if (!user || user.role !== "ADMIN") {
-    window.location.replace("/");
-    return null;
-  }
+/* ─────────────────────────────────────────
+   SHARED TOKENS
+───────────────────────────────────────── */
+const C = {
+  bg: "#F5F7FA",
+  surface: "#fff",
+  border: "#E8EBF0",
+  text: "#1A1D23",
+  muted: "#6B7280",
+  hint: "#9CA3AF",
+  blue: "#2563EB",
+  blueBg: "#EFF6FF",
+  blueBd: "#BFDBFE",
+  green: "#059669",
+  greenBg: "#ECFDF5",
+  greenBd: "#A7F3D0",
+  orange: "#D97706",
+  orangeBg: "#FFFBEB",
+  orangeBd: "#FDE68A",
+  red: "#DC2626",
+  redBg: "#FEF2F2",
+  redBd: "#FECACA",
+  purple: "#7C3AED",
+  purpleBg: "#F5F3FF",
+  purpleBd: "#DDD6FE",
+};
+
+/* ─────────────────────────────────────────
+   BADGE
+───────────────────────────────────────── */
+const BADGE_STYLES = {
+  APPROVED: { bg: C.greenBg, color: C.green, bd: C.greenBd },
+  PENDING: { bg: C.orangeBg, color: C.orange, bd: C.orangeBd },
+  REJECTED: { bg: C.redBg, color: C.red, bd: C.redBd },
+  CANCELLED: { bg: "#F1F5F9", color: "#64748B", bd: "#E2E8F0" },
+  OPEN: { bg: C.blueBg, color: C.blue, bd: C.blueBd },
+  IN_PROGRESS: { bg: C.orangeBg, color: C.orange, bd: C.orangeBd },
+  RESOLVED: { bg: C.greenBg, color: C.green, bd: C.greenBd },
+  CLOSED: { bg: "#F1F5F9", color: "#64748B", bd: "#E2E8F0" },
+  HIGH: { bg: C.redBg, color: C.red, bd: C.redBd },
+  MEDIUM: { bg: C.orangeBg, color: C.orange, bd: C.orangeBd },
+  LOW: { bg: C.greenBg, color: C.green, bd: C.greenBd },
+  ACTIVE: { bg: C.greenBg, color: C.green, bd: C.greenBd },
+  OUT_OF_SERVICE: { bg: C.orangeBg, color: C.orange, bd: C.orangeBd },
+  USER: { bg: C.greenBg, color: C.green, bd: C.greenBd },
+  ADMIN: { bg: C.redBg, color: C.red, bd: C.redBd },
+  TECHNICIAN: { bg: C.purpleBg, color: C.purple, bd: C.purpleBd },
+};
+
+function Badge({ type, children }) {
+  const s = BADGE_STYLES[type] || BADGE_STYLES["CANCELLED"];
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        background: s.bg,
+        color: s.color,
+        border: `1px solid ${s.bd}`,
+        borderRadius: 99,
+        padding: "3px 10px",
+        fontSize: 11,
+        fontWeight: 600,
+      }}
+    >
+      <span
+        style={{
+          width: 5,
+          height: 5,
+          borderRadius: "50%",
+          background: s.color,
+        }}
+      />
+      {children}
+    </span>
+  );
+}
+
+/* ─────────────────────────────────────────
+   NAV ITEM
+───────────────────────────────────────── */
+function NavItem({ icon, label, active, onClick, badge }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 9,
+        padding: "9px 11px",
+        borderRadius: 9,
+        cursor: "pointer",
+        background: active ? C.blueBg : hov ? "#F8FAFC" : "transparent",
+        border: active ? `1px solid ${C.blueBd}` : "1px solid transparent",
+        color: active ? C.blue : hov ? C.text : C.muted,
+        fontSize: 13,
+        fontWeight: active ? 600 : 400,
+        transition: "all .15s",
+      }}
+    >
+      <span style={{ fontSize: 14, width: 18, textAlign: "center" }}>
+        {icon}
+      </span>
+      <span style={{ flex: 1 }}>{label}</span>
+      {badge > 0 && (
+        <span
+          style={{
+            background: C.orange,
+            color: "#fff",
+            fontSize: 10,
+            padding: "1px 7px",
+            borderRadius: 99,
+            fontWeight: 700,
+          }}
+        >
+          {badge}
+        </span>
+      )}
+      {active && !badge && (
+        <span
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: "50%",
+            background: C.blue,
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   STAT CARD
+───────────────────────────────────────── */
+function StatCard({
+  icon,
+  label,
+  value,
+  color,
+  bgColor,
+  delta,
+  deltaColor,
+  delay,
+}) {
+  const [vis, setVis] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setVis(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  return (
+    <div
+      style={{
+        background: C.surface,
+        border: `1px solid ${C.border}`,
+        borderRadius: 14,
+        padding: "16px 18px",
+        opacity: vis ? 1 : 0,
+        transform: vis ? "translateY(0)" : "translateY(16px)",
+        transition: "opacity .5s ease, transform .5s ease",
+      }}
+    >
+      <div
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 10,
+          background: bgColor,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 16,
+          marginBottom: 12,
+        }}
+      >
+        {icon}
+      </div>
+      <div
+        style={{
+          fontSize: 10,
+          color: C.hint,
+          textTransform: "uppercase",
+          letterSpacing: ".07em",
+          fontWeight: 700,
+          marginBottom: 3,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: 24,
+          fontWeight: 800,
+          letterSpacing: "-.04em",
+          color,
+        }}
+      >
+        {value}
+      </div>
+      {delta && (
+        <div
+          style={{
+            fontSize: 11,
+            color: deltaColor || C.muted,
+            marginTop: 2,
+            fontWeight: 500,
+          }}
+        >
+          {delta}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   PANEL (card wrapper)
+───────────────────────────────────────── */
+function Panel({ title, action, onAction, children }) {
+  return (
+    <div
+      style={{
+        background: C.surface,
+        border: `1px solid ${C.border}`,
+        borderRadius: 13,
+        padding: 18,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 14,
+        }}
+      >
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>
+          {title}
+        </span>
+        {action && (
+          <span
+            onClick={onAction}
+            style={{
+              fontSize: 12,
+              color: C.blue,
+              cursor: "pointer",
+              fontWeight: 500,
+            }}
+          >
+            {action}
+          </span>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   FILTER PILLS
+───────────────────────────────────────── */
+function FilterPills({ options, active, onChange, activeColor }) {
+  return (
+    <div
+      style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}
+    >
+      {options.map((o) => {
+        const isActive = active === o;
+        return (
+          <div
+            key={o}
+            onClick={() => onChange(o)}
+            style={{
+              padding: "5px 13px",
+              borderRadius: 99,
+              fontSize: 11,
+              cursor: "pointer",
+              fontWeight: 500,
+              transition: "all .15s",
+              background: isActive ? activeColor || C.blue : C.surface,
+              borderColor: isActive ? activeColor || C.blue : C.border,
+              border: `1px solid ${isActive ? activeColor || C.blue : C.border}`,
+              color: isActive ? "#fff" : C.muted,
+            }}
+          >
+            {o.replace("_", " ")}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   TABLE
+───────────────────────────────────────── */
+function Table({ cols, rows }) {
+  const [hov, setHov] = useState(null);
+  return (
+    <div
+      style={{
+        background: C.surface,
+        border: `1px solid ${C.border}`,
+        borderRadius: 13,
+        overflow: "hidden",
+      }}
+    >
+      <table
+        style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+      >
+        <thead>
+          <tr style={{ background: "#FAFBFC" }}>
+            {cols.map((c) => (
+              <th
+                key={c}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: C.hint,
+                  textTransform: "uppercase",
+                  letterSpacing: ".06em",
+                  padding: "11px 16px",
+                  borderBottom: `1px solid ${C.border}`,
+                  textAlign: "left",
+                }}
+              >
+                {c}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr
+              key={i}
+              onMouseEnter={() => setHov(i)}
+              onMouseLeave={() => setHov(null)}
+              style={{
+                background: hov === i ? "#F8FAFC" : "transparent",
+                transition: "background .1s",
+              }}
+            >
+              {row.map((cell, j) => (
+                <td
+                  key={j}
+                  style={{
+                    padding: "11px 16px",
+                    borderBottom:
+                      i < rows.length - 1 ? `1px solid #F1F5F9` : "none",
+                    color: C.text,
+                  }}
+                >
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   MOCK DATA
+───────────────────────────────────────── */
+const BOOKINGS = [
+  {
+    user: "Asel Kumara",
+    resource: "Meeting Room A3",
+    date: "Apr 15, 10:00 AM",
+    purpose: "Project Meeting",
+    status: "PENDING",
+  },
+  {
+    user: "Nuwan Silva",
+    resource: "Computer Lab B204",
+    date: "Apr 16, 2:00 PM",
+    purpose: "Lab Session",
+    status: "PENDING",
+  },
+  {
+    user: "Dilmi Perera",
+    resource: "Projector #P04",
+    date: "Apr 18, 11:00 AM",
+    purpose: "Lecture",
+    status: "APPROVED",
+  },
+  {
+    user: "Kasun Ranasinghe",
+    resource: "Hall LH-01",
+    date: "Apr 12, 9:00 AM",
+    purpose: "Workshop",
+    status: "REJECTED",
+  },
+  {
+    user: "Tharushi Fernando",
+    resource: "Meeting Room B1",
+    date: "Apr 20, 3:00 PM",
+    purpose: "Team Sync",
+    status: "PENDING",
+  },
+];
+
+const TICKETS = [
+  {
+    title: "AC not working in Lab B204",
+    reporter: "Asel Kumara",
+    priority: "HIGH",
+    status: "IN_PROGRESS",
+    assigned: "Tech. Ravi",
+    updated: "2 hrs ago",
+  },
+  {
+    title: "Projector display issue LH-01",
+    reporter: "Nuwan Silva",
+    priority: "MEDIUM",
+    status: "OPEN",
+    assigned: null,
+    updated: "1 day ago",
+  },
+  {
+    title: "Door lock broken – Room 304",
+    reporter: "Dilmi Perera",
+    priority: "HIGH",
+    status: "RESOLVED",
+    assigned: "Tech. Nimal",
+    updated: "3 days ago",
+  },
+  {
+    title: "Whiteboard marker missing B101",
+    reporter: "Kasun R.",
+    priority: "LOW",
+    status: "OPEN",
+    assigned: null,
+    updated: "4 days ago",
+  },
+  {
+    title: "Network down – Computer Lab C3",
+    reporter: "Tharushi F.",
+    priority: "HIGH",
+    status: "IN_PROGRESS",
+    assigned: "Tech. Ravi",
+    updated: "5 hrs ago",
+  },
+];
+
+const RESOURCES = [
+  {
+    name: "Meeting Room A3",
+    type: "Room",
+    location: "Block A, Floor 3",
+    capacity: "12",
+    status: "ACTIVE",
+  },
+  {
+    name: "Computer Lab B204",
+    type: "Lab",
+    location: "Block B, Floor 2",
+    capacity: "40",
+    status: "ACTIVE",
+  },
+  {
+    name: "Lecture Hall LH-01",
+    type: "Hall",
+    location: "Main Building",
+    capacity: "200",
+    status: "ACTIVE",
+  },
+  {
+    name: "Projector #P04",
+    type: "Equipment",
+    location: "AV Store Room",
+    capacity: "—",
+    status: "OUT_OF_SERVICE",
+  },
+  {
+    name: "Meeting Room B1",
+    type: "Room",
+    location: "Block B, Floor 1",
+    capacity: "8",
+    status: "ACTIVE",
+  },
+  {
+    name: "Camera Kit #C02",
+    type: "Equipment",
+    location: "Media Store",
+    capacity: "—",
+    status: "ACTIVE",
+  },
+];
+
+const USERS = [
+  {
+    name: "Asel Kumara",
+    email: "asel@sliit.lk",
+    role: "USER",
+    initials: "AK",
+    bookings: 4,
+    tickets: 2,
+    joined: "Mar 2026",
+  },
+  {
+    name: "Nuwan Silva",
+    email: "nuwan@sliit.lk",
+    role: "USER",
+    initials: "NS",
+    bookings: 7,
+    tickets: 1,
+    joined: "Feb 2026",
+  },
+  {
+    name: "Dilmi Perera",
+    email: "dilmi@sliit.lk",
+    role: "TECHNICIAN",
+    initials: "DP",
+    bookings: 2,
+    tickets: 5,
+    joined: "Jan 2026",
+  },
+  {
+    name: "Kasun Ranasinghe",
+    email: "kasun@sliit.lk",
+    role: "USER",
+    initials: "KR",
+    bookings: 3,
+    tickets: 1,
+    joined: "Mar 2026",
+  },
+  {
+    name: "Admin User",
+    email: "admin@sliit.lk",
+    role: "ADMIN",
+    initials: "AD",
+    bookings: 0,
+    tickets: 0,
+    joined: "Jan 2026",
+  },
+];
+
+const ACTIVITY = [
+  {
+    color: C.green,
+    text: "Booking #BK-089 approved — Meeting Room A3",
+    time: "2 min ago",
+  },
+  {
+    color: C.orange,
+    text: "Ticket #TK-042 changed to In Progress — Assigned to Tech. Ravi",
+    time: "1 hr ago",
+  },
+  {
+    color: C.blue,
+    text: "New user registered — Tharushi Fernando (tharushi@sliit.lk)",
+    time: "3 hrs ago",
+  },
+  {
+    color: C.red,
+    text: "Booking #BK-085 rejected — Hall LH-01 (scheduling conflict)",
+    time: "5 hrs ago",
+  },
+  {
+    color: C.purple,
+    text: "Resource Projector #P04 set to OUT_OF_SERVICE",
+    time: "1 day ago",
+  },
+  {
+    color: C.green,
+    text: "Ticket #TK-038 resolved and closed by Tech. Nimal",
+    time: "1 day ago",
+  },
+  {
+    color: C.orange,
+    text: "Booking #BK-080 approved — Computer Lab B204",
+    time: "2 days ago",
+  },
+  {
+    color: C.blue,
+    text: "New resource added — Camera Kit #C02 (Media Store)",
+    time: "3 days ago",
+  },
+];
+
+/* ─────────────────────────────────────────
+   MAIN COMPONENT
+───────────────────────────────────────── */
+export default function AdminDashboard() {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("overview");
+  const [loaded, setLoaded] = useState(false);
+  const [bookingFilter, setBookingFilter] = useState("All");
+  const [ticketFilter, setTicketFilter] = useState("All");
+  const [resourceFilter, setResourceFilter] = useState("All");
+
+  const user = (() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+
+  useEffect(() => {
+    if (!user || user.role !== "ADMIN") {
+      navigate("/");
+      return;
+    }
+    setTimeout(() => setLoaded(true), 100);
+  }, []);
+
+  if (!user || user.role !== "ADMIN") return null;
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+    navigate("/");
+  };
+
+  const pendingBookings = BOOKINGS.filter((b) => b.status === "PENDING").length;
+
+  const filteredBookings =
+    bookingFilter === "All"
+      ? BOOKINGS
+      : BOOKINGS.filter((b) => b.status === bookingFilter);
+  const filteredTickets =
+    ticketFilter === "All"
+      ? TICKETS
+      : TICKETS.filter((t) => t.status === ticketFilter);
+  const filteredResources =
+    resourceFilter === "All"
+      ? RESOURCES
+      : RESOURCES.filter((r) => r.type === resourceFilter);
+
+  const NAV = [
+    { id: "overview", icon: "⊞", label: "Overview" },
+    { id: "bookings", icon: "📅", label: "Bookings", badge: pendingBookings },
+    { id: "tickets", icon: "🔧", label: "Tickets" },
+    { id: "resources", icon: "🏛", label: "Resources" },
+    { id: "users", icon: "👥", label: "Users" },
+    { id: "activity", icon: "📋", label: "Activity Log" },
+  ];
+
+  /* shared style objects */
+  const pgTitle = {
+    fontSize: 22,
+    fontWeight: 800,
+    letterSpacing: "-.04em",
+    color: C.text,
+    marginBottom: 6,
+  };
+  const pgSub = { fontSize: 13, color: C.muted, marginBottom: 24 };
+  const btnPrimary = {
+    padding: "9px 20px",
+    borderRadius: 99,
+    background: C.blue,
+    color: "#fff",
+    border: "none",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+    fontFamily: "inherit",
+    transition: "all .15s",
+  };
+
+  const initials = (name) =>
+    name
+      ?.split(" ")
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "??";
 
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "#050505",
-        color: "#fff",
-        padding: 24,
+        background: C.bg,
+        color: C.text,
+        fontFamily:
+          "-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif",
+        display: "flex",
+        opacity: loaded ? 1 : 0,
+        transition: "opacity .5s ease",
       }}
     >
-      <h1>Admin Dashboard</h1>
-      <p style={{ opacity: 0.75 }}>
-        Welcome, {user.name}. Manage facilities, approvals, users, and reports.
-      </p>
+      {/* ── SIDEBAR ── */}
+      <aside
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: 220,
+          zIndex: 50,
+          background: C.surface,
+          borderRight: `1px solid ${C.border}`,
+          display: "flex",
+          flexDirection: "column",
+          padding: "20px 12px",
+        }}
+      >
+        <div
+          onClick={() => navigate("/")}
+          style={{
+            fontSize: 15,
+            fontWeight: 800,
+            letterSpacing: "-.03em",
+            cursor: "pointer",
+            paddingLeft: 6,
+            color: C.text,
+            marginBottom: 2,
+          }}
+        >
+          Smart<span style={{ color: C.blue }}>Campus</span>
+        </div>
+        <div
+          style={{
+            fontSize: 10,
+            color: C.hint,
+            paddingLeft: 6,
+            marginBottom: 22,
+            letterSpacing: ".05em",
+            textTransform: "uppercase",
+            fontWeight: 600,
+          }}
+        >
+          Admin Portal
+        </div>
+
+        <nav
+          style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}
+        >
+          {NAV.map((item) => (
+            <NavItem
+              key={item.id}
+              icon={item.icon}
+              label={item.label}
+              active={activeTab === item.id}
+              badge={item.badge}
+              onClick={() => setActiveTab(item.id)}
+            />
+          ))}
+        </nav>
+
+        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "9px 11px",
+              borderRadius: 9,
+              background: "#F8FAFC",
+              border: `1px solid ${C.border}`,
+              marginBottom: 7,
+            }}
+          >
+            <div
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg,#DC2626,#7C3AED)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#fff",
+                fontSize: 11,
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              {initials(user.name)}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: C.text,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {user.name}
+              </div>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: C.hint,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {user.email}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "8px 11px",
+              borderRadius: 9,
+              cursor: "pointer",
+              background: C.redBg,
+              border: `1px solid ${C.redBd}`,
+              color: C.red,
+              fontSize: 12,
+              fontWeight: 500,
+              fontFamily: "inherit",
+              transition: "all .15s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#FEE2E2")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = C.redBg)}
+          >
+            <span>🚪</span> Sign out
+          </button>
+        </div>
+      </aside>
+
+      {/* ── MAIN ── */}
+      <main
+        style={{
+          marginLeft: 220,
+          flex: 1,
+          padding: "28px max(24px,3vw)",
+          minHeight: "100vh",
+        }}
+      >
+        {/* ── OVERVIEW ── */}
+        {activeTab === "overview" && (
+          <div>
+            <div style={{ marginBottom: 24 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: C.hint,
+                  textTransform: "uppercase",
+                  letterSpacing: ".07em",
+                  fontWeight: 600,
+                  marginBottom: 4,
+                }}
+              >
+                Admin Portal
+              </div>
+              <div style={pgTitle}>Dashboard Overview</div>
+              <Badge type="ADMIN">ADMIN</Badge>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
+                gap: 12,
+                marginBottom: 20,
+              }}
+            >
+              <StatCard
+                icon="📅"
+                label="Total Bookings"
+                value="142"
+                color={C.blue}
+                bgColor={C.blueBg}
+                delta="↑ 12 this week"
+                deltaColor={C.green}
+                delay={80}
+              />
+              <StatCard
+                icon="⏳"
+                label="Pending Approvals"
+                value={pendingBookings}
+                color={C.orange}
+                bgColor={C.orangeBg}
+                delta="Needs attention"
+                deltaColor={C.orange}
+                delay={160}
+              />
+              <StatCard
+                icon="🔧"
+                label="Open Tickets"
+                value="14"
+                color={C.red}
+                bgColor={C.redBg}
+                delta="3 high priority"
+                deltaColor={C.red}
+                delay={240}
+              />
+              <StatCard
+                icon="👥"
+                label="Active Users"
+                value="238"
+                color={C.green}
+                bgColor={C.greenBg}
+                delta="+6 this month"
+                delay={320}
+              />
+            </div>
+
+            {/* Quick actions */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3,1fr)",
+                gap: 10,
+                marginBottom: 20,
+              }}
+            >
+              {[
+                {
+                  icon: "⏳",
+                  label: "Pending Bookings",
+                  sub: `${pendingBookings} awaiting review`,
+                  bg: C.orangeBg,
+                  tab: "bookings",
+                },
+                {
+                  icon: "🚨",
+                  label: "High Priority Tickets",
+                  sub: "3 critical issues",
+                  bg: C.redBg,
+                  tab: "tickets",
+                },
+                {
+                  icon: "🏛",
+                  label: "Manage Resources",
+                  sub: "42 facilities listed",
+                  bg: C.purpleBg,
+                  tab: "resources",
+                },
+              ].map((q) => (
+                <div
+                  key={q.tab}
+                  onClick={() => setActiveTab(q.tab)}
+                  style={{
+                    background: C.surface,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 12,
+                    padding: "14px 16px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    transition: "all .15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "#CBD5E1";
+                    e.currentTarget.style.boxShadow =
+                      "0 2px 8px rgba(0,0,0,.05)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = C.border;
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: q.bg,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 16,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {q.icon}
+                  </div>
+                  <div>
+                    <div
+                      style={{ fontSize: 13, fontWeight: 600, color: C.text }}
+                    >
+                      {q.label}
+                    </div>
+                    <div style={{ fontSize: 11, color: C.hint, marginTop: 1 }}>
+                      {q.sub}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.2fr 1fr",
+                gap: 16,
+              }}
+            >
+              <Panel
+                title="Recent Bookings"
+                action="View all →"
+                onAction={() => setActiveTab("bookings")}
+              >
+                {BOOKINGS.slice(0, 4).map((b, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "10px 12px",
+                      borderRadius: 9,
+                      marginBottom: 4,
+                      cursor: "pointer",
+                      transition: "background .12s",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "#F8FAFC")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "transparent")
+                    }
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: C.text,
+                          marginBottom: 2,
+                        }}
+                      >
+                        {b.purpose}
+                      </div>
+                      <div style={{ fontSize: 11, color: C.hint }}>
+                        {b.resource} · {b.date}
+                      </div>
+                    </div>
+                    <Badge type={b.status}>{b.status}</Badge>
+                  </div>
+                ))}
+              </Panel>
+              <Panel
+                title="Recent Tickets"
+                action="View all →"
+                onAction={() => setActiveTab("tickets")}
+              >
+                {TICKETS.slice(0, 3).map((t, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "10px 12px",
+                      borderRadius: 9,
+                      marginBottom: 4,
+                      cursor: "pointer",
+                      transition: "background .12s",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "#F8FAFC")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "transparent")
+                    }
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: C.text,
+                          marginBottom: 2,
+                        }}
+                      >
+                        {t.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: C.hint }}>
+                        {t.priority} · {t.status.replace("_", " ")}
+                      </div>
+                    </div>
+                    <Badge type={t.priority}>{t.priority}</Badge>
+                  </div>
+                ))}
+              </Panel>
+            </div>
+          </div>
+        )}
+
+        {/* ── BOOKINGS ── */}
+        {activeTab === "bookings" && (
+          <div>
+            <div style={pgTitle}>Booking Management</div>
+            <div style={pgSub}>Review, approve or reject booking requests</div>
+            <FilterPills
+              options={["All", "PENDING", "APPROVED", "REJECTED", "CANCELLED"]}
+              active={bookingFilter}
+              onChange={setBookingFilter}
+            />
+            <Table
+              cols={[
+                "User",
+                "Resource",
+                "Date & Time",
+                "Purpose",
+                "Status",
+                "Action",
+              ]}
+              rows={filteredBookings.map((b) => [
+                b.user,
+                b.resource,
+                b.date,
+                b.purpose,
+                <Badge type={b.status}>{b.status}</Badge>,
+                b.status === "PENDING" ? (
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button
+                      style={{
+                        ...btnPrimary,
+                        background: C.green,
+                        padding: "5px 14px",
+                        fontSize: 11,
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.background = "#047857")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.background = C.green)
+                      }
+                    >
+                      Approve
+                    </button>
+                    <button
+                      style={{
+                        ...btnPrimary,
+                        background: C.red,
+                        padding: "5px 14px",
+                        fontSize: 11,
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.background = "#B91C1C")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.background = C.red)
+                      }
+                    >
+                      Reject
+                    </button>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: 12, color: C.hint }}>—</span>
+                ),
+              ])}
+            />
+          </div>
+        )}
+
+        {/* ── TICKETS ── */}
+        {activeTab === "tickets" && (
+          <div>
+            <div style={pgTitle}>Incident Tickets</div>
+            <div style={pgSub}>
+              Assign technicians and manage issue resolution
+            </div>
+            <FilterPills
+              options={["All", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]}
+              active={ticketFilter}
+              onChange={setTicketFilter}
+              activeColor={C.orange}
+            />
+            <Table
+              cols={[
+                "Title",
+                "Reporter",
+                "Priority",
+                "Status",
+                "Assigned To",
+                "Updated",
+              ]}
+              rows={filteredTickets.map((t) => [
+                <span style={{ fontWeight: 600 }}>{t.title}</span>,
+                t.reporter,
+                <Badge type={t.priority}>{t.priority}</Badge>,
+                <Badge type={t.status}>{t.status.replace("_", " ")}</Badge>,
+                t.assigned || (
+                  <span style={{ fontSize: 12, color: C.hint }}>
+                    Unassigned
+                  </span>
+                ),
+                <span style={{ fontSize: 12, color: C.hint }}>
+                  {t.updated}
+                </span>,
+              ])}
+            />
+          </div>
+        )}
+
+        {/* ── RESOURCES ── */}
+        {activeTab === "resources" && (
+          <div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                marginBottom: 6,
+              }}
+            >
+              <div style={pgTitle}>Resource Catalogue</div>
+              <button
+                style={btnPrimary}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "#1D4ED8")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = C.blue)
+                }
+              >
+                + Add Resource
+              </button>
+            </div>
+            <div style={{ ...pgSub }}>
+              Manage facilities, labs, rooms and equipment
+            </div>
+            <FilterPills
+              options={["All", "Room", "Lab", "Equipment", "Hall"]}
+              active={resourceFilter}
+              onChange={setResourceFilter}
+            />
+            <Table
+              cols={[
+                "Name",
+                "Type",
+                "Location",
+                "Capacity",
+                "Status",
+                "Action",
+              ]}
+              rows={filteredResources.map((r) => [
+                <span style={{ fontWeight: 600 }}>{r.name}</span>,
+                r.type,
+                r.location,
+                r.capacity,
+                <Badge type={r.status}>{r.status.replace("_", " ")}</Badge>,
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: C.blue,
+                    cursor: "pointer",
+                    fontWeight: 500,
+                  }}
+                >
+                  Edit
+                </span>,
+              ])}
+            />
+          </div>
+        )}
+
+        {/* ── USERS ── */}
+        {activeTab === "users" && (
+          <div>
+            <div style={pgTitle}>User Management</div>
+            <div style={pgSub}>View and manage registered users</div>
+            <div style={{ marginBottom: 14 }}>
+              <input
+                placeholder="Search users by name or email..."
+                style={{
+                  width: "100%",
+                  maxWidth: 380,
+                  padding: "8px 14px",
+                  borderRadius: 9,
+                  border: `1px solid ${C.border}`,
+                  background: C.surface,
+                  fontSize: 13,
+                  color: C.text,
+                  outline: "none",
+                  fontFamily: "inherit",
+                }}
+              />
+            </div>
+            <Table
+              cols={["User", "Email", "Role", "Bookings", "Tickets", "Joined"]}
+              rows={USERS.map((u) => [
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg,#2563EB,#7C3AED)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#fff",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {u.initials}
+                  </div>
+                  <span style={{ fontWeight: 600 }}>{u.name}</span>
+                </div>,
+                <span style={{ color: C.muted }}>{u.email}</span>,
+                <Badge type={u.role}>{u.role}</Badge>,
+                u.bookings || "—",
+                u.tickets || "—",
+                <span style={{ fontSize: 12, color: C.hint }}>{u.joined}</span>,
+              ])}
+            />
+          </div>
+        )}
+
+        {/* ── ACTIVITY LOG ── */}
+        {activeTab === "activity" && (
+          <div>
+            <div style={pgTitle}>Activity Log</div>
+            <div style={pgSub}>Full audit trail of all system events</div>
+            {ACTIVITY.map((a, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "11px 14px",
+                  background: C.surface,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 10,
+                  marginBottom: 7,
+                  cursor: "pointer",
+                  transition: "all .15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#CBD5E1";
+                  e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,.05)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = C.border;
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: a.color,
+                    flexShrink: 0,
+                  }}
+                />
+                <span style={{ flex: 1, fontSize: 13, color: C.text }}>
+                  {a.text}
+                </span>
+                <span style={{ fontSize: 11, color: C.hint, flexShrink: 0 }}>
+                  {a.time}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
