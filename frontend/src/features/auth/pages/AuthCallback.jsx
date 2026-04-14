@@ -47,6 +47,8 @@ export default function AuthCallback() {
         setTimeout(() => {
           if (role === "ADMIN") {
             window.location.replace("/admin/dashboard");
+          } else if (role === "TECHNICIAN") {
+            window.location.replace("/technician/dashboard");
           } else {
             window.location.replace("/dashboard");
           }

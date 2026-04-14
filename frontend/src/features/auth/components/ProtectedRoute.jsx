@@ -21,6 +21,9 @@ export default function ProtectedRoute({ allowRoles = [] }) {
   if (!allowRoles.includes(role)) {
     // logged in but wrong role -> send to correct dashboard
     if (role === "ADMIN") return <Navigate to="/admin/dashboard" replace />;
+    if (role === "TECHNICIAN") {
+      return <Navigate to="/technician/dashboard" replace />;
+    }
     return <Navigate to="/dashboard" replace />;
   }
 
