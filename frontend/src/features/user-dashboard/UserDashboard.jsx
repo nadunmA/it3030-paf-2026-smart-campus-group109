@@ -404,8 +404,9 @@ export default function UserDashboard() {
   const [notifs, setNotifs] = useState(MOCK_NOTIFS);
   const [bookingFilter, setBookingFilter] = useState("All");
   const [ticketFilter, setTicketFilter] = useState("All");
+  const [liveUser, setLiveUser] = useState(null);
 
-  const user = useMemo(() => {
+  const sessionUser = useMemo(() => {
     try {
       return JSON.parse(sessionStorage.getItem("user") || "null");
     } catch {
@@ -413,13 +414,28 @@ export default function UserDashboard() {
     }
   }, []);
 
+  // Fetch fresh profile from /api/auth/me
   useEffect(() => {
-    if (!user) {
+    if (!sessionUser) {
       navigate("/");
       return;
     }
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (!data) return;
+          const u = data.user || data;
+          if (u && (u.name || u.email)) {
+            setLiveUser(u);
+            sessionStorage.setItem("user", JSON.stringify(u));
+          }
+        })
+        .catch(() => {});
+    }
     setTimeout(() => setLoaded(true), 100);
-  }, [user, navigate]);
+  }, [sessionUser, navigate]);
 
   const handleLogout = () => {
     sessionStorage.removeItem("token");
@@ -427,7 +443,10 @@ export default function UserDashboard() {
     navigate("/");
   };
 
-  if (!user) return null;
+  if (!sessionUser) return null;
+
+  // Prefer live API data; fall back to sessionStorage
+  const user = liveUser || sessionUser || {};
 
   const unreadCount = notifs.filter((n) => !n.read).length;
 
@@ -662,13 +681,13 @@ export default function UserDashboard() {
               display: "flex",
               alignItems: "center",
               gap: 8,
-              padding: "9px 13px",
+              padding: "9px 12px",
               borderRadius: 9,
               cursor: "pointer",
               background: "#FEF2F2",
               border: "1px solid #FECACA",
               color: "#DC2626",
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 500,
               transition: "all .15s",
               fontFamily: "inherit",
@@ -1271,19 +1290,19 @@ export default function UserDashboard() {
               ))}
             </div>
 
-            {/* Sign out 
-            <div style={{ width: "100%", textAlign: "center" }}>
+            {/* Sign out */}
+            <div style={{ width: "100%", maxWidth: 740 }}>
               <button
                 onClick={handleLogout}
                 style={{
-                  display: "inline-block", // 🔥 key change
-                  padding: "7px 16px",
-                  borderRadius: 999,
+                  width: "100%",
+                  padding: 13,
+                  borderRadius: 12,
                   background: "#FEF2F2",
                   border: "1px solid #FECACA",
                   color: "#DC2626",
-                  fontSize: 13,
-                  fontWeight: 600,
+                  fontSize: 14,
+                  fontWeight: 700,
                   cursor: "pointer",
                   fontFamily: "inherit",
                   transition: "background .15s",
@@ -1295,9 +1314,9 @@ export default function UserDashboard() {
                   (e.currentTarget.style.background = "#FEF2F2")
                 }
               >
-                Log out
+                Sign out of SmartCampus
               </button>
-            </div>*/}
+            </div>
           </div>
         )}
       </main>
