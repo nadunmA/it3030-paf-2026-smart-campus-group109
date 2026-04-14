@@ -136,6 +136,7 @@ function NotifPanel({ onClose }) {
       time: "Yesterday",
     },
   ];
+
   return (
     <div
       style={{
@@ -171,6 +172,7 @@ function NotifPanel({ onClose }) {
           Mark all read
         </span>
       </div>
+
       {notifs.map((n, i) => (
         <div
           key={i}
@@ -212,6 +214,7 @@ function NotifPanel({ onClose }) {
           </div>
         </div>
       ))}
+
       <div
         style={{
           padding: "10px 16px",
@@ -229,7 +232,7 @@ function NotifPanel({ onClose }) {
   );
 }
 
-function UserMenu({ onLogout }) {
+function UserMenu({ onLogout, user }) {
   const [open, setOpen] = useState(false);
   const [notif, setNotif] = useState(false);
   const menuRef = useRef(null);
@@ -253,9 +256,18 @@ function UserMenu({ onLogout }) {
     { icon: "⚙️", label: "Settings" },
   ];
 
+  const displayName = user?.name || "User";
+  const displayEmail = user?.email || "-";
+  const displayRole = user?.role || "USER";
+  const initials = (displayName || "U")
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-      {/* Bell */}
       <div ref={notifRef} style={{ position: "relative" }}>
         <div
           onClick={() => setNotif((o) => !o)}
@@ -292,7 +304,6 @@ function UserMenu({ onLogout }) {
         {notif && <NotifPanel onClose={() => setNotif(false)} />}
       </div>
 
-      {/* Avatar */}
       <div ref={menuRef} style={{ position: "relative" }}>
         <div
           onClick={() => setOpen((o) => !o)}
@@ -312,8 +323,9 @@ function UserMenu({ onLogout }) {
             transform: open ? "scale(1.1)" : "scale(1)",
           }}
         >
-          AJ
+          {initials}
         </div>
+
         {open && (
           <div
             style={{
@@ -339,7 +351,7 @@ function UserMenu({ onLogout }) {
               }}
             >
               <div style={{ fontSize: ".85rem", fontWeight: 600 }}>
-                Ashan Jayawardena
+                {displayName}
               </div>
               <div
                 style={{
@@ -348,7 +360,7 @@ function UserMenu({ onLogout }) {
                   marginTop: 2,
                 }}
               >
-                ashan@sliit.lk
+                {displayEmail}
               </div>
               <div
                 style={{
@@ -372,10 +384,11 @@ function UserMenu({ onLogout }) {
                   }}
                 />
                 <span style={{ fontSize: ".67rem", color: "#30D158" }}>
-                  USER
+                  {displayRole}
                 </span>
               </div>
             </div>
+
             {items.map((item) => (
               <div key={item.label} className="drop-item">
                 <span style={{ fontSize: ".95rem" }}>{item.icon}</span>
@@ -408,6 +421,7 @@ function UserMenu({ onLogout }) {
                 )}
               </div>
             ))}
+
             <div
               style={{
                 height: 1,
@@ -428,6 +442,7 @@ function UserMenu({ onLogout }) {
 export default function Navbar({
   scrolled,
   loggedIn,
+  user,
   onLogout,
   onLoginOpen,
   activeSection,
@@ -454,7 +469,6 @@ export default function Navbar({
         transition: "all .4s ease",
       }}
     >
-      {/* Logo */}
       <div
         onClick={() => onGoTo("hero")}
         style={{
@@ -468,7 +482,6 @@ export default function Navbar({
         Smart<span style={{ color: "#0A84FF" }}>Campus</span>
       </div>
 
-      {/* Center links */}
       <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
         <div
           style={{ position: "relative" }}
@@ -491,23 +504,6 @@ export default function Navbar({
             }}
           >
             Platform
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 10 10"
-              fill="none"
-              style={{
-                transform: megaOpen ? "rotate(180deg)" : "none",
-                transition: "transform .25s",
-              }}
-            >
-              <path
-                d="M2 3.5L5 6.5L8 3.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
           </div>
           {megaOpen && <PlatformMega onClose={() => setMegaOpen(false)} />}
         </div>
@@ -536,26 +532,11 @@ export default function Navbar({
               }}
             >
               {label}
-              {isActive && (
-                <span
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    width: 14,
-                    height: 1.5,
-                    background: "#0A84FF",
-                    borderRadius: 2,
-                  }}
-                />
-              )}
             </div>
           );
         })}
       </div>
 
-      {/* Right */}
       <div
         style={{
           display: "flex",
@@ -565,7 +546,7 @@ export default function Navbar({
         }}
       >
         {loggedIn ? (
-          <UserMenu onLogout={onLogout} />
+          <UserMenu onLogout={onLogout} user={user} />
         ) : (
           <Btn variant="primary" size="sm" onClick={onLoginOpen}>
             Log in
