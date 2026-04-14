@@ -15,10 +15,15 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -55,20 +60,37 @@ public class AdminController {
 
         return userRepository.findAll().stream()
                 .sorted(Comparator.comparing(User::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
-                .map(u -> {
-                    long bookingCount = bookingCountByUser.getOrDefault(u.getId(), 0L);
-                    Map<String, Object> view = new LinkedHashMap<>();
-                    view.put("id", nullSafe(u.getId()));
-                    view.put("name", nullSafe(u.getName()));
-                    view.put("email", nullSafe(u.getEmail()));
-                    view.put("role", u.getRole() != null ? u.getRole().name() : "USER");
-                    view.put("bookings", bookingCount);
-                    view.put("tickets", 0);
-                    view.put("joined", formatDate(u.getCreatedAt()));
-                    view.put("active", u.isActive());
-                    return view;
-                })
+                .map(u -> toUserView(u, bookingCountByUser.getOrDefault(u.getId(), 0L)))
                 .toList();
+    }
+
+    @PatchMapping("/users/{userId}/role")
+    public Map<String, Object> updateUserRole(@PathVariable String userId, @RequestBody RoleUpdateRequest request) {
+        if (request == null || request.role() == null || request.role().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role is required");
+        }
+
+        User user = findUserOrThrow(userId);
+        try {
+            user.setRole(User.Role.valueOf(request.role().trim().toUpperCase()));
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role: " + request.role());
+        }
+
+        userRepository.save(user);
+        return toUserView(user, 0);
+    }
+
+    @PatchMapping("/users/{userId}/active")
+    public Map<String, Object> updateUserActive(@PathVariable String userId, @RequestBody ActiveUpdateRequest request) {
+        if (request == null || request.active() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Active flag is required");
+        }
+
+        User user = findUserOrThrow(userId);
+        user.setActive(request.active());
+        userRepository.save(user);
+        return toUserView(user, 0);
     }
 
     @GetMapping("/resources")
@@ -107,6 +129,24 @@ public class AdminController {
         view.put("time", relativeTime(n.getCreatedAt()));
         view.put("color", colorForType(n.getType()));
         return view;
+    }
+
+    private Map<String, Object> toUserView(User user, long bookingCount) {
+        Map<String, Object> view = new LinkedHashMap<>();
+        view.put("id", nullSafe(user.getId()));
+        view.put("name", nullSafe(user.getName()));
+        view.put("email", nullSafe(user.getEmail()));
+        view.put("role", user.getRole() != null ? user.getRole().name() : "USER");
+        view.put("bookings", bookingCount);
+        view.put("tickets", 0);
+        view.put("joined", formatDate(user.getCreatedAt()));
+        view.put("active", user.isActive());
+        return view;
+    }
+
+    private User findUserOrThrow(String userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found: " + userId));
     }
 
     private String nullSafe(String value) {
@@ -152,5 +192,11 @@ public class AdminController {
             case NEW_COMMENT -> "#8B5CF6";
             case GENERAL -> "#64748B";
         };
+    }
+
+    private record RoleUpdateRequest(String role) {
+    }
+
+    private record ActiveUpdateRequest(Boolean active) {
     }
 }
