@@ -1,9 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function AuthCallback() {
   const [status, setStatus] = useState("Processing login...");
+  const handledRef = useRef(false);
 
   useEffect(() => {
+    if (handledRef.current) {
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(
       window.location.hash.replace(/^#/, ""),
@@ -15,18 +20,26 @@ export default function AuthCallback() {
       hashParams.get("token") ||
       hashParams.get("access_token") ||
       hashParams.get("jwt");
-    const name = params.get("name");
-    const email = params.get("email");
-    const picture = params.get("picture");
-    const role = (params.get("role") || "USER").toUpperCase();
+    const name = params.get("name") || hashParams.get("name");
+    const email = params.get("email") || hashParams.get("email");
+    const picture = params.get("picture") || hashParams.get("picture");
+    const role = (
+      params.get("role") ||
+      hashParams.get("role") ||
+      "USER"
+    ).toUpperCase();
     const oauthError = params.get("error") || hashParams.get("error");
+    const existingToken = sessionStorage.getItem("token");
+    const effectiveToken = token && token.trim() !== "" ? token : existingToken;
 
-    if (token && token.trim() !== "") {
-      sessionStorage.setItem("token", token);
+    if (effectiveToken && effectiveToken.trim() !== "") {
+      handledRef.current = true;
+      sessionStorage.setItem("token", effectiveToken);
       sessionStorage.setItem(
         "user",
         JSON.stringify({ name, email, picture, role }),
       );
+      window.history.replaceState({}, document.title, "/auth/callback");
 
       setTimeout(() => {
         setStatus("Login successful! Redirecting...");
@@ -39,6 +52,7 @@ export default function AuthCallback() {
         }, 700);
       }, 0);
     } else {
+      handledRef.current = true;
       setTimeout(() => {
         setStatus(
           oauthError

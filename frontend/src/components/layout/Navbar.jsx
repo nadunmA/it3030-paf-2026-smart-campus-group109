@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import Btn from "/src/components/ui/Btn";
 import { useNavigate } from "react-router-dom";
+import { apiGet, apiPatch } from "../../lib/api";
 
 const PLATFORM_ITEMS = [
   {
@@ -123,21 +124,36 @@ function PlatformMega({ onClose }) {
   );
 }
 
-function NotifPanel({ onClose }) {
-  const notifs = [
-    { dot: "#0A84FF", text: "Booking Lab B204 approved ✅", time: "2 min ago" },
-    {
-      dot: "#FF9F0A",
-      text: "Ticket #TK-042 is In Progress",
-      time: "1 hour ago",
-    },
-    {
-      dot: "#FF375F",
-      text: "Booking Meeting Room 3 rejected",
-      time: "Yesterday",
-    },
-  ];
+function formatRelativeTime(value) {
+  if (!value) return "just now";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "just now";
+  const diffMs = Date.now() - date.getTime();
+  const mins = Math.max(0, Math.floor(diffMs / 60000));
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hour ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day ago`;
+}
 
+function notifColor(type) {
+  switch (type) {
+    case "BOOKING_APPROVED":
+      return "#30D158";
+    case "BOOKING_REJECTED":
+      return "#FF375F";
+    case "BOOKING_CANCELLED":
+      return "#FF9F0A";
+    case "NEW_COMMENT":
+      return "#BF5AF2";
+    default:
+      return "#0A84FF";
+  }
+}
+
+function NotifPanel({ onClose, notifications, onMarkAllRead, onViewAll }) {
   return (
     <div
       style={{
@@ -168,19 +184,31 @@ function NotifPanel({ onClose }) {
         </span>
         <span
           style={{ fontSize: ".72rem", color: "#0A84FF", cursor: "pointer" }}
-          onClick={onClose}
+          onClick={onMarkAllRead}
         >
           Mark all read
         </span>
       </div>
 
-      {notifs.map((n, i) => (
+      {notifications.length === 0 && (
         <div
-          key={i}
+          style={{
+            padding: "14px 16px",
+            fontSize: ".78rem",
+            color: "rgba(255,255,255,.45)",
+          }}
+        >
+          No new notifications.
+        </div>
+      )}
+
+      {notifications.map((n, i) => (
+        <div
+          key={n.id || i}
           style={{
             padding: "11px 16px",
             borderBottom:
-              i < notifs.length - 1
+              i < notifications.length - 1
                 ? "1px solid rgba(255,255,255,.05)"
                 : "none",
             display: "flex",
@@ -200,17 +228,20 @@ function NotifPanel({ onClose }) {
               width: 7,
               height: 7,
               borderRadius: "50%",
-              background: n.dot,
+              background: notifColor(n.type),
               flexShrink: 0,
               marginTop: 5,
             }}
           />
           <div>
             <div style={{ fontSize: ".79rem", color: "#fff", marginBottom: 3 }}>
-              {n.text}
+              {n.title || "Notification"}
+            </div>
+            <div style={{ fontSize: ".74rem", color: "rgba(255,255,255,.6)" }}>
+              {n.message || ""}
             </div>
             <div style={{ fontSize: ".71rem", color: "rgba(255,255,255,.35)" }}>
-              {n.time}
+              {formatRelativeTime(n.createdAt)}
             </div>
           </div>
         </div>
@@ -225,6 +256,7 @@ function NotifPanel({ onClose }) {
       >
         <span
           style={{ fontSize: ".74rem", color: "#0A84FF", cursor: "pointer" }}
+          onClick={onViewAll}
         >
           View all notifications
         </span>
@@ -237,8 +269,45 @@ function UserMenu({ onLogout, user }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notif, setNotif] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const menuRef = useRef(null);
   const notifRef = useRef(null);
+
+  useEffect(() => {
+    if (!user) return;
+
+    let active = true;
+    const loadNotifications = async () => {
+      try {
+        const res = await apiGet("/notifications/my");
+        if (!active) return;
+        setNotifications(
+          Array.isArray(res?.notifications) ? res.notifications : [],
+        );
+        setUnreadCount(Number(res?.unreadCount || 0));
+      } catch (err) {
+        console.error("Failed to load navbar notifications", err);
+      }
+    };
+
+    loadNotifications();
+    const intervalId = setInterval(loadNotifications, 30000);
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+    };
+  }, [user]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await apiPatch("/notifications/my/read-all", {});
+      setUnreadCount(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (err) {
+      console.error("Failed to mark notifications as read", err);
+    }
+  };
 
   const handleItemClick = (item) => {
     setOpen(false);
@@ -267,9 +336,9 @@ function UserMenu({ onLogout, user }) {
 
   const items = [
     { icon: "🏛️", label: "Browse Facilities" },
-    { icon: "📅", label: "My Bookings", sub: "2 pending" },
+    { icon: "📅", label: "My Bookings" },
     { icon: "🔧", label: "My Tickets" },
-    { icon: "🔔", label: "Notifications", count: 3 },
+    { icon: "🔔", label: "Notifications", count: unreadCount },
     { icon: "👤", label: "Profile", path: "/dashboard" },
     { icon: "⚙️", label: "Settings" },
   ];
@@ -304,23 +373,35 @@ function UserMenu({ onLogout, user }) {
             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 01-3.46 0" />
           </svg>
-          <span
-            style={{
-              position: "absolute",
-              top: -5,
-              right: -6,
-              background: "#FF375F",
-              color: "#fff",
-              fontSize: ".56rem",
-              fontWeight: 700,
-              padding: "1px 4px",
-              borderRadius: 980,
-            }}
-          >
-            3
-          </span>
+          {unreadCount > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                top: -5,
+                right: -6,
+                background: "#FF375F",
+                color: "#fff",
+                fontSize: ".56rem",
+                fontWeight: 700,
+                padding: "1px 4px",
+                borderRadius: 980,
+              }}
+            >
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </div>
-        {notif && <NotifPanel onClose={() => setNotif(false)} />}
+        {notif && (
+          <NotifPanel
+            onClose={() => setNotif(false)}
+            notifications={notifications}
+            onMarkAllRead={handleMarkAllRead}
+            onViewAll={() => {
+              setNotif(false);
+              navigate("/notifications");
+            }}
+          />
+        )}
       </div>
 
       {/* User Profile Avatar & Dropdown */}
