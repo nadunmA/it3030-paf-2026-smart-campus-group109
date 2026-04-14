@@ -46,6 +46,12 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found: " + email));
 
+        if (!user.isActive()) {
+            log.warn("Blocked OAuth2 login for suspended user: {}", email);
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Your account is suspended. Contact an administrator.");
+            return;
+        }
+
         // Generate JWT token
         String token = jwtUtil.generateToken(
                 user.getId(),
