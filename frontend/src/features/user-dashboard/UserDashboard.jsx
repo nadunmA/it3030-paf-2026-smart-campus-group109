@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { apiGet, apiPatch } from "../../lib/api";
 
 /* ── Badge ── */
@@ -52,12 +52,7 @@ function Badge({ type, children }) {
 }
 
 /* ── StatCard ── */
-function StatCard({ icon, label, value, color, bgColor, delay }) {
-  const [vis, setVis] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setVis(true), delay);
-    return () => clearTimeout(t);
-  }, [delay]);
+function StatCard({ icon, label, value, color, bgColor }) {
   return (
     <div
       style={{
@@ -65,8 +60,7 @@ function StatCard({ icon, label, value, color, bgColor, delay }) {
         border: "1px solid #E8EBF0",
         borderRadius: 14,
         padding: "18px 20px",
-        opacity: vis ? 1 : 0,
-        transform: vis ? "translateY(0)" : "translateY(16px)",
+
         transition: "opacity .5s ease, transform .5s ease",
       }}
     >
@@ -255,24 +249,41 @@ function TicketCard({ title, priority, status, updated }) {
 }
 
 /* ── NotifCard ── */
-function NotifCard({ type, text, time, read }) {
-  const dotColors = {
-    booking: "#2563EB",
-    ticket: "#D97706",
-    comment: "#7C3AED",
+/* notification type mapping fix: handles both backend enum names & frontend short names */
+function NotifCard({ notif, onMarkRead }) {
+  const [hov, setHov] = useState(false);
+
+  // Map backend NotificationType enum → display color & label
+  const TYPE_META = {
+    BOOKING_APPROVED: { color: "#2563EB", label: "Booking" },
+    BOOKING_REJECTED: { color: "#DC2626", label: "Booking" },
+    BOOKING_CANCELLED: { color: "#64748B", label: "Booking" },
+    TICKET_STATUS_CHANGED: { color: "#D97706", label: "Ticket" },
+    TICKET_ASSIGNED: { color: "#D97706", label: "Ticket" },
+    NEW_COMMENT: { color: "#7C3AED", label: "Comment" },
+    GENERAL: { color: "#9CA3AF", label: "General" },
+    // legacy short names (if stored that way)
+    booking: { color: "#2563EB", label: "Booking" },
+    ticket: { color: "#D97706", label: "Ticket" },
+    comment: { color: "#7C3AED", label: "Comment" },
   };
-  const dot = dotColors[type] || "#94A3B8";
+
+  const meta = TYPE_META[notif.type] || { color: "#9CA3AF", label: "Info" };
+
   return (
     <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      onClick={() => !notif.read && onMarkRead && onMarkRead(notif.id)}
       style={{
         display: "flex",
         gap: 10,
         padding: "12px 14px",
-        background: read ? "#fff" : "#EFF6FF",
-        border: `1px solid ${read ? "#E8EBF0" : "#BFDBFE"}`,
+        background: notif.read ? "#fff" : hov ? "#DBEAFE" : "#EFF6FF",
+        border: `1px solid ${notif.read ? (hov ? "#CBD5E1" : "#E8EBF0") : "#BFDBFE"}`,
         borderRadius: 10,
         marginBottom: 7,
-        cursor: "pointer",
+        cursor: notif.read ? "default" : "pointer",
         transition: "all .15s",
       }}
     >
@@ -281,12 +292,46 @@ function NotifCard({ type, text, time, read }) {
           width: 8,
           height: 8,
           borderRadius: "50%",
-          background: dot,
+          background: meta.color,
           flexShrink: 0,
           marginTop: 4,
         }}
       />
       <div style={{ flex: 1 }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 6,
+            alignItems: "center",
+            marginBottom: 3,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: meta.color,
+              textTransform: "uppercase",
+              letterSpacing: ".05em",
+            }}
+          >
+            {meta.label}
+          </span>
+          {!notif.read && (
+            <span
+              style={{
+                fontSize: 9,
+                background: meta.color,
+                color: "#fff",
+                padding: "1px 6px",
+                borderRadius: 99,
+                fontWeight: 700,
+              }}
+            >
+              NEW
+            </span>
+          )}
+        </div>
         <div
           style={{
             fontSize: 12,
@@ -295,11 +340,11 @@ function NotifCard({ type, text, time, read }) {
             lineHeight: 1.5,
           }}
         >
-          {text}
+          {notif.text}
         </div>
-        <div style={{ fontSize: 11, color: "#9CA3AF" }}>{time}</div>
+        <div style={{ fontSize: 11, color: "#9CA3AF" }}>{notif.time}</div>
       </div>
-      {!read && (
+      {!notif.read && (
         <span
           style={{
             width: 6,
@@ -342,7 +387,6 @@ const MOCK_BOOKINGS = [
     status: "APPROVED",
   },
 ];
-
 const MOCK_TICKETS = [
   {
     title: "AC not working in Lab B204",
@@ -364,51 +408,32 @@ const MOCK_TICKETS = [
   },
 ];
 
-const MOCK_NOTIFS = [
-  {
-    type: "booking",
-    text: "Your booking for Meeting Room A3 has been approved ✅",
-    time: "2 min ago",
-    read: false,
-  },
-  {
-    type: "ticket",
-    text: "Ticket #TK-042 status changed to In Progress",
-    time: "1 hour ago",
-    read: false,
-  },
-  {
-    type: "comment",
-    text: "Admin added a comment on your ticket #TK-039",
-    time: "3 hours ago",
-    read: false,
-  },
-  {
-    type: "booking",
-    text: "Your booking for Lecture Hall LH-01 was rejected",
-    time: "Yesterday",
-    read: true,
-  },
-  {
-    type: "ticket",
-    text: "Ticket #TK-038 has been resolved ✅",
-    time: "2 days ago",
-    read: true,
-  },
-];
+/* ── notification type mapper ── */
+function mapNotif(n) {
+  return {
+    id: n.id,
+    type: n.type || "GENERAL",
+    text: n.title
+      ? `${n.title}${n.message ? " — " + n.message : ""}`
+      : n.message || "",
+    time: n.createdAt ? new Date(n.createdAt).toLocaleString() : "now",
+    read: Boolean(n.read),
+  };
+}
 
 /* ══ MAIN DASHBOARD ══ */
 export default function UserDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("overview");
-  const [loaded, setLoaded] = useState(false);
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.tab || "overview");
+  const [, setLoaded] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [notifsLoading, setNotifsLoading] = useState(false);
   const [notifsError, setNotifsError] = useState("");
   const [bookingFilter, setBookingFilter] = useState("All");
   const [ticketFilter, setTicketFilter] = useState("All");
+  const [notificationFilter, setNotificationFilter] = useState("ALL");
   const [liveUser, setLiveUser] = useState(null);
-
   const sessionUser = useMemo(() => {
     try {
       return JSON.parse(sessionStorage.getItem("user") || "null");
@@ -417,58 +442,75 @@ export default function UserDashboard() {
     }
   }, []);
 
-  // Fetch fresh profile from /api/auth/me and load notifications
+  /* ── fetch notifications (reusable) ── */
+  const fetchNotifs = useCallback(async () => {
+    try {
+      setNotifsLoading(true);
+      setNotifsError("");
+      const res = await apiGet("/notifications/my");
+      const list = Array.isArray(res?.notifications) ? res.notifications : [];
+      setNotifs(list.map(mapNotif));
+    } catch (e) {
+      console.error("Failed to load notifications", e);
+      setNotifsError("Failed to load notifications.");
+    } finally {
+      setNotifsLoading(false);
+    }
+  }, []);
+
+  /* ── on mount: fetch profile + notifications ── */
   useEffect(() => {
     if (!sessionUser) {
       navigate("/");
       return;
     }
+
     const token = sessionStorage.getItem("token");
     if (token) {
       fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
-          if (!data) return;
-          const u = data.user || data;
-          if (u && (u.name || u.email)) {
+          const u = data?.user || data;
+          if (u?.name || u?.email) {
             setLiveUser(u);
             sessionStorage.setItem("user", JSON.stringify(u));
           }
         })
         .catch(() => {});
     }
+
+    // load notifications immediately for overview unread count
+    fetchNotifs();
     setTimeout(() => setLoaded(true), 100);
-  }, [sessionUser, navigate]);
+  }, [sessionUser, navigate, fetchNotifs]);
 
-  // Load notifications when notifications tab opens
   useEffect(() => {
-    if (activeTab !== "notifications") return;
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+    }
+  }, [location.state]);
 
-    (async () => {
-      try {
-        setNotifsLoading(true);
-        setNotifsError("");
-        const res = await apiGet("/notifications/my");
-        const list = res.notifications || [];
-        setNotifs(
-          list.map((n) => ({
-            type: n.type?.toLowerCase() || "ticket",
-            text: `${n.title} - ${n.message}`,
-            time: n.createdAt
-              ? new Date(n.createdAt).toLocaleDateString()
-              : "now",
-            read: n.read || false,
-            id: n.id,
-          })),
-        );
-      } catch (e) {
-        console.error("Failed to load notifications", e);
-        setNotifsError("Failed to load notifications. Using cached data.");
-      } finally {
-        setNotifsLoading(false);
-      }
-    })();
-  }, [activeTab]);
+  /* ── single notification mark-as-read ── */
+  const markOneRead = useCallback(async (id) => {
+    try {
+      await apiPatch(`/notifications/${id}/read`, {});
+      setNotifs((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
+      );
+    } catch (e) {
+      console.error("Failed to mark notification as read", e);
+    }
+  }, []);
+
+  /* ── mark all read ── */
+  const markAllRead = useCallback(async () => {
+    try {
+      await apiPatch("/notifications/my/read-all", {});
+      setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (e) {
+      console.error("Failed to mark all as read", e);
+    }
+  }, []);
 
   const handleLogout = () => {
     sessionStorage.removeItem("token");
@@ -478,25 +520,28 @@ export default function UserDashboard() {
 
   if (!sessionUser) return null;
 
-  // Prefer live API data; fall back to sessionStorage
   const user = liveUser || sessionUser || {};
-
   const unreadCount = notifs.filter((n) => !n.read).length;
-
-  const markAllRead = async () => {
-    try {
-      await apiPatch("/notifications/my/read-all", {});
-      setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-    } catch (e) {
-      console.error("Failed to mark all as read", e);
-    }
-  };
+  const notificationFilters = [
+    "ALL",
+    "BOOKING",
+    "TICKET",
+    "COMMENT",
+    "GENERAL",
+    "UNREAD",
+  ];
+  const filteredNotifications = notifs.filter((n) => {
+    if (notificationFilter === "ALL") return true;
+    if (notificationFilter === "UNREAD") return !n.read;
+    return (n.type || "GENERAL") === notificationFilter;
+  });
+  const unreadNotifications = filteredNotifications.filter((n) => !n.read);
+  const readNotifications = filteredNotifications.filter((n) => n.read);
 
   const filteredBookings =
     bookingFilter === "All"
       ? MOCK_BOOKINGS
       : MOCK_BOOKINGS.filter((b) => b.status === bookingFilter);
-
   const filteredTickets =
     ticketFilter === "All"
       ? MOCK_TICKETS
@@ -510,28 +555,11 @@ export default function UserDashboard() {
       id: "notifications",
       icon: "🔔",
       label: "Notifications",
-      badge: unreadCount,
+      badge: unreadCount > 0 ? unreadCount : 0,
     },
     { id: "profile", icon: "👤", label: "Profile" },
   ];
 
-  /* ── shared styles ── */
-  const sectionLabel = {
-    fontSize: 11,
-    fontWeight: 700,
-    color: "#9CA3AF",
-    letterSpacing: ".07em",
-    textTransform: "uppercase",
-    margin: "16px 0 10px",
-  };
-  const pageTitle = {
-    fontSize: 22,
-    fontWeight: 700,
-    letterSpacing: "-.03em",
-    color: "#1A1D23",
-    marginBottom: 6,
-  };
-  const pageSub = { fontSize: 13, color: "#6B7280", marginBottom: 24 };
   const filterPillBase = {
     padding: "5px 14px",
     borderRadius: 99,
@@ -548,6 +576,22 @@ export default function UserDashboard() {
     background: "#2563EB",
     borderColor: "#2563EB",
     color: "#fff",
+  };
+  const pageTitle = {
+    fontSize: 22,
+    fontWeight: 700,
+    letterSpacing: "-.03em",
+    color: "#1A1D23",
+    marginBottom: 6,
+  };
+  const pageSub = { fontSize: 13, color: "#6B7280", marginBottom: 24 };
+  const sectionLabel = {
+    fontSize: 11,
+    fontWeight: 700,
+    color: "#9CA3AF",
+    letterSpacing: ".07em",
+    textTransform: "uppercase",
+    margin: "16px 0 10px",
   };
   const btnPrimary = {
     padding: "10px 22px",
@@ -572,8 +616,6 @@ export default function UserDashboard() {
         fontFamily:
           "-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif",
         display: "flex",
-        opacity: loaded ? 1 : 0,
-        transition: "opacity .5s ease",
       }}
     >
       {/* ── SIDEBAR ── */}
@@ -592,7 +634,6 @@ export default function UserDashboard() {
           padding: "22px 14px",
         }}
       >
-        {/* Logo */}
         <div
           onClick={() => navigate("/")}
           style={{
@@ -608,7 +649,6 @@ export default function UserDashboard() {
           Smart<span style={{ color: "#2563EB" }}>Campus</span>
         </div>
 
-        {/* Nav */}
         <nav
           style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}
         >
@@ -619,14 +659,18 @@ export default function UserDashboard() {
               label={item.label}
               active={activeTab === item.id}
               badge={item.badge}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                if (item.path) {
+                  navigate(item.path);
+                } else {
+                  setActiveTab(item.id);
+                }
+              }}
             />
           ))}
         </nav>
 
-        {/* Divider */}
         <div style={{ borderTop: "1px solid #E8EBF0", paddingTop: 14 }}>
-          {/* User card */}
           <div
             style={{
               display: "flex",
@@ -680,7 +724,6 @@ export default function UserDashboard() {
             </div>
           </div>
 
-          {/* Back to home */}
           <button
             onClick={() => navigate("/")}
             style={{
@@ -712,7 +755,6 @@ export default function UserDashboard() {
             <span>🏠</span> Back to Home
           </button>
 
-          {/* Logout */}
           <button
             onClick={handleLogout}
             style={{
@@ -739,7 +781,7 @@ export default function UserDashboard() {
         </div>
       </aside>
 
-      {/* ── MAIN CONTENT ── */}
+      {/* ── MAIN ── */}
       <main
         style={{
           marginLeft: 236,
@@ -748,7 +790,7 @@ export default function UserDashboard() {
           minHeight: "100vh",
         }}
       >
-        {/* ── OVERVIEW ── */}
+        {/* OVERVIEW */}
         {activeTab === "overview" && (
           <div>
             <div style={{ marginBottom: 30 }}>
@@ -778,7 +820,6 @@ export default function UserDashboard() {
               <Badge type={user.role || "USER"}>{user.role || "USER"}</Badge>
             </div>
 
-            {/* Stat cards */}
             <div
               style={{
                 display: "grid",
@@ -821,7 +862,6 @@ export default function UserDashboard() {
               />
             </div>
 
-            {/* Recent activity */}
             <div
               style={{
                 display: "grid",
@@ -871,7 +911,7 @@ export default function UserDashboard() {
                   <span
                     style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}
                   >
-                    Notifications
+                    Recent Notifications
                   </span>
                   <span
                     onClick={() => setActiveTab("notifications")}
@@ -885,22 +925,45 @@ export default function UserDashboard() {
                     View all →
                   </span>
                 </div>
-                {notifs.slice(0, 3).map((n, i) => (
-                  <NotifCard key={i} {...n} />
-                ))}
+                {notifsLoading ? (
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: "#9CA3AF",
+                      padding: "12px 0",
+                    }}
+                  >
+                    Loading…
+                  </div>
+                ) : notifs.length === 0 ? (
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: "#9CA3AF",
+                      padding: "12px 0",
+                    }}
+                  >
+                    No notifications yet.
+                  </div>
+                ) : (
+                  notifs
+                    .slice(0, 3)
+                    .map((n, i) => (
+                      <NotifCard key={i} notif={n} onMarkRead={markOneRead} />
+                    ))
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* ── BOOKINGS ── */}
+        {/* BOOKINGS */}
         {activeTab === "bookings" && (
           <div>
             <div style={pageTitle}>My Bookings</div>
             <div style={pageSub}>
               Manage your facility and equipment bookings
             </div>
-
             <div
               style={{
                 display: "flex",
@@ -923,7 +986,6 @@ export default function UserDashboard() {
                 ),
               )}
             </div>
-
             {filteredBookings.length === 0 ? (
               <div
                 style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}
@@ -933,7 +995,6 @@ export default function UserDashboard() {
             ) : (
               filteredBookings.map((b, i) => <BookingCard key={i} {...b} />)
             )}
-
             <button
               style={btnPrimary}
               onMouseEnter={(e) =>
@@ -948,12 +1009,11 @@ export default function UserDashboard() {
           </div>
         )}
 
-        {/* ── TICKETS ── */}
+        {/* TICKETS */}
         {activeTab === "tickets" && (
           <div>
             <div style={pageTitle}>Incident Tickets</div>
             <div style={pageSub}>Report and track maintenance issues</div>
-
             <div
               style={{
                 display: "flex",
@@ -981,7 +1041,6 @@ export default function UserDashboard() {
                 </div>
               ))}
             </div>
-
             {filteredTickets.length === 0 ? (
               <div
                 style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}
@@ -991,7 +1050,6 @@ export default function UserDashboard() {
             ) : (
               filteredTickets.map((t, i) => <TicketCard key={i} {...t} />)
             )}
-
             <button
               style={{ ...btnPrimary, background: "#D97706" }}
               onMouseEnter={(e) =>
@@ -1006,7 +1064,7 @@ export default function UserDashboard() {
           </div>
         )}
 
-        {/* ── NOTIFICATIONS ── */}
+        {/* NOTIFICATIONS */}
         {activeTab === "notifications" && (
           <div>
             <div
@@ -1021,7 +1079,7 @@ export default function UserDashboard() {
                 <div style={pageTitle}>Notifications</div>
                 <div style={{ fontSize: 13, color: "#6B7280" }}>
                   {notifsLoading
-                    ? "Loading notifications..."
+                    ? "Loading…"
                     : unreadCount > 0
                       ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}`
                       : "All caught up!"}
@@ -1030,7 +1088,6 @@ export default function UserDashboard() {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  disabled={notifsLoading}
                   style={{
                     padding: "8px 18px",
                     borderRadius: 99,
@@ -1038,17 +1095,14 @@ export default function UserDashboard() {
                     border: "1px solid #E2E8F0",
                     color: "#6B7280",
                     fontSize: 12,
-                    cursor: notifsLoading ? "not-allowed" : "pointer",
+                    cursor: "pointer",
                     fontFamily: "inherit",
                     fontWeight: 500,
                     transition: "all .15s",
-                    opacity: notifsLoading ? 0.65 : 1,
                   }}
                   onMouseEnter={(e) => {
-                    if (!notifsLoading) {
-                      e.currentTarget.style.borderColor = "#94A3B8";
-                      e.currentTarget.style.color = "#1A1D23";
-                    }
+                    e.currentTarget.style.borderColor = "#94A3B8";
+                    e.currentTarget.style.color = "#1A1D23";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = "#E2E8F0";
@@ -1058,6 +1112,27 @@ export default function UserDashboard() {
                   Mark all read
                 </button>
               )}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: 6,
+                marginBottom: 18,
+                flexWrap: "wrap",
+              }}
+            >
+              {notificationFilters.map((f) => (
+                <div
+                  key={f}
+                  onClick={() => setNotificationFilter(f)}
+                  style={
+                    notificationFilter === f ? filterPillActive : filterPillBase
+                  }
+                >
+                  {f === "ALL" ? "All" : f.charAt(0) + f.slice(1).toLowerCase()}
+                </div>
+              ))}
             </div>
 
             {notifsError && (
@@ -1080,9 +1155,9 @@ export default function UserDashboard() {
               <div
                 style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}
               >
-                Loading notifications...
+                Loading notifications…
               </div>
-            ) : notifs.length === 0 ? (
+            ) : filteredNotifications.length === 0 ? (
               <div
                 style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}
               >
@@ -1090,25 +1165,20 @@ export default function UserDashboard() {
               </div>
             ) : (
               <>
-                {notifs.some((n) => !n.read) && (
+                {unreadNotifications.length > 0 && (
                   <>
                     <div style={sectionLabel}>Unread</div>
-                    {notifs
-                      .filter((n) => !n.read)
-                      .map((n, i) => (
-                        <NotifCard key={i} {...n} />
-                      ))}
+                    {unreadNotifications.map((n, i) => (
+                      <NotifCard key={i} notif={n} onMarkRead={markOneRead} />
+                    ))}
                   </>
                 )}
-
-                {notifs.some((n) => n.read) && (
+                {readNotifications.length > 0 && (
                   <>
                     <div style={sectionLabel}>Earlier</div>
-                    {notifs
-                      .filter((n) => n.read)
-                      .map((n, i) => (
-                        <NotifCard key={i} {...n} />
-                      ))}
+                    {readNotifications.map((n, i) => (
+                      <NotifCard key={i} notif={n} onMarkRead={markOneRead} />
+                    ))}
                   </>
                 )}
               </>
@@ -1116,7 +1186,7 @@ export default function UserDashboard() {
           </div>
         )}
 
-        {/* ── PROFILE ── */}
+        {/* PROFILE */}
         {activeTab === "profile" && (
           <div
             style={{
@@ -1126,7 +1196,6 @@ export default function UserDashboard() {
               paddingTop: 8,
             }}
           >
-            {/* Page heading */}
             <div style={{ width: "100%", maxWidth: 740, marginBottom: 24 }}>
               <div style={pageTitle}>Profile</div>
               <div style={{ fontSize: 13, color: "#6B7280" }}>
@@ -1134,7 +1203,6 @@ export default function UserDashboard() {
               </div>
             </div>
 
-            {/* Hero card */}
             <div
               style={{
                 width: "100%",
@@ -1229,7 +1297,6 @@ export default function UserDashboard() {
               </div>
             </div>
 
-            {/* Info grid — 2 columns */}
             <div
               style={{
                 width: "100%",
@@ -1304,7 +1371,6 @@ export default function UserDashboard() {
               ))}
             </div>
 
-            {/* Activity stats */}
             <div
               style={{
                 width: "100%",
@@ -1371,7 +1437,6 @@ export default function UserDashboard() {
               ))}
             </div>
 
-            {/* Sign out */}
             <div style={{ width: "100%", maxWidth: 740 }}>
               <button
                 onClick={handleLogout}
@@ -1395,7 +1460,7 @@ export default function UserDashboard() {
                   (e.currentTarget.style.background = "#FEF2F2")
                 }
               >
-                Sign out
+                Sign out of SmartCampus
               </button>
             </div>
           </div>

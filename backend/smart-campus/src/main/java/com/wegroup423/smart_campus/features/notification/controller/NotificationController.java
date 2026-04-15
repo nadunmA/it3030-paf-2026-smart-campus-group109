@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.wegroup423.smart_campus.features.notification.model.Notification;
@@ -92,6 +91,20 @@ public class NotificationController {
     public ResponseEntity<Map<String, String>> deleteNotification(@PathVariable String id, Authentication auth) {
         notificationService.deleteNotification(id, currentUserId(auth));
         return ResponseEntity.ok(Map.of("message", "Notification deleted"));
+    }
+
+    @GetMapping("/stats/my")
+    public ResponseEntity<Map<String, Object>> getMyNotificationStats(Authentication auth) {
+        String userId = currentUserId(auth);
+        long unreadCount = notificationService.getUnreadCount(userId);
+        long totalCount = notificationService.getNotificationsForUser(userId).size();
+
+        return ResponseEntity.ok(Map.of(
+                "userId", userId,
+                "unreadCount", unreadCount,
+                "totalCount", totalCount,
+                "readCount", totalCount - unreadCount
+        ));
     }
 
     private record CreateNotificationRequest(String title, String message) {
