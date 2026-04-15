@@ -1378,7 +1378,7 @@ export default function UserDashboard() {
                 style={{
                   width: "100%",
                   padding: 13,
-                  borderRadius: 12,
+                  borderRadius: 24,
                   background: "#FEF2F2",
                   border: "1px solid #FECACA",
                   color: "#DC2626",
@@ -1395,7 +1395,7 @@ export default function UserDashboard() {
                   (e.currentTarget.style.background = "#FEF2F2")
                 }
               >
-                Sign out of SmartCampus
+                Sign out
               </button>
             </div>
           </div>

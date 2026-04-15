@@ -153,7 +153,7 @@ function notifColor(type) {
   }
 }
 
-function NotifPanel({ onClose, notifications, onMarkAllRead, onViewAll }) {
+function NotifPanel({ notifications, onMarkAllRead, onViewAll }) {
   return (
     <div
       style={{
