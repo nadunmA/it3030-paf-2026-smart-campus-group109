@@ -9,40 +9,50 @@ const PLATFORM_ITEMS = [
     color: "#0A84FF",
     title: "Facilities",
     desc: "Browse all bookable resources",
+    path: "/dashboard", // path එක මෙතනට එකතු කළා
   },
   {
     icon: "📅",
     color: "#30D158",
     title: "Bookings",
     desc: "Manage your reservations",
+    path: "/dashboard",
   },
   {
     icon: "🔧",
     color: "#FF9F0A",
     title: "Incident Tickets",
     desc: "Report and track issues",
+    path: "/dashboard",
   },
   {
     icon: "🔔",
     color: "#BF5AF2",
     title: "Notifications",
     desc: "Stay updated instantly",
+    path: "/notifications",
   },
   {
     icon: "🔐",
     color: "#FF375F",
     title: "OAuth Login",
     desc: "Secure Google sign-in",
-  },
-  {
-    icon: "📊",
-    color: "#64D2FF",
-    title: "Admin Dashboard",
-    desc: "Full campus oversight",
+    path: "/",
   },
 ];
 
 function PlatformMega({ onClose }) {
+  const navigate = useNavigate();
+
+  const handleItemClick = (path) => {
+    onClose(); // dropdown එක වහන්න
+    if (path === "/notifications") {
+      navigate("/dashboard", { state: { tab: "notifications" } });
+      return;
+    }
+    navigate(path); // අදාළ පේජ් එකට යන්න
+  };
+
   return (
     <div
       onMouseLeave={onClose}
@@ -64,7 +74,18 @@ function PlatformMega({ onClose }) {
     >
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
         {PLATFORM_ITEMS.map((item) => (
-          <a key={item.title} href="#" className="mega-item">
+          <div
+            key={item.title}
+            onClick={() => handleItemClick(item.path)}
+            className="mega-item"
+            style={{
+              cursor: "pointer",
+              display: "flex",
+              gap: 12,
+              padding: 10,
+              borderRadius: 12,
+            }}
+          >
             <div
               style={{
                 width: 40,
@@ -98,7 +119,7 @@ function PlatformMega({ onClose }) {
                 {item.desc}
               </div>
             </div>
-          </a>
+          </div>
         ))}
       </div>
       <div
@@ -116,6 +137,10 @@ function PlatformMega({ onClose }) {
         </span>
         <span
           style={{ fontSize: ".72rem", color: "#0A84FF", cursor: "pointer" }}
+          onClick={() => {
+            onClose();
+            navigate("/dashboard", { state: { tab: "notifications" } });
+          }}
         >
           View all →
         </span>
@@ -153,7 +178,7 @@ function notifColor(type) {
   }
 }
 
-function NotifPanel({ notifications, onMarkAllRead, onViewAll }) {
+function NotifPanel({ notifications, onMarkAllRead, onViewAll, onNotifClick }) {
   return (
     <div
       style={{
@@ -190,62 +215,71 @@ function NotifPanel({ notifications, onMarkAllRead, onViewAll }) {
         </span>
       </div>
 
-      {notifications.length === 0 && (
-        <div
-          style={{
-            padding: "14px 16px",
-            fontSize: ".78rem",
-            color: "rgba(255,255,255,.45)",
-          }}
-        >
-          No new notifications.
-        </div>
-      )}
-
-      {notifications.map((n, i) => (
-        <div
-          key={n.id || i}
-          style={{
-            padding: "11px 16px",
-            borderBottom:
-              i < notifications.length - 1
-                ? "1px solid rgba(255,255,255,.05)"
-                : "none",
-            display: "flex",
-            gap: 10,
-            cursor: "pointer",
-            transition: "background .15s",
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.background = "rgba(255,255,255,.04)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.background = "transparent")
-          }
-        >
-          <span
+      <div style={{ maxHeight: 350, overflowY: "auto" }}>
+        {notifications.length === 0 && (
+          <div
             style={{
-              width: 7,
-              height: 7,
-              borderRadius: "50%",
-              background: notifColor(n.type),
-              flexShrink: 0,
-              marginTop: 5,
+              padding: "14px 16px",
+              fontSize: ".78rem",
+              color: "rgba(255,255,255,.45)",
             }}
-          />
-          <div>
-            <div style={{ fontSize: ".79rem", color: "#fff", marginBottom: 3 }}>
-              {n.title || "Notification"}
-            </div>
-            <div style={{ fontSize: ".74rem", color: "rgba(255,255,255,.6)" }}>
-              {n.message || ""}
-            </div>
-            <div style={{ fontSize: ".71rem", color: "rgba(255,255,255,.35)" }}>
-              {formatRelativeTime(n.createdAt)}
+          >
+            No new notifications.
+          </div>
+        )}
+
+        {notifications.map((n, i) => (
+          <div
+            key={n.id || i}
+            onClick={() => onNotifClick(n)}
+            style={{
+              padding: "11px 16px",
+              borderBottom:
+                i < notifications.length - 1
+                  ? "1px solid rgba(255,255,255,.05)"
+                  : "none",
+              display: "flex",
+              gap: 10,
+              cursor: "pointer",
+              transition: "background .15s",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "rgba(255,255,255,.04)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "transparent")
+            }
+          >
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: notifColor(n.type),
+                flexShrink: 0,
+                marginTop: 5,
+              }}
+            />
+            <div>
+              <div
+                style={{ fontSize: ".79rem", color: "#fff", marginBottom: 3 }}
+              >
+                {n.title || "Notification"}
+              </div>
+              <div
+                style={{ fontSize: ".74rem", color: "rgba(255,255,255,.6)" }}
+              >
+                {n.message || ""}
+              </div>
+              <div
+                style={{ fontSize: ".71rem", color: "rgba(255,255,255,.35)" }}
+              >
+                {formatRelativeTime(n.createdAt)}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
       <div
         style={{
@@ -276,7 +310,6 @@ function UserMenu({ onLogout, user }) {
 
   useEffect(() => {
     if (!user) return;
-
     let active = true;
     const loadNotifications = async () => {
       try {
@@ -290,7 +323,6 @@ function UserMenu({ onLogout, user }) {
         console.error("Failed to load navbar notifications", err);
       }
     };
-
     loadNotifications();
     const intervalId = setInterval(loadNotifications, 30000);
     return () => {
@@ -298,6 +330,11 @@ function UserMenu({ onLogout, user }) {
       clearInterval(intervalId);
     };
   }, [user]);
+
+  const handleNotifClick = () => {
+    setNotif(false);
+    navigate("/dashboard", { state: { tab: "notifications" } });
+  };
 
   const handleMarkAllRead = async () => {
     try {
@@ -311,17 +348,20 @@ function UserMenu({ onLogout, user }) {
 
   const handleItemClick = (item) => {
     setOpen(false);
-
     if (item.label === "Profile") {
-      if (user?.role === "ADMIN") {
-        navigate("/admin/dashboard");
-      } else {
-        navigate("/dashboard");
-      }
+      user?.role === "ADMIN"
+        ? navigate("/admin/dashboard")
+        : navigate("/dashboard");
     } else if (item.label === "Notifications") {
-      navigate("/notifications");
+      navigate("/dashboard", { state: { tab: "notifications" } });
     } else if (item.label === "Settings") {
       navigate("/settings");
+    } else if (
+      item.label === "My Bookings" ||
+      item.label === "My Tickets" ||
+      item.label === "Browse Facilities"
+    ) {
+      navigate("/dashboard");
     }
   };
 
@@ -339,7 +379,7 @@ function UserMenu({ onLogout, user }) {
     { icon: "📅", label: "My Bookings" },
     { icon: "🔧", label: "My Tickets" },
     { icon: "🔔", label: "Notifications", count: unreadCount },
-    { icon: "👤", label: "Profile", path: "/dashboard" },
+    { icon: "👤", label: "Profile" },
     { icon: "⚙️", label: "Settings" },
   ];
 
@@ -355,7 +395,6 @@ function UserMenu({ onLogout, user }) {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-      {/* Notifications Icon */}
       <div ref={notifRef} style={{ position: "relative" }}>
         <div
           onClick={() => setNotif((o) => !o)}
@@ -393,18 +432,17 @@ function UserMenu({ onLogout, user }) {
         </div>
         {notif && (
           <NotifPanel
-            onClose={() => setNotif(false)}
             notifications={notifications}
             onMarkAllRead={handleMarkAllRead}
+            onNotifClick={handleNotifClick}
             onViewAll={() => {
               setNotif(false);
-              navigate("/notifications");
+              navigate("/dashboard", { state: { tab: "notifications" } });
             }}
           />
         )}
       </div>
 
-      {/* User Profile Avatar & Dropdown */}
       <div ref={menuRef} style={{ position: "relative" }}>
         <div
           onClick={() => setOpen((o) => !o)}
@@ -426,7 +464,6 @@ function UserMenu({ onLogout, user }) {
         >
           {initials}
         </div>
-
         {open && (
           <div
             style={{
@@ -444,7 +481,6 @@ function UserMenu({ onLogout, user }) {
               animation: "dropIn .2s ease",
             }}
           >
-            {/* User Info Section */}
             <div
               style={{
                 padding: "10px 12px 9px",
@@ -490,8 +526,6 @@ function UserMenu({ onLogout, user }) {
                 </span>
               </div>
             </div>
-
-            {/* Menu Items */}
             {items.map((item) => (
               <div
                 key={item.label}
@@ -499,19 +533,8 @@ function UserMenu({ onLogout, user }) {
                 onClick={() => handleItemClick(item)}
                 style={{ cursor: "pointer" }}
               >
-                <span style={{ fontSize: ".95rem" }}>{item.icon}</span>
+                <span style={{ fontSize: ".95rem" }}>{item.icon}</span>{" "}
                 {item.label}
-                {item.sub && (
-                  <span
-                    style={{
-                      marginLeft: "auto",
-                      fontSize: ".7rem",
-                      color: "rgba(255,255,255,.3)",
-                    }}
-                  >
-                    {item.sub}
-                  </span>
-                )}
                 {item.count && (
                   <span
                     style={{
@@ -529,7 +552,6 @@ function UserMenu({ onLogout, user }) {
                 )}
               </div>
             ))}
-
             <div
               style={{
                 height: 1,
@@ -557,7 +579,6 @@ export default function Navbar({
   onGoTo,
 }) {
   const [megaOpen, setMegaOpen] = useState(false);
-
   return (
     <nav
       style={{
@@ -589,7 +610,6 @@ export default function Navbar({
       >
         Smart<span style={{ color: "#0A84FF" }}>Campus</span>
       </div>
-
       <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
         <div
           style={{ position: "relative" }}
@@ -615,7 +635,6 @@ export default function Navbar({
           </div>
           {megaOpen && <PlatformMega onClose={() => setMegaOpen(false)} />}
         </div>
-
         {[
           ["About", "stats"],
           ["Features", "features"],
@@ -644,7 +663,6 @@ export default function Navbar({
           );
         })}
       </div>
-
       <div
         style={{
           display: "flex",

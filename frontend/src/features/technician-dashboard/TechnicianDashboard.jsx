@@ -417,6 +417,7 @@ export default function TechnicianDashboard() {
     try {
       await apiPatch("/notifications/my/read-all", {});
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      // eslint-disable-next-line no-unused-vars
     } catch (e) {
       setError("Failed to mark notifications as read.");
     }
