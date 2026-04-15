@@ -1,11 +1,16 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import SmartCampusHome from "../src/features/home/pages/SmartCampusHome";
+import SmartCampusHome from "./features/home/pages/SmartCampusHome";
 import "./App.css";
-import AuthCallback from "../src/features/auth/pages/AuthCallback";
-import CreateBookingPage from "../src/features/bookings/pages/CreateBookingPage";
-import MyBookingsPage from "../src/features/bookings/pages/MyBookingsPage";
-import AdminBookingApprovalPage from "../src/features/bookings/pages/AdminBookingApprovalPage";
-import { RequireAuth, RequireRole } from "../src/features/auth/components/RouteGuards";
+import AuthCallback from "./features/auth/pages/AuthCallback";
+import UserDashboard from "./features/user-dashboard/UserDashboard";
+import AdminDashboard from "./features/admin-dashboard/AdminDashboard";
+import TechnicianDashboard from "./features/technician-dashboard/TechnicianDashboard";
+import UserNotifications from "./features/notification/NotificationsPage";
+import ProtectedRoute from "./features/auth/components/ProtectedRoute";
+import CreateBookingPage from "./features/bookings/pages/CreateBookingPage";
+import MyBookingsPage from "./features/bookings/pages/MyBookingsPage";
+import AdminBookingApprovalPage from "./features/bookings/pages/AdminBookingApprovalPage";
+import { RequireAuth, RequireRole } from "./features/auth/components/RouteGuards";
 
 export default function App() {
   return (
@@ -13,6 +18,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<SmartCampusHome />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+
         <Route
           path="/bookings/create"
           element={
@@ -37,6 +43,32 @@ export default function App() {
             </RequireRole>
           }
         />
+
+        {/* USER only */}
+        <Route element={<ProtectedRoute allowRoles={["USER"]} />}>
+          <Route path="/dashboard" element={<UserDashboard />} />
+        </Route>
+
+        <Route
+          element={
+            <ProtectedRoute allowRoles={["USER", "ADMIN", "TECHNICIAN"]} />
+          }
+        >
+          <Route path="/notifications" element={<UserNotifications />} />
+        </Route>
+
+        {/* TECHNICIAN only */}
+        <Route element={<ProtectedRoute allowRoles={["TECHNICIAN"]} />}>
+          <Route
+            path="/technician/dashboard"
+            element={<TechnicianDashboard />}
+          />
+        </Route>
+
+        {/* ADMIN only */}
+        <Route element={<ProtectedRoute allowRoles={["ADMIN"]} />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

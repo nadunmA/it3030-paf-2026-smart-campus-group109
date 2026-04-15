@@ -10,7 +10,8 @@ import com.wegroup423.smart_campus.features.notification.model.Notification;
 import com.wegroup423.smart_campus.features.notification.repository.NotificationRepository;
 
 import java.util.List;
-
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -36,11 +37,10 @@ public class NotificationService {
     // Mark single notification as read
     public Notification markAsRead(String notificationId, String userId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found: " + notificationId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found"));
 
-        // Ensure user owns this notification
         if (!notification.getUserId().equals(userId)) {
-            throw new RuntimeException("Access denied");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
         notification.setRead(true);
@@ -59,10 +59,10 @@ public class NotificationService {
     // Delete a notification
     public void deleteNotification(String notificationId, String userId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found: " + notificationId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found"));
 
         if (!notification.getUserId().equals(userId)) {
-            throw new RuntimeException("Access denied");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
         notificationRepository.delete(notification);
@@ -84,6 +84,41 @@ public class NotificationService {
         Notification saved = notificationRepository.save(notification);
         log.info("Notification created for user: {} | type: {}", userId, type);
         return saved;
+    }
+
+    public Notification createSelfNotification(String userId, String title, String message) {
+        String safeTitle = title == null || title.isBlank() ? "General Update" : title.trim();
+        String safeMessage = message == null ? "" : message.trim();
+
+        return createNotification(
+                userId,
+                safeTitle,
+                safeMessage,
+                Notification.NotificationType.GENERAL,
+                null,
+                null
+        );
+    }
+
+    public Notification updateNotification(String notificationId, String userId, String title, String message, Boolean read) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found"));
+
+        if (!notification.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        if (title != null) {
+            notification.setTitle(title.trim());
+        }
+        if (message != null) {
+            notification.setMessage(message.trim());
+        }
+        if (read != null) {
+            notification.setRead(read);
+        }
+
+        return notificationRepository.save(notification);
     }
 
     //anjitha booking temp

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Btn from "/src/components/ui/Btn";
+import { apiGet, apiPatch } from "../../lib/api";
 
 const PLATFORM_ITEMS = [
   {
@@ -125,20 +126,36 @@ function PlatformMega({ onClose }) {
   );
 }
 
-function NotifPanel({ onClose }) {
-  const notifs = [
-    { dot: "#0A84FF", text: "Booking Lab B204 approved ✅", time: "2 min ago" },
-    {
-      dot: "#FF9F0A",
-      text: "Ticket #TK-042 is In Progress",
-      time: "1 hour ago",
-    },
-    {
-      dot: "#FF375F",
-      text: "Booking Meeting Room 3 rejected",
-      time: "Yesterday",
-    },
-  ];
+function formatRelativeTime(value) {
+  if (!value) return "just now";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "just now";
+  const diffMs = Date.now() - date.getTime();
+  const mins = Math.max(0, Math.floor(diffMs / 60000));
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hour ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day ago`;
+}
+
+function notifColor(type) {
+  switch (type) {
+    case "BOOKING_APPROVED":
+      return "#30D158";
+    case "BOOKING_REJECTED":
+      return "#FF375F";
+    case "BOOKING_CANCELLED":
+      return "#FF9F0A";
+    case "NEW_COMMENT":
+      return "#BF5AF2";
+    default:
+      return "#0A84FF";
+  }
+}
+
+function NotifPanel({ notifications, onMarkAllRead, onViewAll }) {
   return (
     <div
       style={{
@@ -169,18 +186,31 @@ function NotifPanel({ onClose }) {
         </span>
         <span
           style={{ fontSize: ".72rem", color: "#0A84FF", cursor: "pointer" }}
-          onClick={onClose}
+          onClick={onMarkAllRead}
         >
           Mark all read
         </span>
       </div>
-      {notifs.map((n, i) => (
+
+      {notifications.length === 0 && (
         <div
-          key={i}
+          style={{
+            padding: "14px 16px",
+            fontSize: ".78rem",
+            color: "rgba(255,255,255,.45)",
+          }}
+        >
+          No new notifications.
+        </div>
+      )}
+
+      {notifications.map((n, i) => (
+        <div
+          key={n.id || i}
           style={{
             padding: "11px 16px",
             borderBottom:
-              i < notifs.length - 1
+              i < notifications.length - 1
                 ? "1px solid rgba(255,255,255,.05)"
                 : "none",
             display: "flex",
@@ -200,21 +230,25 @@ function NotifPanel({ onClose }) {
               width: 7,
               height: 7,
               borderRadius: "50%",
-              background: n.dot,
+              background: notifColor(n.type),
               flexShrink: 0,
               marginTop: 5,
             }}
           />
           <div>
             <div style={{ fontSize: ".79rem", color: "#fff", marginBottom: 3 }}>
-              {n.text}
+              {n.title || "Notification"}
+            </div>
+            <div style={{ fontSize: ".74rem", color: "rgba(255,255,255,.6)" }}>
+              {n.message || ""}
             </div>
             <div style={{ fontSize: ".71rem", color: "rgba(255,255,255,.35)" }}>
-              {n.time}
+              {formatRelativeTime(n.createdAt)}
             </div>
           </div>
         </div>
       ))}
+
       <div
         style={{
           padding: "10px 16px",
@@ -224,6 +258,7 @@ function NotifPanel({ onClose }) {
       >
         <span
           style={{ fontSize: ".74rem", color: "#0A84FF", cursor: "pointer" }}
+          onClick={onViewAll}
         >
           View all notifications
         </span>
@@ -232,12 +267,70 @@ function NotifPanel({ onClose }) {
   );
 }
 
-function UserMenu({ onLogout }) {
+function UserMenu({ onLogout, user }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notif, setNotif] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const menuRef = useRef(null);
   const notifRef = useRef(null);
+
+  useEffect(() => {
+    if (!user) return;
+
+    let active = true;
+    const loadNotifications = async () => {
+      try {
+        const res = await apiGet("/notifications/my");
+        if (!active) return;
+        setNotifications(
+          Array.isArray(res?.notifications) ? res.notifications : [],
+        );
+        setUnreadCount(Number(res?.unreadCount || 0));
+      } catch (err) {
+        console.error("Failed to load navbar notifications", err);
+      }
+    };
+
+    loadNotifications();
+    const intervalId = setInterval(loadNotifications, 30000);
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+    };
+  }, [user]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await apiPatch("/notifications/my/read-all", {});
+      setUnreadCount(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (err) {
+      console.error("Failed to mark notifications as read", err);
+    }
+  };
+
+  const handleItemClick = (item) => {
+    setOpen(false);
+
+    if (item.path) {
+      navigate(item.path);
+      return;
+    }
+
+    if (item.label === "Profile") {
+      if (user?.role === "ADMIN") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+    } else if (item.label === "Notifications") {
+      navigate("/notifications");
+    } else if (item.label === "Settings") {
+      navigate("/settings");
+    }
+  };
 
   useEffect(() => {
     const h = (e) => {
@@ -250,18 +343,28 @@ function UserMenu({ onLogout }) {
 
   const items = [
     { icon: "🏛️", label: "Browse Facilities" },
-    { icon: "📅", label: "My Bookings", sub: "2 pending", path: "/bookings/me" },
+    { icon: "📅", label: "My Bookings", path: "/bookings/me" },
     { icon: "📝", label: "Create Booking", path: "/bookings/create" },
     { icon: "🛡️", label: "Admin Booking Dashboard", path: "/bookings/admin" },
     { icon: "🔧", label: "My Tickets" },
-    { icon: "🔔", label: "Notifications", count: 3 },
+    { icon: "🔔", label: "Notifications", count: unreadCount },
     { icon: "👤", label: "Profile" },
     { icon: "⚙️", label: "Settings" },
   ];
 
+  const displayName = user?.name || "User";
+  const displayEmail = user?.email || "-";
+  const displayRole = user?.role || "USER";
+  const initials = (displayName || "U")
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-      {/* Bell */}
+      {/* Notifications Icon */}
       <div ref={notifRef} style={{ position: "relative" }}>
         <div
           onClick={() => setNotif((o) => !o)}
@@ -279,33 +382,38 @@ function UserMenu({ onLogout }) {
             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 01-3.46 0" />
           </svg>
-          <span
-            style={{
-              position: "absolute",
-              top: -5,
-              right: -6,
-              background: "#FF375F",
-              color: "#fff",
-              fontSize: ".56rem",
-              fontWeight: 700,
-              padding: "1px 4px",
-              borderRadius: 980,
-            }}
-          >
-            3
-          </span>
-              onClick={() => {
-                if (item.path) {
-                  navigate(item.path);
-                  setOpen(false);
-                }
+          {unreadCount > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                top: -5,
+                right: -6,
+                background: "#FF375F",
+                color: "#fff",
+                fontSize: ".56rem",
+                fontWeight: 700,
+                padding: "1px 4px",
+                borderRadius: 980,
               }}
-              style={item.path ? { cursor: "pointer" } : undefined}
+            >
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </div>
-        {notif && <NotifPanel onClose={() => setNotif(false)} />}
+        {notif && (
+          <NotifPanel
+            onClose={() => setNotif(false)}
+            notifications={notifications}
+            onMarkAllRead={handleMarkAllRead}
+            onViewAll={() => {
+              setNotif(false);
+              navigate("/notifications");
+            }}
+          />
+        )}
       </div>
 
-      {/* Avatar */}
+      {/* User Profile Avatar & Dropdown */}
       <div ref={menuRef} style={{ position: "relative" }}>
         <div
           onClick={() => setOpen((o) => !o)}
@@ -325,8 +433,9 @@ function UserMenu({ onLogout }) {
             transform: open ? "scale(1.1)" : "scale(1)",
           }}
         >
-          AJ
+          {initials}
         </div>
+
         {open && (
           <div
             style={{
@@ -344,6 +453,7 @@ function UserMenu({ onLogout }) {
               animation: "dropIn .2s ease",
             }}
           >
+            {/* User Info Section */}
             <div
               style={{
                 padding: "10px 12px 9px",
@@ -352,7 +462,7 @@ function UserMenu({ onLogout }) {
               }}
             >
               <div style={{ fontSize: ".85rem", fontWeight: 600 }}>
-                Ashan Jayawardena
+                {displayName}
               </div>
               <div
                 style={{
@@ -361,7 +471,7 @@ function UserMenu({ onLogout }) {
                   marginTop: 2,
                 }}
               >
-                ashan@sliit.lk
+                {displayEmail}
               </div>
               <div
                 style={{
@@ -385,12 +495,19 @@ function UserMenu({ onLogout }) {
                   }}
                 />
                 <span style={{ fontSize: ".67rem", color: "#30D158" }}>
-                  USER
+                  {displayRole}
                 </span>
               </div>
             </div>
+
+            {/* Menu Items */}
             {items.map((item) => (
-              <div key={item.label} className="drop-item">
+              <div
+                key={item.label}
+                className="drop-item"
+                onClick={() => handleItemClick(item)}
+                style={{ cursor: "pointer" }}
+              >
                 <span style={{ fontSize: ".95rem" }}>{item.icon}</span>
                 {item.label}
                 {item.sub && (
@@ -421,6 +538,7 @@ function UserMenu({ onLogout }) {
                 )}
               </div>
             ))}
+
             <div
               style={{
                 height: 1,
@@ -441,6 +559,7 @@ function UserMenu({ onLogout }) {
 export default function Navbar({
   scrolled,
   loggedIn,
+  user,
   onLogout,
   onLoginOpen,
   activeSection,
@@ -467,7 +586,6 @@ export default function Navbar({
         transition: "all .4s ease",
       }}
     >
-      {/* Logo */}
       <div
         onClick={() => onGoTo("hero")}
         style={{
@@ -481,7 +599,6 @@ export default function Navbar({
         Smart<span style={{ color: "#0A84FF" }}>Campus</span>
       </div>
 
-      {/* Center links */}
       <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
         <div
           style={{ position: "relative" }}
@@ -504,23 +621,6 @@ export default function Navbar({
             }}
           >
             Platform
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 10 10"
-              fill="none"
-              style={{
-                transform: megaOpen ? "rotate(180deg)" : "none",
-                transition: "transform .25s",
-              }}
-            >
-              <path
-                d="M2 3.5L5 6.5L8 3.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
           </div>
           {megaOpen && <PlatformMega onClose={() => setMegaOpen(false)} />}
         </div>
@@ -549,20 +649,6 @@ export default function Navbar({
               }}
             >
               {label}
-              {isActive && (
-                <span
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    width: 14,
-                    height: 1.5,
-                    background: "#0A84FF",
-                    borderRadius: 2,
-                  }}
-                />
-              )}
             </div>
           );
         })}
@@ -586,7 +672,6 @@ export default function Navbar({
         </Link>
       </div>
 
-      {/* Right */}
       <div
         style={{
           display: "flex",
@@ -596,7 +681,7 @@ export default function Navbar({
         }}
       >
         {loggedIn ? (
-          <UserMenu onLogout={onLogout} />
+          <UserMenu onLogout={onLogout} user={user} />
         ) : (
           <Btn variant="primary" size="sm" onClick={onLoginOpen}>
             Log in

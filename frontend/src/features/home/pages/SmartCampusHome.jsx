@@ -16,11 +16,31 @@ const SECTION_IDS = ["hero", "stats", "features", "howitworks", "cta"];
 export default function SmartCampusHome() {
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [loggedIn, setLoggedIn] = useState(false);
+
+  const [loggedIn, setLoggedIn] = useState(() => {
+    const token = sessionStorage.getItem("token");
+    return !!token;
+  });
+
+  const [user, setUser] = useState(() => {
+    const token = sessionStorage.getItem("token");
+    const rawUser = sessionStorage.getItem("user");
+
+    if (token && rawUser) {
+      try {
+        return JSON.parse(rawUser);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
   const [loginOpen, setLoginOpen] = useState(false);
   const activeSection = useActiveSection(SECTION_IDS);
   useScrollReveal();
 
+  // scroll stuff
   useEffect(() => {
     const h = () => {
       const doc = document.documentElement;
@@ -32,6 +52,13 @@ export default function SmartCampusHome() {
     window.addEventListener("scroll", h, { passive: true });
     return () => window.removeEventListener("scroll", h);
   }, []);
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+    setUser(null);
+    setLoggedIn(false);
+  };
 
   const goTo = (id) =>
     document
@@ -55,7 +82,6 @@ export default function SmartCampusHome() {
           position: "relative",
         }}
       >
-        {/* Scroll progress bar */}
         <div
           style={{
             position: "fixed",
@@ -71,51 +97,18 @@ export default function SmartCampusHome() {
           }}
         />
 
-        {/* Section dots */}
-        <div
-          style={{
-            position: "fixed",
-            right: 18,
-            top: "50%",
-            transform: "translateY(-50%)",
-            zIndex: 150,
-            display: "flex",
-            flexDirection: "column",
-            gap: 9,
-          }}
-        >
-          {SECTION_IDS.map((id) => (
-            <div
-              key={id}
-              onClick={() => goTo(id)}
-              title={id[0].toUpperCase() + id.slice(1)}
-              style={{
-                width: activeSection === id ? 5 : 3.5,
-                height: activeSection === id ? 22 : 3.5,
-                borderRadius: 980,
-                background:
-                  activeSection === id ? "#0A84FF" : "rgba(255,255,255,.22)",
-                cursor: "pointer",
-                transition: "all .35s ease",
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Animated Background */}
         <AnimatedBackground />
 
-        {/* Navbar */}
         <Navbar
           scrolled={scrolled}
           loggedIn={loggedIn}
-          onLogout={() => setLoggedIn(false)}
+          user={user}
+          onLogout={handleLogout}
           onLoginOpen={() => setLoginOpen(true)}
           activeSection={activeSection}
           onGoTo={goTo}
         />
 
-        {/* Sections */}
         <HeroSection onLoginOpen={() => setLoginOpen(true)} onGoTo={goTo} />
         <StatsSection />
         <FeaturesSection />

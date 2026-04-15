@@ -1,27 +1,40 @@
-import { defineConfig } from 'vite'
-import tailwindcss from '@tailwindcss/vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
+  plugins: [react(), tailwindcss()],
   server: {
+    watch: {
+      usePolling: true,
+    },
     proxy: {
-     
-      '/oauth2': {
-        target: 'http://localhost:8080',
+      "/oauth2": {
+        target: "http://127.0.0.1:8080",
+        changeOrigin: true,
+        secure: false,
+      },
+      "/login": {
+        target: "http://127.0.0.1:8080",
+        changeOrigin: true,
+        secure: false,
+      },
+      "/logout": {
+        target: "http://127.0.0.1:8080",
+        changeOrigin: true,
+        secure: false,
+      },
+      "/api": {
+        target: "http://127.0.0.1:8080",
         changeOrigin: true,
         secure: false,
       },
     },
   },
   test: {
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.js'],
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.js"],
     globals: true,
     css: true,
   },
-})
+});
