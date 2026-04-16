@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { apiGet, apiPatch } from "../../../lib/api";
 
-/* ── Badge ── */
+/* Badge */
 function Badge({ type, children }) {
   const styles = {
     APPROVED: { bg: "#ECFDF5", color: "#059669", border: "#A7F3D0" },
@@ -54,7 +54,7 @@ function Badge({ type, children }) {
   );
 }
 
-/* ── StatCard ── */
+/* StatCard */
 function StatCard({ icon, label, value, color, bgColor }) {
   return (
     <div
@@ -108,7 +108,7 @@ function StatCard({ icon, label, value, color, bgColor }) {
   );
 }
 
-/* ── NavItem ── */
+/* NavItem */
 function NavItem({ icon, label, active, onClick, badge }) {
   const [hov, setHov] = useState(false);
   return (
@@ -163,7 +163,7 @@ function NavItem({ icon, label, active, onClick, badge }) {
   );
 }
 
-/* ── BookingCard ── */
+/* BookingCard */
 function BookingCard({ title, resource, date, status }) {
   const [hov, setHov] = useState(false);
   return (
@@ -204,7 +204,7 @@ function BookingCard({ title, resource, date, status }) {
   );
 }
 
-/* ── TicketCard ── */
+/* TicketCard */
 function TicketCard({ title, priority, status, updated }) {
   const [hov, setHov] = useState(false);
   return (
@@ -251,7 +251,7 @@ function TicketCard({ title, priority, status, updated }) {
   );
 }
 
-/* ── FacilityCard ── */
+/* FacilityCard */
 function FacilityCard({ name, type, location, capacity, availability }) {
   const [hov, setHov] = useState(false);
   return (
@@ -291,12 +291,11 @@ function FacilityCard({ name, type, location, capacity, availability }) {
   );
 }
 
-/* ── NotifCard ── */
-/* notification type mapping fix: handles both backend enum names & frontend short names */
+/* NotifCard */
+
 function NotifCard({ notif, onMarkRead }) {
   const [hov, setHov] = useState(false);
 
-  // Map backend NotificationType enum → display color & label
   const TYPE_META = {
     BOOKING_APPROVED: { color: "#2563EB", label: "Booking" },
     BOOKING_REJECTED: { color: "#DC2626", label: "Booking" },
@@ -403,7 +402,7 @@ function NotifCard({ notif, onMarkRead }) {
   );
 }
 
-/* ── MOCK DATA ── */
+/* MOCK DATA */
 const MOCK_BOOKINGS = [
   {
     title: "Project Meeting",
@@ -451,7 +450,7 @@ const MOCK_TICKETS = [
   },
 ];
 
-/* ── notification type mapper ── */
+/* notification type mapper */
 function mapNotif(n) {
   return {
     id: n.id,
@@ -464,7 +463,7 @@ function mapNotif(n) {
   };
 }
 
-/* ══ MAIN DASHBOARD ══ */
+/* MAIN DASHBOARD */
 export default function UserDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -548,7 +547,7 @@ export default function UserDashboard() {
         .catch(() => {});
     }
 
-    // load notifications immediately for overview unread count
+    // load notifications
     fetchNotifs();
     setTimeout(() => setLoaded(true), 100);
   }, [sessionUser, navigate, fetchNotifs]);
@@ -565,7 +564,7 @@ export default function UserDashboard() {
     }
   }, [activeTab, halls.length, hallsLoading, fetchResources]);
 
-  /* ── single notification mark-as-read ── */
+  /* single notification mark-as-read */
   const markOneRead = useCallback(async (id) => {
     try {
       await apiPatch(`/notifications/${id}/read`, {});
@@ -577,7 +576,7 @@ export default function UserDashboard() {
     }
   }, []);
 
-  /* ── mark all read ── */
+  /* mark all read */
   const markAllRead = useCallback(async () => {
     try {
       await apiPatch("/notifications/my/read-all", {});
@@ -698,7 +697,7 @@ export default function UserDashboard() {
         display: "flex",
       }}
     >
-      {/* ── SIDEBAR ── */}
+      {/* SIDEBAR */}
       <aside
         style={{
           position: "fixed",
@@ -861,7 +860,7 @@ export default function UserDashboard() {
         </div>
       </aside>
 
-      {/* ── MAIN ── */}
+      {/* MAIN */}
       <main
         style={{
           marginLeft: 236,

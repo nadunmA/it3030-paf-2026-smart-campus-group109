@@ -576,7 +576,7 @@ export default function AdminDashboard() {
         transition: "opacity .5s ease",
       }}
     >
-      {/* ── SIDEBAR ── */}
+      {/* SIDEBAR */}
       <aside
         style={{
           position: "fixed",
@@ -726,7 +726,7 @@ export default function AdminDashboard() {
           minHeight: "100vh",
         }}
       >
-        {/* ── OVERVIEW ── */}
+        {/* OVERVIEW */}
         {activeTab === "overview" && (
           <div>
             <div style={{ marginBottom: 24 }}>
@@ -1072,7 +1072,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── TICKETS ── */}
+        {/* TICKETS */}
         {activeTab === "tickets" && (
           <div>
             <div style={pgTitle}>Incident Tickets</div>
@@ -1116,7 +1116,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── RESOURCES ── */}
+        {/* RESOURCES */}
         {activeTab === "resources" && (
           <div>
             <div
@@ -1183,7 +1183,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── USER ── */}
+        {/* USER */}
 
         {activeTab === "users" && (
           <UserList
@@ -1195,7 +1195,7 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* ── ACTIVITY LOG ── */}
+        {/* ACTIVITY LOG */}
         {activeTab === "activity" && (
           <div>
             <div style={pgTitle}>Activity Log</div>
