@@ -17,6 +17,8 @@ public interface ResourceRepository extends MongoRepository<Resource, String> {
 
     Optional<Resource> findById(String id);
 
+       Optional<Resource> findByQrCode(String qrCode);
+
     List<Resource> findByResourceTypeId(String resourceTypeId);
 
     List<Resource> findByLocation(String location);

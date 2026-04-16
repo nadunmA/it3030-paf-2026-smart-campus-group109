@@ -4,8 +4,13 @@ import com.wegroup423.smart_campus.features.admin.model.dto.request.CreateResour
 import com.wegroup423.smart_campus.features.admin.model.dto.request.UpdateResourceRequest;
 import com.wegroup423.smart_campus.features.admin.model.dto.response.ResourceResponse;
 import com.wegroup423.smart_campus.features.admin.service.ResourceService;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -48,6 +53,28 @@ public class ResourceApiController {
     @PreAuthorize("hasAnyRole('ADMIN','USER','TECHNICIAN')")
     public ResponseEntity<ResourceResponse> getResource(@PathVariable String id) {
         return ResponseEntity.ok(resourceService.getResource(id));
+    }
+
+    @GetMapping("/lookup")
+    @PreAuthorize("hasAnyRole('ADMIN','USER','TECHNICIAN')")
+    public ResponseEntity<ResourceResponse> getResourceByQrCode(@RequestParam String qrCode) {
+        return ResponseEntity.ok(resourceService.getResourceByQrCode(qrCode));
+    }
+
+    @GetMapping("/export/csv")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<byte[]> exportResourcesCsv(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) Integer capacity) {
+        String csv = resourceService.exportResourcesAsCsv(type, location, capacity);
+        String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String fileName = "resources-report-" + date + ".csv";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .body(csv.getBytes(StandardCharsets.UTF_8));
     }
 
     @PutMapping("/{id}")
