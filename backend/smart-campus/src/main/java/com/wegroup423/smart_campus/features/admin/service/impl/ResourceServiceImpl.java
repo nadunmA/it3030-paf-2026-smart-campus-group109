@@ -97,6 +97,18 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+    public ResourceResponse getResourceByQrCode(String qrCode) {
+        if (qrCode == null || qrCode.isBlank()) {
+            throw new ResourceNotFoundException("QR code is required");
+        }
+
+        Resource resource = resourceRepository.findByQrCode(qrCode.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found for qrCode: " + qrCode));
+
+        return enrichResourceResponse(resource);
+    }
+
+    @Override
     public Page<ResourceResponse> getAllResources(Pageable pageable) {
         return resourceRepository.findAll(pageable)
                 .map(this::enrichResourceResponse);
@@ -242,6 +254,30 @@ public class ResourceServiceImpl implements ResourceService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public String exportResourcesAsCsv(String type, String location, Integer capacity) {
+        List<ResourceResponse> resources = searchResources(type, location, null, capacity);
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("id,name,type,location,capacity,status,availability,assignedTechnician,maintenanceDate,qrCode\n");
+
+        for (ResourceResponse resource : resources) {
+            csv.append(csvCell(resource.id())).append(',')
+                    .append(csvCell(resource.name())).append(',')
+                    .append(csvCell(resource.type())).append(',')
+                    .append(csvCell(resource.location())).append(',')
+                    .append(csvCell(resource.capacity())).append(',')
+                    .append(csvCell(resource.status())).append(',')
+                    .append(csvCell(resource.availability())).append(',')
+                    .append(csvCell(resource.assignedTechnicianName())).append(',')
+                    .append(csvCell(resource.maintenanceDate())).append(',')
+                    .append(csvCell(resource.qrCode()))
+                    .append('\n');
+        }
+
+        return csv.toString();
+    }
+
     private ResourceResponse enrichResourceResponse(Resource resource) {
         ResourceType resourceType = resourceTypeRepository.findById(resource.getResourceTypeId())
                 .orElse(null);
@@ -328,5 +364,11 @@ public class ResourceServiceImpl implements ResourceService {
         return availability == ResourceAvailability.AVAILABLE
                 ? ResourceStatus.ACTIVE
                 : ResourceStatus.OUT_OF_SERVICE;
+    }
+
+    private String csvCell(Object value) {
+        String raw = value == null ? "" : String.valueOf(value);
+        String escaped = raw.replace("\"", "\"\"");
+        return "\"" + escaped + "\"";
     }
 }

@@ -76,6 +76,7 @@ export default function ResourceDetailPage() {
     ["Condition", resource.condition || "—"],
     ["Serial Number", resource.serialNumber || "—"],
     ["Assigned Technician", resource.assignedTechnicianName || resource.assignedTechnicianId || "—"],
+    ["QR Code", resource.qrCode || "—"],
     ["Created At", resource.createdAt || "—"],
     ["Updated At", resource.updatedAt || "—"],
   ];
@@ -104,6 +105,25 @@ export default function ResourceDetailPage() {
               </div>
             ))}
           </div>
+
+          {resource.qrCode && (
+            <div style={{ marginTop: 16, border: `1px solid ${C.border}`, borderRadius: 16, padding: 16, background: "#FAFBFC", display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(resource.qrCode)}`}
+                alt="Resource QR"
+                width={140}
+                height={140}
+                style={{ borderRadius: 10, border: `1px solid ${C.border}`, background: "#fff" }}
+              />
+              <div>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".08em", color: C.muted, fontWeight: 700, marginBottom: 6 }}>QR Check-In Code</div>
+                <div style={{ color: C.text, fontWeight: 700 }}>{resource.qrCode}</div>
+                <div style={{ marginTop: 8, color: C.muted, fontSize: 13 }}>
+                  Use this code in the Resource Catalogue QR Lookup to open this resource quickly.
+                </div>
+              </div>
+            </div>
+          )}
 
           {isAdmin && (
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
