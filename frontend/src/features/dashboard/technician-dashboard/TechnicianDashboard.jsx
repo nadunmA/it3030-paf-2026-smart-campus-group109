@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiGet, apiPatch } from "../../lib/api";
+import { apiGet, apiPatch } from "../../../lib/api";
 
 /* ─────────────────────────────────────────
    BADGE

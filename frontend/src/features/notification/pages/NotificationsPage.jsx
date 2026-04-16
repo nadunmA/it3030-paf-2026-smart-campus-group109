@@ -1,7 +1,7 @@
 // src/features/notification/NotificationsPage.jsx
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiGet, apiPatch } from "../../lib/api";
+import { apiGet, apiPatch } from "../../../lib/api";
 
 /* ── Badge ── */
 function Badge({ type, children }) {
