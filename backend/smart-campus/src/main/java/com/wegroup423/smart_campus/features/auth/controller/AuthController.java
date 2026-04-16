@@ -19,14 +19,7 @@ public class AuthController {
 
     private final UserRepository userRepository;
 
-    /**
-     * GET /api/auth/me
-     *
-     * Handles 3 principal types that JwtAuthFilter might inject:
-     *  1. String  — raw userId stored as principal
-     *  2. UserDetails — Spring's standard; username = userId or email
-     *  3. User (your entity) — if JwtAuthFilter sets the full object
-     */
+
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal Object principal) {
 
@@ -34,12 +27,12 @@ public class AuthController {
             return ResponseEntity.status(401).body(Map.of("error", "Unauthorized - no principal"));
         }
 
-        // Case 1: principal is the full User entity already
+        // principal is the full User entity already
         if (principal instanceof User user) {
             return ResponseEntity.ok(toSafeMap(user));
         }
 
-        // Case 2: principal is a Spring UserDetails (username = userId or email)
+        // principal is a Spring UserDetails (username = userId or email)
         String identifier;
         if (principal instanceof UserDetails ud) {
             identifier = ud.getUsername();
