@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPatch } from "../../../lib/api";
-import HallsTab from "../../admin-dashboard/components/HallsTab";
+import HallsTab from "../../dashboard/admin-dashboard/components/HallsTab";
 import UserList from "../../userManagement/UserList";
 
 /* ─────────────────────────────────────────
@@ -418,7 +418,7 @@ export default function AdminDashboard() {
         const [b, t, r, u, a] = await Promise.allSettled([
           apiGet("/admin/bookings"),
           apiGet("/admin/tickets"),
-          apiGet("/admin/resources"),
+          apiGet("/resources"),
           apiGet("/admin/users"),
           apiGet("/admin/activity"),
         ]);
@@ -540,7 +540,6 @@ export default function AdminDashboard() {
     { id: "overview", icon: "⊞", label: "Overview" },
     { id: "bookings", icon: "📅", label: "Bookings", badge: pendingBookings },
     { id: "tickets", icon: "🔧", label: "Tickets" },
-    { id: "halls", icon: "🏛", label: "Halls" },
     { id: "resources", icon: "📦", label: "Resources" },
     { id: "users", icon: "👥", label: "Users" },
     { id: "activity", icon: "📋", label: "Activity Log" },
@@ -643,7 +642,13 @@ export default function AdminDashboard() {
               label={item.label}
               active={activeTab === item.id}
               badge={item.badge}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                if (item.id === "resources") {
+                  navigate("/resources");
+                  return;
+                }
+                setActiveTab(item.id);
+              }}
             />
           ))}
         </nav>
@@ -833,13 +838,6 @@ export default function AdminDashboard() {
                   tab: "tickets",
                 },
                 {
-                  icon: "🏛",
-                  label: "Manage Halls",
-                  sub: "Facilities & Assets",
-                  bg: C.purpleBg,
-                  tab: "halls",
-                },
-                {
                   icon: "📦",
                   label: "Manage Resources",
                   sub: "Equipment & inventory",
@@ -849,7 +847,13 @@ export default function AdminDashboard() {
               ].map((q) => (
                 <div
                   key={q.tab}
-                  onClick={() => setActiveTab(q.tab)}
+                  onClick={() => {
+                    if (q.tab === "resources") {
+                      navigate("/resources");
+                      return;
+                    }
+                    setActiveTab(q.tab);
+                  }}
                   style={{
                     background: C.surface,
                     border: `1px solid ${C.border}`,
@@ -1130,9 +1134,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── HALLS ── */}
-        {activeTab === "halls" && <HallsTab />}
-
         {/* ── RESOURCES ── */}
         {activeTab === "resources" && (
           <div>
@@ -1146,6 +1147,8 @@ export default function AdminDashboard() {
             >
               <div style={pgTitle}>Resource Catalogue</div>
               <button
+                type="button"
+                onClick={() => navigate("/resources")}
                 style={btnPrimary}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.background = "#1D4ED8")
@@ -1183,6 +1186,7 @@ export default function AdminDashboard() {
                   {(r.status || "ACTIVE").replace("_", " ")}
                 </Badge>,
                 <span
+                  onClick={() => navigate(`/resources/${r.id}`)}
                   style={{
                     fontSize: 12,
                     color: C.blue,

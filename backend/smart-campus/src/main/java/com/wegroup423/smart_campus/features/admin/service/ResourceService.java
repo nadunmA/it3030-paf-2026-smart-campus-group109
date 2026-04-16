@@ -13,9 +13,13 @@ public interface ResourceService {
 
     ResourceResponse getResource(String id);
 
+    ResourceResponse getResourceByQrCode(String qrCode);
+
     Page<ResourceResponse> getAllResources(Pageable pageable);
 
     ResourceResponse updateResource(String id, UpdateResourceRequest request);
+
+    ResourceResponse updateResourceStatus(String id, String status);
 
     void deleteResource(String id);
 
@@ -26,4 +30,6 @@ public interface ResourceService {
     List<ResourceResponse> getResourcesByLocation(String location);
 
     List<ResourceResponse> getAssignedResources(String technicianId);
+
+    String exportResourcesAsCsv(String type, String location, Integer capacity);
 }

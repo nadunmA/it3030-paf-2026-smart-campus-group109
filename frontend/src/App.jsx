@@ -14,6 +14,8 @@ import {
   RequireAuth,
   RequireRole,
 } from "./features/auth/components/RouteGuards";
+import ResourceListPage from "./features/resources/ResourceListPage";
+import ResourceDetailPage from "./features/resources/ResourceDetailPage";
 
 export default function App() {
   return (
@@ -58,6 +60,8 @@ export default function App() {
           }
         >
           <Route path="/notifications" element={<UserNotifications />} />
+          <Route path="/resources" element={<ResourceListPage />} />
+          <Route path="/resources/:id" element={<ResourceDetailPage />} />
         </Route>
 
         {/* TECHNICIAN only */}

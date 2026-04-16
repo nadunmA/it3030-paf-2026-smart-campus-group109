@@ -24,7 +24,7 @@ async function apiRequest(method, path, payload) {
 
   if (!res.ok) {
     throw new Error(
-      `GET ${path} failed: ${res.status} - ${JSON.stringify(body)}`,
+      `${method} ${path} failed: ${res.status} - ${JSON.stringify(body)}`,
     );
   }
 
@@ -49,4 +49,30 @@ export async function apiPatch(path, payload) {
 
 export async function apiDelete(path) {
   return apiRequest("DELETE", path);
+}
+
+export async function apiDownload(path) {
+  const token = sessionStorage.getItem("token");
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "GET",
+    headers,
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`GET ${path} failed: ${res.status} - ${text}`);
+  }
+
+  const contentDisposition = res.headers.get("content-disposition") || "";
+  const fileNameMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i);
+  const fileName = fileNameMatch?.[1] || "download.bin";
+  const blob = await res.blob();
+
+  return { blob, fileName };
 }
