@@ -39,35 +39,24 @@ const PLATFORM_ITEMS = [
     desc: "Secure Google sign-in",
     path: "/",
   },
-  {
-    icon: "📊",
-    color: "#64D2FF",
-    title: "Admin Dashboard",
-    desc: "Full campus oversight",
-    path: "/bookings/admin",
-  },
 ];
 
 function PlatformMega({ onClose }) {
   const navigate = useNavigate();
 
   const handleItemClick = (path) => {
-    onClose(); // dropdown එක වහන්න
+    onClose();
     if (path === "/notifications") {
       navigate("/dashboard", { state: { tab: "notifications" } });
       return;
     }
-    navigate(path); // අදාළ පේජ් එකට යන්න
+    navigate(path);
   };
 
   return (
     <div
-      onMouseLeave={onClose}
       style={{
-        position: "absolute",
-        top: "calc(100% + 10px)",
-        left: "50%",
-        transform: "translateX(-50%)",
+        // Position styles removed as requested
         background: "rgba(14,14,18,.97)",
         backdropFilter: "blur(28px)",
         border: "1px solid rgba(255,255,255,.1)",
@@ -129,6 +118,7 @@ function PlatformMega({ onClose }) {
           </div>
         ))}
       </div>
+
       <div
         style={{
           margin: "6px 6px 2px",
@@ -202,6 +192,7 @@ function NotifPanel({ notifications, onMarkAllRead, onViewAll, onNotifClick }) {
         animation: "dropIn .2s ease",
       }}
     >
+      {/* NotifPanel content */}
       <div
         style={{
           padding: "13px 16px 10px",
@@ -318,6 +309,7 @@ function UserMenu({ onLogout, user }) {
   useEffect(() => {
     if (!user) return;
     let active = true;
+
     const loadNotifications = async () => {
       try {
         const res = await apiGet("/notifications/my");
@@ -330,8 +322,10 @@ function UserMenu({ onLogout, user }) {
         console.error("Failed to load navbar notifications", err);
       }
     };
+
     loadNotifications();
     const intervalId = setInterval(loadNotifications, 30000);
+
     return () => {
       active = false;
       clearInterval(intervalId);
@@ -410,6 +404,7 @@ function UserMenu({ onLogout, user }) {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      {/* Notification Bell & Panel */}
       <div ref={notifRef} style={{ position: "relative" }}>
         <div
           onClick={() => setNotif((o) => !o)}
@@ -427,6 +422,7 @@ function UserMenu({ onLogout, user }) {
             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 01-3.46 0" />
           </svg>
+
           {unreadCount > 0 && (
             <span
               style={{
@@ -445,6 +441,7 @@ function UserMenu({ onLogout, user }) {
             </span>
           )}
         </div>
+
         {notif && (
           <NotifPanel
             notifications={notifications}
@@ -458,6 +455,7 @@ function UserMenu({ onLogout, user }) {
         )}
       </div>
 
+      {/* User Menu */}
       <div ref={menuRef} style={{ position: "relative" }}>
         <div
           onClick={() => setOpen((o) => !o)}
@@ -479,6 +477,7 @@ function UserMenu({ onLogout, user }) {
         >
           {initials}
         </div>
+
         {open && (
           <div
             style={{
@@ -496,6 +495,7 @@ function UserMenu({ onLogout, user }) {
               animation: "dropIn .2s ease",
             }}
           >
+            {/* User menu content */}
             <div
               style={{
                 padding: "10px 12px 9px",
@@ -541,6 +541,7 @@ function UserMenu({ onLogout, user }) {
                 </span>
               </div>
             </div>
+
             {items.map((item) => (
               <div
                 key={item.label}
@@ -567,6 +568,7 @@ function UserMenu({ onLogout, user }) {
                 )}
               </div>
             ))}
+
             <div
               style={{
                 height: 1,
@@ -574,6 +576,7 @@ function UserMenu({ onLogout, user }) {
                 margin: "4px 6px",
               }}
             />
+
             <div className="drop-item drop-danger" onClick={onLogout}>
               <span style={{ fontSize: ".95rem" }}>🚪</span> Sign out
             </div>
@@ -594,6 +597,12 @@ export default function Navbar({
   onGoTo,
 }) {
   const [megaOpen, setMegaOpen] = useState(false);
+  const megaCloseRef = useRef(null);
+
+  useEffect(() => {
+    return () => clearTimeout(megaCloseRef.current);
+  }, []);
+
   return (
     <nav
       style={{
@@ -609,7 +618,9 @@ export default function Navbar({
         padding: "0 max(28px,5vw)",
         background: scrolled ? "rgba(0,0,0,.82)" : "transparent",
         backdropFilter: scrolled ? "blur(20px) saturate(180%)" : "none",
-        borderBottom: `1px solid ${scrolled ? "rgba(255,255,255,.08)" : "transparent"}`,
+        borderBottom: `1px solid ${
+          scrolled ? "rgba(255,255,255,.08)" : "transparent"
+        }`,
         transition: "all .4s ease",
       }}
     >
@@ -625,13 +636,21 @@ export default function Navbar({
       >
         Smart<span style={{ color: "#0A84FF" }}>Campus</span>
       </div>
+
       <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
         <div
           style={{ position: "relative" }}
-          onMouseLeave={() => setMegaOpen(false)}
+          onMouseEnter={() => {
+            clearTimeout(megaCloseRef.current);
+            setMegaOpen(true);
+          }}
+          onMouseLeave={() => {
+            megaCloseRef.current = setTimeout(() => {
+              setMegaOpen(false);
+            }, 180);
+          }}
         >
           <div
-            onMouseEnter={() => setMegaOpen(true)}
             className="nav-pill"
             style={{
               display: "flex",
@@ -648,8 +667,29 @@ export default function Navbar({
           >
             Platform
           </div>
-          {megaOpen && <PlatformMega onClose={() => setMegaOpen(false)} />}
+
+          {megaOpen && (
+            <div
+              onMouseEnter={() => clearTimeout(megaCloseRef.current)}
+              onMouseLeave={() => {
+                megaCloseRef.current = setTimeout(() => {
+                  setMegaOpen(false);
+                }, 180);
+              }}
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                marginTop: 6,
+                zIndex: 300,
+              }}
+            >
+              <PlatformMega onClose={() => setMegaOpen(false)} />
+            </div>
+          )}
         </div>
+
         {[
           ["About", "stats"],
           ["Features", "features"],
@@ -694,6 +734,7 @@ export default function Navbar({
           Bookings
         </Link>
       </div>
+
       <div
         style={{
           display: "flex",
