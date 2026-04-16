@@ -22,6 +22,7 @@ public record ResourceResponse(
         String assignedTechnicianId,
         String assignedTechnicianName,
         String serialNumber,
+        String usageInstructions,
         String condition,
         LocalDate maintenanceDate,
         String qrCode,

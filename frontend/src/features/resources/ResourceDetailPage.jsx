@@ -23,6 +23,28 @@ function readUser() {
   }
 }
 
+function normalizeTypeKey(value) {
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "_");
+}
+
+function buildEquipmentQrPayload(resource) {
+  const lines = [
+    `Resource: ${resource.name || ""}`,
+    `Type: ${resource.type || resource.resourceTypeName || ""}`,
+    `Location: ${resource.location || ""}`,
+    `Serial: ${resource.serialNumber || "N/A"}`,
+    `Usage: ${resource.usageInstructions || "N/A"}`,
+    `Warranty Expiry: ${resource.warrantyExpiry || "N/A"}`,
+    `Maintenance Date: ${resource.maintenanceDate || "N/A"}`,
+    `Condition: ${resource.condition || "N/A"}`,
+  ];
+
+  return lines.join("\n");
+}
+
 export default function ResourceDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -76,6 +98,7 @@ export default function ResourceDetailPage() {
   const rows = [
     ["Type", resource.type || resource.resourceTypeName],
     ["Description", resource.description || "—"],
+    ["How To Use", resource.usageInstructions || "—"],
     ["Location", resource.location || "—"],
     ["Capacity", resource.capacity ?? "—"],
     ["Availability Start", resource.availabilityStart || "—"],
@@ -89,6 +112,9 @@ export default function ResourceDetailPage() {
     ["Created At", resource.createdAt || "—"],
     ["Updated At", resource.updatedAt || "—"],
   ];
+
+  const isEquipment = normalizeTypeKey(resource.type || resource.resourceTypeName) === "EQUIPMENT";
+  const qrPayload = isEquipment ? buildEquipmentQrPayload(resource) : resource.qrCode;
 
   return (
     <ResourceAdminLayout>
@@ -115,20 +141,26 @@ export default function ResourceDetailPage() {
             ))}
           </div>
 
-          {resource.qrCode && (
+          {qrPayload && (
             <div style={{ marginTop: 16, border: `1px solid ${C.border}`, borderRadius: 16, padding: 16, background: "#FAFBFC", display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(resource.qrCode)}`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(qrPayload)}`}
                 alt="Resource QR"
                 width={140}
                 height={140}
                 style={{ borderRadius: 10, border: `1px solid ${C.border}`, background: "#fff" }}
               />
               <div>
-                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".08em", color: C.muted, fontWeight: 700, marginBottom: 6 }}>QR Check-In Code</div>
-                <div style={{ color: C.text, fontWeight: 700 }}>{resource.qrCode}</div>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".08em", color: C.muted, fontWeight: 700, marginBottom: 6 }}>
+                  {isEquipment ? "Equipment QR Details" : "QR Check-In Code"}
+                </div>
+                <div style={{ color: C.text, fontWeight: 700, maxWidth: 580, whiteSpace: "pre-wrap" }}>
+                  {qrPayload}
+                </div>
                 <div style={{ marginTop: 8, color: C.muted, fontSize: 13 }}>
-                  Use this code in the Resource Catalogue QR Lookup to open this resource quickly.
+                  {isEquipment
+                    ? "Scanning this QR shows equipment usage and warranty information from this CRUD record."
+                    : "Use this code in the Resource Catalogue QR Lookup to open this resource quickly."}
                 </div>
               </div>
             </div>

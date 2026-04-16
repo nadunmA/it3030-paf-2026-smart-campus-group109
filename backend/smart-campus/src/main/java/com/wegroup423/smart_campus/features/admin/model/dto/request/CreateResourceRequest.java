@@ -32,6 +32,8 @@ public record CreateResourceRequest(
 
         String serialNumber,
 
+        String usageInstructions,
+
         String condition,
 
         LocalDate maintenanceDate,
