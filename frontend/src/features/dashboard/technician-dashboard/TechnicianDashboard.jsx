@@ -647,7 +647,7 @@ export default function TechnicianDashboard() {
         </div>
       </aside>
 
-      {/* ── MAIN ── */}
+      {/* MAIN */}
       <main
         style={{
           marginLeft: 224,
@@ -682,7 +682,7 @@ export default function TechnicianDashboard() {
           </div>
         )}
 
-        {/* ── OVERVIEW ── */}
+        {/* OVERVIEW */}
         {activeTab === "overview" && (
           <div>
             <div style={{ marginBottom: 26 }}>
@@ -1579,7 +1579,7 @@ export default function TechnicianDashboard() {
         )}
       </main>
 
-      {/* ── UPDATE MODAL ── */}
+      {/* UPDATE MODAL */}
       {selectedTicket && (
         <UpdateModal
           ticket={selectedTicket}

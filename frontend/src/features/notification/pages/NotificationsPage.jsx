@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPatch } from "../../../lib/api";
 
-/* ── Badge ── */
+/* Badge */
 function Badge({ type, children }) {
   const styles = {
     APPROVED: { bg: "#ECFDF5", color: "#059669", border: "#A7F3D0" },
@@ -44,7 +44,7 @@ function Badge({ type, children }) {
   );
 }
 
-/* ── NavItem ── */
+/* NavItem */
 function NavItem({ icon, label, active, onClick, badge }) {
   const [hov, setHov] = useState(false);
   return (
@@ -89,7 +89,7 @@ function NavItem({ icon, label, active, onClick, badge }) {
   );
 }
 
-/* ── TYPE META ── */
+/* TYPE META */
 const TYPE_META = {
   BOOKING_APPROVED: {
     color: "#2563EB",
@@ -134,7 +134,7 @@ function mapNotif(n) {
   };
 }
 
-/* ── NotifCard ── */
+/* NotifCard */
 function NotifCard({ notif, onMarkRead }) {
   const [hov, setHov] = useState(false);
   const meta = getMeta(notif.type);
@@ -300,7 +300,7 @@ export default function NotificationsPage() {
   const user = sessionUser;
   const unreadCount = notifs.filter((n) => !n.read).length;
 
-  /* ── filter logic ── */
+  /* filter logic */
   const FILTERS = ["ALL", "BOOKING", "TICKET", "COMMENT", "GENERAL", "UNREAD"];
 
   const filtered = notifs.filter((n) => {
@@ -312,7 +312,7 @@ export default function NotificationsPage() {
   const unread = filtered.filter((n) => !n.read);
   const read = filtered.filter((n) => n.read);
 
-  /* ── shared styles ── */
+  /* shared styles */
   const filterPillBase = {
     padding: "5px 14px",
     borderRadius: 99,
@@ -520,7 +520,7 @@ export default function NotificationsPage() {
         </div>
       </aside>
 
-      {/* ── MAIN ── */}
+      {/* MAIN */}
       <main
         style={{
           marginLeft: 236,
