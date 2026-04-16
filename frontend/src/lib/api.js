@@ -70,7 +70,7 @@ export async function apiDownload(path) {
   }
 
   const contentDisposition = res.headers.get("content-disposition") || "";
-  // Fixed regex - no unnecessary escapes
+
   const fileNameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
   const fileName = fileNameMatch?.[1] || "download.bin";
   const blob = await res.blob();
