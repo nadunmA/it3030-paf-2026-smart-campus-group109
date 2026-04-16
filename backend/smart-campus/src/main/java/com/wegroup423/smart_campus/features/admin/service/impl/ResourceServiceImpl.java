@@ -9,6 +9,7 @@ import com.wegroup423.smart_campus.features.admin.model.entity.Resource;
 import com.wegroup423.smart_campus.features.admin.model.entity.ResourceType;
 import com.wegroup423.smart_campus.features.admin.model.enums.ResourceAvailability;
 import com.wegroup423.smart_campus.features.admin.model.enums.ResourceCondition;
+import com.wegroup423.smart_campus.features.admin.model.enums.ResourceStatus;
 import com.wegroup423.smart_campus.features.admin.repository.ResourceRepository;
 import com.wegroup423.smart_campus.features.admin.repository.ResourceTypeRepository;
 import com.wegroup423.smart_campus.features.admin.service.ResourceService;
@@ -36,36 +37,34 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public ResourceResponse createResource(CreateResourceRequest request) {
         // Validate resource type exists
-        ResourceType resourceType = resourceTypeRepository.findById(request.resourceTypeId())
-                .orElseThrow(() -> new ResourceTypeNotFoundException(
-                        "ResourceType not found with id: " + request.resourceTypeId()));
+        ResourceType resourceType = resolveResourceType(request.resourceTypeId(), request.type());
 
-        // Validate assigned technician exists if provided
-        String technicianName = null;
-        if (request.assignedTechnicianId() != null) {
-            User technician = userRepository.findById(request.assignedTechnicianId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Technician not found with id: " + request.assignedTechnicianId()));
-            technicianName = technician.getName();
-        }
+        String normalizedTechnicianId = normalizeTechnicianId(request.assignedTechnicianId());
+        String technicianName = resolveTechnicianName(normalizedTechnicianId);
 
         // Generate QR code (simple UUID-based approach)
         String qrCode = "RESOURCE_" + UUID.randomUUID().toString();
 
         Resource resource = Resource.builder()
                 .name(request.name())
-                .resourceTypeId(request.resourceTypeId())
+            .type(resourceType.getName())
+            .description(request.description())
+            .resourceTypeId(resourceType.getId())
                 .location(request.location())
                 .capacity(request.capacity())
+            .availabilityStart(request.availabilityStart())
+            .availabilityEnd(request.availabilityEnd())
                 .cost(request.cost())
                 .warrantyExpiry(request.warrantyExpiry())
-                .assignedTechnicianId(request.assignedTechnicianId())
+                .assignedTechnicianId(normalizedTechnicianId)
                 .serialNumber(request.serialNumber())
+                .usageInstructions(request.usageInstructions())
                 .condition(request.condition() != null ? 
                         ResourceCondition.valueOf(request.condition()) : ResourceCondition.EXCELLENT)
                 .maintenanceDate(request.maintenanceDate())
                 .qrCode(qrCode)
                 .availability(ResourceAvailability.AVAILABLE)
+            .status(resolveStatus(request.status(), ResourceStatus.ACTIVE))
                 .createdAt(Instant.now())
                 .build();
 
@@ -93,6 +92,18 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+    public ResourceResponse getResourceByQrCode(String qrCode) {
+        if (qrCode == null || qrCode.isBlank()) {
+            throw new ResourceNotFoundException("QR code is required");
+        }
+
+        Resource resource = resourceRepository.findByQrCode(qrCode.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found for qrCode: " + qrCode));
+
+        return enrichResourceResponse(resource);
+    }
+
+    @Override
     public Page<ResourceResponse> getAllResources(Pageable pageable) {
         return resourceRepository.findAll(pageable)
                 .map(this::enrichResourceResponse);
@@ -108,16 +119,24 @@ public class ResourceServiceImpl implements ResourceService {
         }
         if (request.resourceTypeId() != null) {
             // Validate new resource type exists
-            resourceTypeRepository.findById(request.resourceTypeId())
-                    .orElseThrow(() -> new ResourceTypeNotFoundException(
-                            "ResourceType not found with id: " + request.resourceTypeId()));
-            resource.setResourceTypeId(request.resourceTypeId());
+            ResourceType resourceType = resolveResourceType(request.resourceTypeId(), request.type());
+            resource.setResourceTypeId(resourceType.getId());
+            resource.setType(resourceType.getName());
+        }
+        if (request.description() != null) {
+            resource.setDescription(request.description());
         }
         if (request.location() != null) {
             resource.setLocation(request.location());
         }
         if (request.capacity() != null) {
             resource.setCapacity(request.capacity());
+        }
+        if (request.availabilityStart() != null) {
+            resource.setAvailabilityStart(request.availabilityStart());
+        }
+        if (request.availabilityEnd() != null) {
+            resource.setAvailabilityEnd(request.availabilityEnd());
         }
         if (request.cost() != null) {
             resource.setCost(request.cost());
@@ -126,13 +145,13 @@ public class ResourceServiceImpl implements ResourceService {
             resource.setWarrantyExpiry(request.warrantyExpiry());
         }
         if (request.assignedTechnicianId() != null) {
-            userRepository.findById(request.assignedTechnicianId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Technician not found with id: " + request.assignedTechnicianId()));
-            resource.setAssignedTechnicianId(request.assignedTechnicianId());
+            resource.setAssignedTechnicianId(normalizeTechnicianId(request.assignedTechnicianId()));
         }
         if (request.serialNumber() != null) {
             resource.setSerialNumber(request.serialNumber());
+        }
+        if (request.usageInstructions() != null) {
+            resource.setUsageInstructions(request.usageInstructions());
         }
         if (request.condition() != null) {
             resource.setCondition(ResourceCondition.valueOf(request.condition()));
@@ -142,11 +161,30 @@ public class ResourceServiceImpl implements ResourceService {
         }
         if (request.availability() != null) {
             resource.setAvailability(ResourceAvailability.valueOf(request.availability()));
+            resource.setStatus(mapAvailabilityToStatus(resource.getAvailability()));
+        }
+        if (request.status() != null) {
+            resource.setStatus(resolveStatus(request.status(), resource.getStatus()));
+            resource.setAvailability(mapStatusToAvailability(resource.getStatus()));
         }
 
         resource.setUpdatedAt(Instant.now());
         Resource updated = resourceRepository.save(resource);
         return enrichResourceResponse(updated);
+    }
+
+    @Override
+    public ResourceResponse updateResourceStatus(String id, String status) {
+        Resource resource = resourceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + id));
+
+        ResourceStatus newStatus = resolveStatus(status, resource.getStatus());
+        resource.setStatus(newStatus);
+        resource.setAvailability(mapStatusToAvailability(newStatus));
+        resource.setUpdatedAt(Instant.now());
+
+        Resource saved = resourceRepository.save(resource);
+        return enrichResourceResponse(saved);
     }
 
     @Override
@@ -160,18 +198,19 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public List<ResourceResponse> searchResources(String type, String location, String availability, Integer capacity) {
         List<Resource> resources;
+        String resolvedType = resolveTypeFilter(type);
 
-        if (type != null && !type.isEmpty() && location != null && !location.isEmpty() && availability != null) {
+        if (resolvedType != null && location != null && !location.isEmpty() && availability != null) {
             ResourceAvailability availabilityEnum = ResourceAvailability.valueOf(availability);
-            resources = resourceRepository.findByTypeLocationAvailability(type, location, availabilityEnum);
-        } else if (type != null && !type.isEmpty() && availability != null) {
+            resources = resourceRepository.findByTypeLocationAvailability(resolvedType, location, availabilityEnum);
+        } else if (resolvedType != null && availability != null) {
             ResourceAvailability availabilityEnum = ResourceAvailability.valueOf(availability);
-            resources = resourceRepository.findByTypeAndAvailability(type, availabilityEnum);
+            resources = resourceRepository.findByTypeAndAvailability(resolvedType, availabilityEnum);
         } else if (location != null && !location.isEmpty() && availability != null) {
             ResourceAvailability availabilityEnum = ResourceAvailability.valueOf(availability);
             resources = resourceRepository.findByLocationAndAvailability(location, availabilityEnum);
-        } else if (type != null && !type.isEmpty()) {
-            resources = resourceRepository.findByResourceTypeId(type);
+        } else if (resolvedType != null) {
+            resources = resourceRepository.findByResourceTypeId(resolvedType);
         } else if (location != null && !location.isEmpty()) {
             resources = resourceRepository.findByLocation(location);
         } else if (availability != null) {
@@ -210,6 +249,32 @@ public class ResourceServiceImpl implements ResourceService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public String exportResourcesAsCsv(String type, String location, Integer capacity) {
+        List<ResourceResponse> resources = searchResources(type, location, null, capacity);
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("id,name,type,location,capacity,status,availability,assignedTechnician,warrantyExpiry,maintenanceDate,usageInstructions,qrCode\n");
+
+        for (ResourceResponse resource : resources) {
+            csv.append(csvCell(resource.id())).append(',')
+                    .append(csvCell(resource.name())).append(',')
+                    .append(csvCell(resource.type())).append(',')
+                    .append(csvCell(resource.location())).append(',')
+                    .append(csvCell(resource.capacity())).append(',')
+                    .append(csvCell(resource.status())).append(',')
+                    .append(csvCell(resource.availability())).append(',')
+                    .append(csvCell(resource.assignedTechnicianName())).append(',')
+                    .append(csvCell(resource.warrantyExpiry())).append(',')
+                    .append(csvCell(resource.maintenanceDate())).append(',')
+                    .append(csvCell(resource.usageInstructions())).append(',')
+                    .append(csvCell(resource.qrCode()))
+                    .append('\n');
+        }
+
+        return csv.toString();
+    }
+
     private ResourceResponse enrichResourceResponse(Resource resource) {
         ResourceType resourceType = resourceTypeRepository.findById(resource.getResourceTypeId())
                 .orElse(null);
@@ -230,21 +295,97 @@ public class ResourceServiceImpl implements ResourceService {
         return new ResourceResponse(
                 resource.getId(),
                 resource.getName(),
+                resource.getType() != null ? resource.getType() : resourceTypeName,
+                resource.getDescription(),
                 resource.getResourceTypeId(),
                 resourceTypeName,
                 resource.getLocation(),
                 resource.getCapacity(),
+                resource.getAvailabilityStart(),
+                resource.getAvailabilityEnd(),
                 resource.getAvailability().name(),
+                resource.getStatus() != null ? resource.getStatus().name() : ResourceStatus.ACTIVE.name(),
                 resource.getCost(),
                 resource.getWarrantyExpiry(),
                 resource.getAssignedTechnicianId(),
                 technicianName,
                 resource.getSerialNumber(),
+                resource.getUsageInstructions(),
                 resource.getCondition().name(),
                 resource.getMaintenanceDate(),
                 resource.getQrCode(),
                 resource.getCreatedAt(),
                 resource.getUpdatedAt()
         );
+    }
+
+    private ResourceType resolveResourceType(String resourceTypeId, String type) {
+        if (resourceTypeId != null && !resourceTypeId.isBlank()) {
+            return resourceTypeRepository.findById(resourceTypeId)
+                    .orElseThrow(() -> new ResourceTypeNotFoundException(
+                            "ResourceType not found with id: " + resourceTypeId));
+        }
+
+        if (type != null && !type.isBlank()) {
+            return resourceTypeRepository.findByName(type)
+                    .orElseThrow(() -> new ResourceTypeNotFoundException(
+                            "ResourceType not found with name: " + type));
+        }
+
+        throw new ResourceTypeNotFoundException("Resource type is required");
+    }
+
+    private String resolveTypeFilter(String type) {
+        if (type == null || type.isBlank()) {
+            return null;
+        }
+
+        return resourceTypeRepository.findByName(type)
+                .map(ResourceType::getId)
+                .orElse(type);
+    }
+
+    private String normalizeTechnicianId(String technicianId) {
+        if (technicianId == null || technicianId.isBlank()) {
+            return null;
+        }
+
+        String trimmed = technicianId.trim();
+        return userRepository.findById(trimmed).isPresent() ? trimmed : null;
+    }
+
+    private String resolveTechnicianName(String technicianId) {
+        if (technicianId == null) {
+            return null;
+        }
+
+        return userRepository.findById(technicianId)
+                .map(User::getName)
+                .orElse(null);
+    }
+
+    private ResourceStatus resolveStatus(String status, ResourceStatus fallback) {
+        if (status == null || status.isBlank()) {
+            return fallback;
+        }
+        return ResourceStatus.valueOf(status.trim().toUpperCase());
+    }
+
+    private ResourceAvailability mapStatusToAvailability(ResourceStatus status) {
+        return status == ResourceStatus.OUT_OF_SERVICE
+                ? ResourceAvailability.UNAVAILABLE
+                : ResourceAvailability.AVAILABLE;
+    }
+
+    private ResourceStatus mapAvailabilityToStatus(ResourceAvailability availability) {
+        return availability == ResourceAvailability.AVAILABLE
+                ? ResourceStatus.ACTIVE
+                : ResourceStatus.OUT_OF_SERVICE;
+    }
+
+    private String csvCell(Object value) {
+        String raw = value == null ? "" : String.valueOf(value);
+        String escaped = raw.replace("\"", "\"\"");
+        return "\"" + escaped + "\"";
     }
 }

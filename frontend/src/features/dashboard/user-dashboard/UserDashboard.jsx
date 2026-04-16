@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { apiGet, apiPatch } from "../../lib/api";
+import { apiGet, apiPatch } from "../../../lib/api";
 
-/* ── Badge ── */
+/* Badge */
 function Badge({ type, children }) {
   const styles = {
     APPROVED: { bg: "#ECFDF5", color: "#059669", border: "#A7F3D0" },
@@ -54,7 +54,7 @@ function Badge({ type, children }) {
   );
 }
 
-/* ── StatCard ── */
+/* StatCard */
 function StatCard({ icon, label, value, color, bgColor }) {
   return (
     <div
@@ -108,7 +108,7 @@ function StatCard({ icon, label, value, color, bgColor }) {
   );
 }
 
-/* ── NavItem ── */
+/* NavItem */
 function NavItem({ icon, label, active, onClick, badge }) {
   const [hov, setHov] = useState(false);
   return (
@@ -163,7 +163,7 @@ function NavItem({ icon, label, active, onClick, badge }) {
   );
 }
 
-/* ── BookingCard ── */
+/* BookingCard */
 function BookingCard({ title, resource, date, status }) {
   const [hov, setHov] = useState(false);
   return (
@@ -204,7 +204,7 @@ function BookingCard({ title, resource, date, status }) {
   );
 }
 
-/* ── TicketCard ── */
+/* TicketCard */
 function TicketCard({ title, priority, status, updated }) {
   const [hov, setHov] = useState(false);
   return (
@@ -251,7 +251,7 @@ function TicketCard({ title, priority, status, updated }) {
   );
 }
 
-/* ── FacilityCard ── */
+/* FacilityCard */
 function FacilityCard({ name, type, location, capacity, availability }) {
   const [hov, setHov] = useState(false);
   return (
@@ -291,12 +291,11 @@ function FacilityCard({ name, type, location, capacity, availability }) {
   );
 }
 
-/* ── NotifCard ── */
-/* notification type mapping fix: handles both backend enum names & frontend short names */
+/* NotifCard */
+
 function NotifCard({ notif, onMarkRead }) {
   const [hov, setHov] = useState(false);
 
-  // Map backend NotificationType enum → display color & label
   const TYPE_META = {
     BOOKING_APPROVED: { color: "#2563EB", label: "Booking" },
     BOOKING_REJECTED: { color: "#DC2626", label: "Booking" },
@@ -403,7 +402,7 @@ function NotifCard({ notif, onMarkRead }) {
   );
 }
 
-/* ── MOCK DATA ── */
+/* MOCK DATA */
 const MOCK_BOOKINGS = [
   {
     title: "Project Meeting",
@@ -451,7 +450,7 @@ const MOCK_TICKETS = [
   },
 ];
 
-/* ── notification type mapper ── */
+/* notification type mapper */
 function mapNotif(n) {
   return {
     id: n.id,
@@ -464,7 +463,7 @@ function mapNotif(n) {
   };
 }
 
-/* ══ MAIN DASHBOARD ══ */
+/* MAIN DASHBOARD */
 export default function UserDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -489,11 +488,11 @@ export default function UserDashboard() {
     }
   }, []);
 
-  const fetchHalls = useCallback(async () => {
+  const fetchResources = useCallback(async () => {
     try {
       setHallsLoading(true);
       setHallsError("");
-      const res = await apiGet("/admin/facilities?page=0&size=100");
+      const res = await apiGet("/resources");
       const list = Array.isArray(res)
         ? res
         : Array.isArray(res?.content)
@@ -548,7 +547,7 @@ export default function UserDashboard() {
         .catch(() => {});
     }
 
-    // load notifications immediately for overview unread count
+    // load notifications
     fetchNotifs();
     setTimeout(() => setLoaded(true), 100);
   }, [sessionUser, navigate, fetchNotifs]);
@@ -560,12 +559,12 @@ export default function UserDashboard() {
   }, [location.state]);
 
   useEffect(() => {
-    if (activeTab === "halls" && halls.length === 0 && !hallsLoading) {
-      fetchHalls();
+    if (activeTab === "resources" && halls.length === 0 && !hallsLoading) {
+      fetchResources();
     }
-  }, [activeTab, halls.length, hallsLoading, fetchHalls]);
+  }, [activeTab, halls.length, hallsLoading, fetchResources]);
 
-  /* ── single notification mark-as-read ── */
+  /* single notification mark-as-read */
   const markOneRead = useCallback(async (id) => {
     try {
       await apiPatch(`/notifications/${id}/read`, {});
@@ -577,7 +576,7 @@ export default function UserDashboard() {
     }
   }, []);
 
-  /* ── mark all read ── */
+  /* mark all read */
   const markAllRead = useCallback(async () => {
     try {
       await apiPatch("/notifications/my/read-all", {});
@@ -629,7 +628,7 @@ export default function UserDashboard() {
   const NAV = [
     { id: "overview", icon: "⊞", label: "Overview" },
     { id: "bookings", icon: "📅", label: "My Bookings" },
-    { id: "halls", icon: "🏛", label: "Halls" },
+    { id: "resources", icon: "🏛", label: "Resources" },
     { id: "tickets", icon: "🔧", label: "My Tickets" },
     {
       id: "notifications",
@@ -698,7 +697,7 @@ export default function UserDashboard() {
         display: "flex",
       }}
     >
-      {/* ── SIDEBAR ── */}
+      {/* SIDEBAR */}
       <aside
         style={{
           position: "fixed",
@@ -861,7 +860,7 @@ export default function UserDashboard() {
         </div>
       </aside>
 
-      {/* ── MAIN ── */}
+      {/* MAIN */}
       <main
         style={{
           marginLeft: 236,
@@ -1089,8 +1088,8 @@ export default function UserDashboard() {
           </div>
         )}
 
-        {/* HALLS */}
-        {activeTab === "halls" && (
+        {/* RESOURCES */}
+        {activeTab === "resources" && (
           <div>
             <div
               style={{
@@ -1102,13 +1101,13 @@ export default function UserDashboard() {
               }}
             >
               <div>
-                <div style={pageTitle}>Halls & Facilities</div>
+                <div style={pageTitle}>Resources & Facilities</div>
                 <div style={pageSub}>
-                  Browse available halls, labs, and campus facilities
+                  Browse available resources, labs, and campus facilities
                 </div>
               </div>
               <button
-                onClick={fetchHalls}
+                onClick={fetchResources}
                 style={{
                   padding: "8px 18px",
                   borderRadius: 99,
@@ -1170,11 +1169,15 @@ export default function UserDashboard() {
             )}
 
             {hallsLoading ? (
-              <div style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}>
+              <div
+                style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}
+              >
                 Loading facilities...
               </div>
             ) : filteredHalls.length === 0 ? (
-              <div style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}>
+              <div
+                style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}
+              >
                 No facilities found.
               </div>
             ) : (

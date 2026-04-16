@@ -22,7 +22,7 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     private String currentUserId(Authentication auth) {
-        return auth.getName(); // make sure JWT subject = userId
+        return auth.getName();
     }
 
     @GetMapping("/my")

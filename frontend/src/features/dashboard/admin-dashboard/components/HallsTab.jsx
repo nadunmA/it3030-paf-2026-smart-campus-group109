@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { apiGet, apiPost, apiPatch, apiDelete } from "../../../lib/api";
+import { apiGet, apiPost, apiPatch, apiDelete } from "../../../../lib/api";
 
 const C = {
   bg: "#F5F7FA",
@@ -36,7 +36,11 @@ function Badge({ type, children }) {
     FAIR: { bg: C.orangeBg, color: C.orange, bd: C.orangeBd },
     POOR: { bg: C.redBg, color: C.red, bd: C.redBd },
   };
-  const s = BADGE_STYLES[type] || { bg: "#F1F5F9", color: "#64748B", bd: "#E2E8F0" };
+  const s = BADGE_STYLES[type] || {
+    bg: "#F1F5F9",
+    color: "#64748B",
+    bd: "#E2E8F0",
+  };
   return (
     <span
       style={{
@@ -77,7 +81,9 @@ function Table({ cols, rows }) {
         overflow: "hidden",
       }}
     >
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      <table
+        style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+      >
         <thead>
           <tr style={{ background: "#FAFBFC" }}>
             {cols.map((c) => (
@@ -115,7 +121,8 @@ function Table({ cols, rows }) {
                   key={j}
                   style={{
                     padding: "11px 16px",
-                    borderBottom: i < rows.length - 1 ? `1px solid #F1F5F9` : "none",
+                    borderBottom:
+                      i < rows.length - 1 ? `1px solid #F1F5F9` : "none",
                     color: C.text,
                   }}
                 >
@@ -203,9 +210,23 @@ function ResourceDetailModal({ resource, onClose, onEdit, onDelete }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "start",
+            marginBottom: 16,
+          }}
+        >
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: C.text, margin: 0 }}>
+            <h2
+              style={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: C.text,
+                margin: 0,
+              }}
+            >
               {resource.name}
             </h2>
             <p style={{ fontSize: 12, color: C.hint, margin: "4px 0 0 0" }}>
@@ -233,37 +254,82 @@ function ResourceDetailModal({ resource, onClose, onEdit, onDelete }) {
           </Badge>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 16,
+            marginBottom: 20,
+          }}
+        >
           {[
             { label: "Location", value: resource.location },
             { label: "Capacity", value: resource.capacity },
             { label: "Cost", value: `$${resource.cost?.toFixed(2) || "N/A"}` },
             { label: "Serial Number", value: resource.serialNumber || "—" },
             { label: "Warranty Expiry", value: resource.warrantyExpiry || "—" },
-            { label: "Maintenance Date", value: resource.maintenanceDate || "—" },
-            { label: "Assigned Technician", value: resource.assignedTechnicianName || "Unassigned" },
+            {
+              label: "Maintenance Date",
+              value: resource.maintenanceDate || "—",
+            },
+            {
+              label: "Assigned Technician",
+              value: resource.assignedTechnicianName || "Unassigned",
+            },
           ].map((item, i) => (
             <div key={i}>
-              <div style={{ fontSize: 11, color: C.hint, fontWeight: 600, marginBottom: 4, textTransform: "uppercase" }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: C.hint,
+                  fontWeight: 600,
+                  marginBottom: 4,
+                  textTransform: "uppercase",
+                }}
+              >
                 {item.label}
               </div>
-              <div style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>{item.value}</div>
+              <div style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>
+                {item.value}
+              </div>
             </div>
           ))}
         </div>
 
         {resource.qrCode && (
           <div style={{ marginBottom: 20, textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: C.hint, fontWeight: 600, marginBottom: 8, textTransform: "uppercase" }}>
+            <div
+              style={{
+                fontSize: 11,
+                color: C.hint,
+                fontWeight: 600,
+                marginBottom: 8,
+                textTransform: "uppercase",
+              }}
+            >
               QR Code
             </div>
-            <div style={{ fontSize: 12, color: C.muted, fontFamily: "monospace", wordBreak: "break-all" }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: C.muted,
+                fontFamily: "monospace",
+                wordBreak: "break-all",
+              }}
+            >
               {resource.qrCode}
             </div>
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 8, borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            borderTop: `1px solid ${C.border}`,
+            paddingTop: 16,
+          }}
+        >
           <button
             onClick={onEdit}
             style={{
@@ -379,9 +445,18 @@ export default function HallsTab() {
   };
 
   const filteredResources = resources.filter((r) => {
-    if (filters.availability !== "All" && r.availability !== filters.availability) return false;
-    if (filters.typeId !== "All" && r.resourceTypeId !== filters.typeId) return false;
-    if (filters.location && !r.location.toLowerCase().includes(filters.location.toLowerCase())) return false;
+    if (
+      filters.availability !== "All" &&
+      r.availability !== filters.availability
+    )
+      return false;
+    if (filters.typeId !== "All" && r.resourceTypeId !== filters.typeId)
+      return false;
+    if (
+      filters.location &&
+      !r.location.toLowerCase().includes(filters.location.toLowerCase())
+    )
+      return false;
     return true;
   });
 
@@ -462,9 +537,25 @@ export default function HallsTab() {
       )}
 
       {/* Filters */}
-      <div style={{ marginBottom: 16, display: "flex", gap: 12, alignItems: "flex-end" }}>
+      <div
+        style={{
+          marginBottom: 16,
+          display: "flex",
+          gap: 12,
+          alignItems: "flex-end",
+        }}
+      >
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: C.hint, textTransform: "uppercase", display: "block", marginBottom: 6 }}>
+          <label
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: C.hint,
+              textTransform: "uppercase",
+              display: "block",
+              marginBottom: 6,
+            }}
+          >
             Type
           </label>
           <select
@@ -481,7 +572,11 @@ export default function HallsTab() {
             }}
           >
             <option value="All">All</option>
-            {[...new Map(resources.map((r) => [r.resourceTypeId, r.resourceTypeName])).entries()].map(([id, name]) => (
+            {[
+              ...new Map(
+                resources.map((r) => [r.resourceTypeId, r.resourceTypeName]),
+              ).entries(),
+            ].map(([id, name]) => (
               <option key={id} value={id}>
                 {name}
               </option>
@@ -489,12 +584,23 @@ export default function HallsTab() {
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: C.hint, textTransform: "uppercase", display: "block", marginBottom: 6 }}>
+          <label
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: C.hint,
+              textTransform: "uppercase",
+              display: "block",
+              marginBottom: 6,
+            }}
+          >
             Availability
           </label>
           <select
             value={filters.availability}
-            onChange={(e) => setFilters({ ...filters, availability: e.target.value })}
+            onChange={(e) =>
+              setFilters({ ...filters, availability: e.target.value })
+            }
             style={{
               border: `1px solid ${C.border}`,
               borderRadius: 7,
@@ -512,14 +618,25 @@ export default function HallsTab() {
           </select>
         </div>
         <div style={{ flex: 1 }}>
-          <label style={{ fontSize: 11, fontWeight: 600, color: C.hint, textTransform: "uppercase", display: "block", marginBottom: 6 }}>
+          <label
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: C.hint,
+              textTransform: "uppercase",
+              display: "block",
+              marginBottom: 6,
+            }}
+          >
             Search Location
           </label>
           <input
             type="text"
             placeholder="e.g., Building A, Room 101"
             value={filters.location}
-            onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+            onChange={(e) =>
+              setFilters({ ...filters, location: e.target.value })
+            }
             style={{
               width: "100%",
               border: `1px solid ${C.border}`,
@@ -538,12 +655,22 @@ export default function HallsTab() {
       {filteredResources.length === 0 ? (
         <Panel title="Resources">
           <div style={{ padding: "32px 16px", textAlign: "center" }}>
-            <p style={{ color: C.hint, margin: 0 }}>No resources found. Create your first resource to get started.</p>
+            <p style={{ color: C.hint, margin: 0 }}>
+              No resources found. Create your first resource to get started.
+            </p>
           </div>
         </Panel>
       ) : (
         <Table
-          cols={["Name", "Type", "Location", "Capacity", "Availability", "Condition", "Actions"]}
+          cols={[
+            "Name",
+            "Type",
+            "Location",
+            "Capacity",
+            "Availability",
+            "Condition",
+            "Actions",
+          ]}
           rows={filteredResources.map((r) => [
             <span style={{ fontWeight: 600 }}>{r.name}</span>,
             r.resourceTypeName,
@@ -715,12 +842,21 @@ function ResourceFormModal({ resource, onSave, onCancel }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: C.text, margin: "0 0 16px 0" }}>
+        <h2
+          style={{
+            fontSize: 18,
+            fontWeight: 700,
+            color: C.text,
+            margin: "0 0 16px 0",
+          }}
+        >
           {resource ? "Edit Resource" : "Create New Resource"}
         </h2>
 
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+          >
             <FormField
               label="Name"
               required
@@ -744,7 +880,9 @@ function ResourceFormModal({ resource, onSave, onCancel }) {
             </FormField>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+          >
             <FormField
               label="Location"
               required
@@ -762,7 +900,9 @@ function ResourceFormModal({ resource, onSave, onCancel }) {
             />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+          >
             <FormField
               label="Cost ($)"
               type="number"
@@ -780,7 +920,9 @@ function ResourceFormModal({ resource, onSave, onCancel }) {
             />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+          >
             <FormField
               label="Warranty Expiry"
               type="date"
@@ -795,7 +937,9 @@ function ResourceFormModal({ resource, onSave, onCancel }) {
             />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+          >
             <FormField
               label="Condition"
               as="select"
@@ -822,7 +966,14 @@ function ResourceFormModal({ resource, onSave, onCancel }) {
             </FormField>
           </div>
 
-          <div style={{ display: "flex", gap: 8, borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              borderTop: `1px solid ${C.border}`,
+              paddingTop: 16,
+            }}
+          >
             <button
               type="button"
               onClick={onCancel}
@@ -866,10 +1017,26 @@ function ResourceFormModal({ resource, onSave, onCancel }) {
 }
 
 // Form Field Helper
-function FormField({ label, required, as = "input", value, onChange, ...props }) {
+function FormField({
+  label,
+  required,
+  as = "input",
+  value,
+  onChange,
+  ...props
+}) {
   return (
     <div>
-      <label style={{ fontSize: 11, fontWeight: 600, color: C.hint, textTransform: "uppercase", display: "block", marginBottom: 6 }}>
+      <label
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          color: C.hint,
+          textTransform: "uppercase",
+          display: "block",
+          marginBottom: 6,
+        }}
+      >
         {label} {required && <span style={{ color: C.red }}>*</span>}
       </label>
       {as === "select" ? (

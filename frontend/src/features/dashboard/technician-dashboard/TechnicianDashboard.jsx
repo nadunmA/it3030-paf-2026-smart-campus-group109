@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiGet, apiPatch } from "../../lib/api";
+import { apiGet, apiPatch } from "../../../lib/api";
 
 /* ─────────────────────────────────────────
    BADGE
@@ -647,7 +647,7 @@ export default function TechnicianDashboard() {
         </div>
       </aside>
 
-      {/* ── MAIN ── */}
+      {/* MAIN */}
       <main
         style={{
           marginLeft: 224,
@@ -682,7 +682,7 @@ export default function TechnicianDashboard() {
           </div>
         )}
 
-        {/* ── OVERVIEW ── */}
+        {/* OVERVIEW */}
         {activeTab === "overview" && (
           <div>
             <div style={{ marginBottom: 26 }}>
@@ -1579,7 +1579,7 @@ export default function TechnicianDashboard() {
         )}
       </main>
 
-      {/* ── UPDATE MODAL ── */}
+      {/* UPDATE MODAL */}
       {selectedTicket && (
         <UpdateModal
           ticket={selectedTicket}

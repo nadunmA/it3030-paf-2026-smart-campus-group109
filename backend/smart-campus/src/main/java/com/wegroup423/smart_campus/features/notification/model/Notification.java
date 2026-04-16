@@ -21,7 +21,7 @@ public class Notification {
     @Id
     private String id;
 
-    private String userId;        // recipient user ID
+    private String userId;
     private String title;
     private String message;
     private NotificationType type;
