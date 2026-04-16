@@ -718,21 +718,25 @@ export default function Navbar({
           );
         })}
 
-        <Link
-          to="/bookings/me"
+        <div
+          onClick={() => onGoTo("bookings")}
           className="nav-pill"
           style={{
             padding: "5px 11px",
             borderRadius: 8,
             fontSize: ".83rem",
-            color: "rgba(255,255,255,.72)",
+            color:
+              activeSection === "bookings" ? "#fff" : "rgba(255,255,255,.58)",
             cursor: "pointer",
             transition: "all .2s",
-            textDecoration: "none",
+            background:
+              activeSection === "bookings"
+                ? "rgba(255,255,255,.07)"
+                : "transparent",
           }}
         >
           Bookings
-        </Link>
+        </div>
       </div>
 
       <div
