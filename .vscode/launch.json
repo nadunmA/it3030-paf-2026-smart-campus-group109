@@ -13,8 +13,15 @@
             "request": "launch",
             "mainClass": "com.wegroup423.smart_campus.SmartCampusApplication",
             "projectName": "smart-campus",
+            "cwd": "${workspaceFolder}/backend/smart-campus",
+            "console": "internalConsole",
+            "serverReadyAction": {
+                "pattern": "Started .* in .* seconds.*",
+                "uriFormat": "http://localhost:8080",
+                "action": "openExternally"
+            },
             "env": {
-                "MONGO_URI": "mongodb+srv://SmartCampus423:djwqubFfE7oYQ4ef@smartcampuscluster423.ektubbf.mongodb.net/?appName=SmartCampusCluster423",
+                "MONGO_URI": "mongodb+srv://SmartCampus423:djwqubFfE7oYQ4ef@smartcampuscluster423.ektubbf.mongodb.net/smart_campus_db?appName=SmartCampusCluster423",
                 "GOOGLE_CLIENT_ID": "45348808560-5ql4e6gbkjbl3jt41lodoqugb643h1s6.apps.googleusercontent.com",
                 "GOOGLE_CLIENT_SECRET": "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"
             }
