@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { apiGet, apiPatch } from "../../lib/api";
+import { apiGet, apiPatch } from "../../../lib/api";
 
 /* ── Badge ── */
 function Badge({ type, children }) {
@@ -1170,11 +1170,15 @@ export default function UserDashboard() {
             )}
 
             {hallsLoading ? (
-              <div style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}>
+              <div
+                style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}
+              >
                 Loading facilities...
               </div>
             ) : filteredHalls.length === 0 ? (
-              <div style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}>
+              <div
+                style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}
+              >
                 No facilities found.
               </div>
             ) : (

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiGet, apiPatch } from "../../lib/api";
-import HallsTab from "./components/HallsTab";
+import { apiGet, apiPatch } from "../../../lib/api";
+import HallsTab from "../../admin-dashboard/components/HallsTab";
+import UserList from "../../userManagement/UserList";
 
 /* ─────────────────────────────────────────
    SHARED TOKENS
@@ -383,7 +384,7 @@ export default function AdminDashboard() {
   const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [userSearch, setUserSearch] = useState("");
+  const [userSearch] = useState("");
   const [userActionError, setUserActionError] = useState("");
   const [userActionBusyId, setUserActionBusyId] = useState("");
 
@@ -1196,131 +1197,16 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── USERS ── */}
+        {/* ── USER ── */}
+
         {activeTab === "users" && (
-          <div>
-            <div style={pgTitle}>User Management</div>
-            <div style={pgSub}>View and manage registered users</div>
-            {userActionError && (
-              <div
-                style={{
-                  marginBottom: 12,
-                  fontSize: 12,
-                  color: C.red,
-                  background: C.redBg,
-                  border: `1px solid ${C.redBd}`,
-                  borderRadius: 8,
-                  padding: "8px 10px",
-                }}
-              >
-                {userActionError}
-              </div>
-            )}
-            <div style={{ marginBottom: 14 }}>
-              <input
-                placeholder="Search users by name or email..."
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                style={{
-                  width: "100%",
-                  maxWidth: 380,
-                  padding: "8px 14px",
-                  borderRadius: 9,
-                  border: `1px solid ${C.border}`,
-                  background: C.surface,
-                  fontSize: 13,
-                  color: C.text,
-                  outline: "none",
-                  fontFamily: "inherit",
-                }}
-              />
-            </div>
-            <Table
-              cols={[
-                "User",
-                "Email",
-                "Role",
-                "Status",
-                "Bookings",
-                "Tickets",
-                "Joined",
-                "Actions",
-              ]}
-              rows={filteredUsers.map((u) => [
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      background: "linear-gradient(135deg,#2563EB,#7C3AED)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#fff",
-                      fontSize: 10,
-                      fontWeight: 700,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {u.initials || initials(u.name)}
-                  </div>
-                  <span style={{ fontWeight: 600 }}>{u.name}</span>
-                </div>,
-                <span style={{ color: C.muted }}>{u.email}</span>,
-                <select
-                  value={u.role || "USER"}
-                  disabled={userActionBusyId === u.id}
-                  onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                  style={{
-                    border: `1px solid ${C.border}`,
-                    borderRadius: 7,
-                    background: C.surface,
-                    color: C.text,
-                    fontSize: 12,
-                    padding: "5px 8px",
-                    fontFamily: "inherit",
-                    cursor:
-                      userActionBusyId === u.id ? "not-allowed" : "pointer",
-                  }}
-                >
-                  <option value="USER">USER</option>
-                  <option value="ADMIN">ADMIN</option>
-                  <option value="TECHNICIAN">TECHNICIAN</option>
-                </select>,
-                u.active === false ? (
-                  <Badge type="CANCELLED">SUSPENDED</Badge>
-                ) : (
-                  <Badge type="ACTIVE">ACTIVE</Badge>
-                ),
-                u.bookings || "—",
-                u.tickets || "—",
-                <span style={{ fontSize: 12, color: C.hint }}>{u.joined}</span>,
-                <button
-                  disabled={userActionBusyId === u.id}
-                  onClick={() => handleToggleActive(u)}
-                  style={{
-                    border:
-                      u.active === false
-                        ? `1px solid ${C.greenBd}`
-                        : `1px solid ${C.redBd}`,
-                    borderRadius: 8,
-                    background: u.active === false ? C.greenBg : C.redBg,
-                    color: u.active === false ? C.green : C.red,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    padding: "5px 10px",
-                    fontFamily: "inherit",
-                    cursor:
-                      userActionBusyId === u.id ? "not-allowed" : "pointer",
-                    opacity: userActionBusyId === u.id ? 0.65 : 1,
-                  }}
-                >
-                  {u.active === false ? "Activate" : "Suspend"}
-                </button>,
-              ])}
-            />
-          </div>
+          <UserList
+            users={filteredUsers}
+            onRoleChange={handleRoleChange}
+            onToggleActive={handleToggleActive}
+            busyId={userActionBusyId}
+            error={userActionError}
+          />
         )}
 
         {/* ── ACTIVITY LOG ── */}
