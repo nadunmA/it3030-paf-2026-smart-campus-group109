@@ -9,7 +9,7 @@ const PLATFORM_ITEMS = [
     color: "#0A84FF",
     title: "Facilities",
     desc: "Browse all bookable resources",
-    path: "/dashboard", // path එක මෙතනට එකතු කළා
+    path: "/dashboard",
   },
   {
     icon: "📅",
@@ -689,8 +689,6 @@ export default function Navbar({
             cursor: "pointer",
             transition: "all .2s",
             textDecoration: "none",
-            border: "1px solid rgba(48,209,88,.32)",
-            background: "rgba(48,209,88,.08)",
           }}
         >
           Bookings
