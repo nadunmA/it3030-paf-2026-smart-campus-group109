@@ -19,6 +19,9 @@ function Badge({ type, children }) {
     USER: { bg: "#ECFDF5", color: "#059669", border: "#A7F3D0" },
     ADMIN: { bg: "#EFF6FF", color: "#2563EB", border: "#BFDBFE" },
     TECHNICIAN: { bg: "#F5F3FF", color: "#7C3AED", border: "#DDD6FE" },
+    AVAILABLE: { bg: "#ECFDF5", color: "#059669", border: "#A7F3D0" },
+    UNAVAILABLE: { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA" },
+    MAINTENANCE: { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A" },
   };
   const s = styles[type] || styles["CANCELLED"];
   return (
@@ -248,6 +251,46 @@ function TicketCard({ title, priority, status, updated }) {
   );
 }
 
+/* ── FacilityCard ── */
+function FacilityCard({ name, type, location, capacity, availability }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        padding: "14px 16px",
+        background: "#fff",
+        border: `1px solid ${hov ? "#CBD5E1" : "#E8EBF0"}`,
+        borderRadius: 10,
+        boxShadow: hov ? "0 2px 8px rgba(0,0,0,.05)" : "none",
+        transition: "all .15s",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 10,
+          marginBottom: 8,
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#1A1D23" }}>
+          {name}
+        </div>
+        <Badge type={availability}>{availability || "UNKNOWN"}</Badge>
+      </div>
+      <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 4 }}>
+        {type || "Facility"}
+      </div>
+      <div style={{ fontSize: 12, color: "#9CA3AF" }}>
+        {location || "Unknown location"} · Capacity {capacity ?? "N/A"}
+      </div>
+    </div>
+  );
+}
+
 /* ── NotifCard ── */
 /* notification type mapping fix: handles both backend enum names & frontend short names */
 function NotifCard({ notif, onMarkRead }) {
@@ -433,12 +476,38 @@ export default function UserDashboard() {
   const [bookingFilter, setBookingFilter] = useState("All");
   const [ticketFilter, setTicketFilter] = useState("All");
   const [notificationFilter, setNotificationFilter] = useState("ALL");
+  const [hallFilter, setHallFilter] = useState("ALL");
   const [liveUser, setLiveUser] = useState(null);
+  const [halls, setHalls] = useState([]);
+  const [hallsLoading, setHallsLoading] = useState(false);
+  const [hallsError, setHallsError] = useState("");
   const sessionUser = useMemo(() => {
     try {
       return JSON.parse(sessionStorage.getItem("user") || "null");
     } catch {
       return null;
+    }
+  }, []);
+
+  const fetchHalls = useCallback(async () => {
+    try {
+      setHallsLoading(true);
+      setHallsError("");
+      const res = await apiGet("/admin/facilities?page=0&size=100");
+      const list = Array.isArray(res)
+        ? res
+        : Array.isArray(res?.content)
+          ? res.content
+          : [];
+      setHalls(list);
+    } catch (e) {
+      console.error("Failed to load facilities", e);
+      setHallsError(
+        "Facilities are unavailable for this account or could not be loaded.",
+      );
+      setHalls([]);
+    } finally {
+      setHallsLoading(false);
     }
   }, []);
 
@@ -489,6 +558,12 @@ export default function UserDashboard() {
       setActiveTab(location.state.tab);
     }
   }, [location.state]);
+
+  useEffect(() => {
+    if (activeTab === "halls" && halls.length === 0 && !hallsLoading) {
+      fetchHalls();
+    }
+  }, [activeTab, halls.length, hallsLoading, fetchHalls]);
 
   /* ── single notification mark-as-read ── */
   const markOneRead = useCallback(async (id) => {
@@ -546,10 +621,15 @@ export default function UserDashboard() {
     ticketFilter === "All"
       ? MOCK_TICKETS
       : MOCK_TICKETS.filter((t) => t.status === ticketFilter);
+  const filteredHalls = halls.filter((h) => {
+    if (hallFilter === "ALL") return true;
+    return (h.availability || "").toUpperCase() === hallFilter;
+  });
 
   const NAV = [
     { id: "overview", icon: "⊞", label: "Overview" },
     { id: "bookings", icon: "📅", label: "My Bookings" },
+    { id: "halls", icon: "🏛", label: "Halls" },
     { id: "tickets", icon: "🔧", label: "My Tickets" },
     {
       id: "notifications",
@@ -1006,6 +1086,117 @@ export default function UserDashboard() {
             >
               + New Booking
             </button>
+          </div>
+        )}
+
+        {/* HALLS */}
+        {activeTab === "halls" && (
+          <div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                marginBottom: 20,
+                gap: 12,
+              }}
+            >
+              <div>
+                <div style={pageTitle}>Halls & Facilities</div>
+                <div style={pageSub}>
+                  Browse available halls, labs, and campus facilities
+                </div>
+              </div>
+              <button
+                onClick={fetchHalls}
+                style={{
+                  padding: "8px 18px",
+                  borderRadius: 99,
+                  background: "#fff",
+                  border: "1px solid #E2E8F0",
+                  color: "#6B7280",
+                  fontSize: 12,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontWeight: 500,
+                  transition: "all .15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#94A3B8";
+                  e.currentTarget.style.color = "#1A1D23";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "#E2E8F0";
+                  e.currentTarget.style.color = "#6B7280";
+                }}
+              >
+                Refresh
+              </button>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: 6,
+                marginBottom: 18,
+                flexWrap: "wrap",
+              }}
+            >
+              {["ALL", "AVAILABLE", "MAINTENANCE", "UNAVAILABLE"].map((f) => (
+                <div
+                  key={f}
+                  onClick={() => setHallFilter(f)}
+                  style={hallFilter === f ? filterPillActive : filterPillBase}
+                >
+                  {f === "ALL" ? "All" : f}
+                </div>
+              ))}
+            </div>
+
+            {hallsError && (
+              <div
+                style={{
+                  marginBottom: 12,
+                  fontSize: 12,
+                  color: "#DC2626",
+                  background: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  borderRadius: 8,
+                  padding: "8px 10px",
+                }}
+              >
+                {hallsError}
+              </div>
+            )}
+
+            {hallsLoading ? (
+              <div style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}>
+                Loading facilities...
+              </div>
+            ) : filteredHalls.length === 0 ? (
+              <div style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}>
+                No facilities found.
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+                  gap: 10,
+                }}
+              >
+                {filteredHalls.map((h) => (
+                  <FacilityCard
+                    key={h.id}
+                    name={h.name}
+                    type={h.resourceTypeName}
+                    location={h.location}
+                    capacity={h.capacity}
+                    availability={h.availability}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
