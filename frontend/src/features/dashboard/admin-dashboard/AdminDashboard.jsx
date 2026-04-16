@@ -143,21 +143,9 @@ function NavItem({ icon, label, active, onClick, badge }) {
 /* ─────────────────────────────────────────
    STAT CARD
 ───────────────────────────────────────── */
-function StatCard({
-  icon,
-  label,
-  value,
-  color,
-  bgColor,
-  delta,
-  deltaColor,
-  delay,
-}) {
-  const [vis, setVis] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setVis(true), delay);
-    return () => clearTimeout(t);
-  }, [delay]);
+function StatCard({ icon, label, value, color, bgColor, delta, deltaColor }) {
+  const [vis] = useState(false);
+
   return (
     <div
       style={{
@@ -165,7 +153,7 @@ function StatCard({
         border: `1px solid ${C.border}`,
         borderRadius: 14,
         padding: "16px 18px",
-        opacity: vis ? 1 : 0,
+
         transform: vis ? "translateY(0)" : "translateY(16px)",
         transition: "opacity .5s ease, transform .5s ease",
       }}
@@ -642,13 +630,7 @@ export default function AdminDashboard() {
               label={item.label}
               active={activeTab === item.id}
               badge={item.badge}
-              onClick={() => {
-                if (item.id === "resources") {
-                  navigate("/resources");
-                  return;
-                }
-                setActiveTab(item.id);
-              }}
+              onClick={() => setActiveTab(item.id)}
             />
           ))}
         </nav>
