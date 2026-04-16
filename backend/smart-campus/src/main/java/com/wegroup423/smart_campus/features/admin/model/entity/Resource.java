@@ -58,6 +58,8 @@ public class Resource {
 
     private String serialNumber;
 
+    private String usageInstructions;
+
     @Builder.Default
     private ResourceCondition condition = ResourceCondition.EXCELLENT;
 
