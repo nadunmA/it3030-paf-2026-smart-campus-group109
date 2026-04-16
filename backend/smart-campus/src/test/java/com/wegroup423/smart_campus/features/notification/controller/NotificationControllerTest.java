@@ -43,7 +43,7 @@ class NotificationControllerTest {
         sampleNotif.setRead(false);
     }
 
-    // ── GET /api/notifications/my ──────────────────────────────────────────
+    // GET /api/notifications/my
 
     @Test
     @WithMockUser(username = "user-123")
@@ -79,7 +79,7 @@ class NotificationControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // ── POST /api/notifications/my ─────────────────────────────────────────
+    // POST /api/notifications/my
 
     @Test
     @WithMockUser(username = "user-123")
@@ -100,7 +100,7 @@ class NotificationControllerTest {
                 .andExpect(jsonPath("$.id").value("notif-001"));
     }
 
-    // ── PATCH /api/notifications/{id}/read ────────────────────────────────
+    // PATCH /api/notifications/{id}/read
 
     @Test
     @WithMockUser(username = "user-123")
@@ -125,7 +125,7 @@ class NotificationControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // ── PATCH /api/notifications/my/read-all ──────────────────────────────
+    // PATCH /api/notifications/my/read-all
 
     @Test
     @WithMockUser(username = "user-123")
@@ -139,7 +139,7 @@ class NotificationControllerTest {
         verify(notificationService, times(1)).markAllAsRead("user-123");
     }
 
-    // ── DELETE /api/notifications/{id} ────────────────────────────────────
+    // DELETE /api/notifications/{id}
 
     @Test
     @WithMockUser(username = "user-123")
@@ -154,7 +154,7 @@ class NotificationControllerTest {
         verify(notificationService, times(1)).deleteNotification("notif-001", "user-123");
     }
 
-    // ── GET /api/notifications/stats/my ───────────────────────────────────
+    // GET /api/notifications/stats/my
 
     @Test
     @WithMockUser(username = "user-123")
@@ -171,7 +171,7 @@ class NotificationControllerTest {
                 .andExpect(jsonPath("$.readCount").value(0));
     }
 
-    // ── PUT /api/notifications/{id} ───────────────────────────────────────
+    // PUT /api/notifications/{id}
 
     @Test
     @WithMockUser(username = "user-123")
