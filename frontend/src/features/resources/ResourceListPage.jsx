@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiDownload, apiGet } from "../../lib/api";
 import ResourceFormModal from "./ResourceFormModal";
+import ResourceAdminLayout from "./ResourceAdminLayout";
 import StatusBadge from "./StatusBadge";
 
 const C = {
@@ -171,11 +172,15 @@ export default function ResourceListPage() {
   };
 
   if (loading) {
-    return <div style={{ padding: 24, color: C.muted }}>Loading resources...</div>;
+    return (
+      <ResourceAdminLayout>
+        <div style={{ padding: 24, color: C.muted }}>Loading resources...</div>
+      </ResourceAdminLayout>
+    );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, padding: 24 }}>
+    <ResourceAdminLayout>
       <div style={{ maxWidth: 1240, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "start", marginBottom: 22 }}>
           <div>
@@ -285,6 +290,6 @@ export default function ResourceListPage() {
           }}
         />
       )}
-    </div>
+    </ResourceAdminLayout>
   );
 }

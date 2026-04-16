@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiDelete, apiGet } from "../../lib/api";
+import ResourceAdminLayout from "./ResourceAdminLayout";
 import StatusBadge from "./StatusBadge";
 import ResourceFormModal from "./ResourceFormModal";
 
@@ -57,11 +58,19 @@ export default function ResourceDetailPage() {
   };
 
   if (loading) {
-    return <div style={{ padding: 24, color: C.muted }}>Loading resource...</div>;
+    return (
+      <ResourceAdminLayout>
+        <div style={{ padding: 24, color: C.muted }}>Loading resource...</div>
+      </ResourceAdminLayout>
+    );
   }
 
   if (error || !resource) {
-    return <div style={{ padding: 24, color: C.red }}>{error || "Resource not found"}</div>;
+    return (
+      <ResourceAdminLayout>
+        <div style={{ padding: 24, color: C.red }}>{error || "Resource not found"}</div>
+      </ResourceAdminLayout>
+    );
   }
 
   const rows = [
@@ -82,7 +91,7 @@ export default function ResourceDetailPage() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, padding: 24 }}>
+    <ResourceAdminLayout>
       <div style={{ maxWidth: 1080, margin: "0 auto" }}>
         <button onClick={() => navigate("/resources")} style={{ border: "none", background: "transparent", color: C.blue, fontWeight: 700, cursor: "pointer", marginBottom: 16 }}>
           ← Back to resource list
@@ -149,6 +158,6 @@ export default function ResourceDetailPage() {
           }}
         />
       )}
-    </div>
+    </ResourceAdminLayout>
   );
 }
