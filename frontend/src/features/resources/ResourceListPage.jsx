@@ -183,7 +183,14 @@ export default function ResourceListPage() {
             <div style={{ color: C.muted, marginTop: 6 }}>Search and browse lecture halls, labs, meeting rooms, and equipment.</div>
           </div>
           {isAdmin && (
-            <button onClick={() => setEditing(true)} style={{ border: "none", background: C.blue, color: "#fff", borderRadius: 999, padding: "12px 18px", fontWeight: 800, cursor: "pointer" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setError("");
+                setEditing(true);
+              }}
+              style={{ border: "none", background: C.blue, color: "#fff", borderRadius: 999, padding: "12px 18px", fontWeight: 800, cursor: "pointer" }}
+            >
               + Add Resource
             </button>
           )}

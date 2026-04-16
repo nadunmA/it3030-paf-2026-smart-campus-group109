@@ -24,7 +24,7 @@ async function apiRequest(method, path, payload) {
 
   if (!res.ok) {
     throw new Error(
-      `GET ${path} failed: ${res.status} - ${JSON.stringify(body)}`,
+      `${method} ${path} failed: ${res.status} - ${JSON.stringify(body)}`,
     );
   }
 

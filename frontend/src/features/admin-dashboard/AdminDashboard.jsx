@@ -416,7 +416,7 @@ export default function AdminDashboard() {
         const [b, t, r, u, a] = await Promise.allSettled([
           apiGet("/admin/bookings"),
           apiGet("/admin/tickets"),
-          apiGet("/admin/resources"),
+          apiGet("/resources"),
           apiGet("/admin/users"),
           apiGet("/admin/activity"),
         ]);
@@ -640,7 +640,13 @@ export default function AdminDashboard() {
               label={item.label}
               active={activeTab === item.id}
               badge={item.badge}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                if (item.id === "resources") {
+                  navigate("/resources");
+                  return;
+                }
+                setActiveTab(item.id);
+              }}
             />
           ))}
         </nav>
@@ -839,7 +845,13 @@ export default function AdminDashboard() {
               ].map((q) => (
                 <div
                   key={q.tab}
-                  onClick={() => setActiveTab(q.tab)}
+                  onClick={() => {
+                    if (q.tab === "resources") {
+                      navigate("/resources");
+                      return;
+                    }
+                    setActiveTab(q.tab);
+                  }}
                   style={{
                     background: C.surface,
                     border: `1px solid ${C.border}`,
@@ -1133,6 +1145,8 @@ export default function AdminDashboard() {
             >
               <div style={pgTitle}>Resource Catalogue</div>
               <button
+                type="button"
+                onClick={() => navigate("/resources")}
                 style={btnPrimary}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.background = "#1D4ED8")
@@ -1170,6 +1184,7 @@ export default function AdminDashboard() {
                   {(r.status || "ACTIVE").replace("_", " ")}
                 </Badge>,
                 <span
+                  onClick={() => navigate(`/resources/${r.id}`)}
                   style={{
                     fontSize: 12,
                     color: C.blue,

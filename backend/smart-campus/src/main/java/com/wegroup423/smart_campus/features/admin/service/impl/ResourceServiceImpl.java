@@ -39,14 +39,8 @@ public class ResourceServiceImpl implements ResourceService {
         // Validate resource type exists
         ResourceType resourceType = resolveResourceType(request.resourceTypeId(), request.type());
 
-        // Validate assigned technician exists if provided
-        String technicianName = null;
-        if (request.assignedTechnicianId() != null) {
-            User technician = userRepository.findById(request.assignedTechnicianId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Technician not found with id: " + request.assignedTechnicianId()));
-            technicianName = technician.getName();
-        }
+        String normalizedTechnicianId = normalizeTechnicianId(request.assignedTechnicianId());
+        String technicianName = resolveTechnicianName(normalizedTechnicianId);
 
         // Generate QR code (simple UUID-based approach)
         String qrCode = "RESOURCE_" + UUID.randomUUID().toString();
@@ -62,7 +56,7 @@ public class ResourceServiceImpl implements ResourceService {
             .availabilityEnd(request.availabilityEnd())
                 .cost(request.cost())
                 .warrantyExpiry(request.warrantyExpiry())
-                .assignedTechnicianId(request.assignedTechnicianId())
+                .assignedTechnicianId(normalizedTechnicianId)
                 .serialNumber(request.serialNumber())
                 .condition(request.condition() != null ? 
                         ResourceCondition.valueOf(request.condition()) : ResourceCondition.EXCELLENT)
@@ -150,10 +144,7 @@ public class ResourceServiceImpl implements ResourceService {
             resource.setWarrantyExpiry(request.warrantyExpiry());
         }
         if (request.assignedTechnicianId() != null) {
-            userRepository.findById(request.assignedTechnicianId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Technician not found with id: " + request.assignedTechnicianId()));
-            resource.setAssignedTechnicianId(request.assignedTechnicianId());
+            resource.setAssignedTechnicianId(normalizeTechnicianId(request.assignedTechnicianId()));
         }
         if (request.serialNumber() != null) {
             resource.setSerialNumber(request.serialNumber());
@@ -345,6 +336,25 @@ public class ResourceServiceImpl implements ResourceService {
         return resourceTypeRepository.findByName(type)
                 .map(ResourceType::getId)
                 .orElse(type);
+    }
+
+    private String normalizeTechnicianId(String technicianId) {
+        if (technicianId == null || technicianId.isBlank()) {
+            return null;
+        }
+
+        String trimmed = technicianId.trim();
+        return userRepository.findById(trimmed).isPresent() ? trimmed : null;
+    }
+
+    private String resolveTechnicianName(String technicianId) {
+        if (technicianId == null) {
+            return null;
+        }
+
+        return userRepository.findById(technicianId)
+                .map(User::getName)
+                .orElse(null);
     }
 
     private ResourceStatus resolveStatus(String status, ResourceStatus fallback) {

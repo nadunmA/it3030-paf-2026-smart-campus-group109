@@ -94,11 +94,13 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
     const initialTypeId = pick(resource?.resourceTypeId || "");
     const initialTypeName = pick(resource?.type || resource?.resourceTypeName || "");
     const selectedType = types.find((item) => item.id === initialTypeId || item.name === initialTypeName);
+    const fallbackTypeId = !resource?.id && !initialTypeId && types.length > 0 ? types[0].id : initialTypeId;
+    const fallbackTypeName = !resource?.id && !initialTypeName && types.length > 0 ? types[0].name : initialTypeName;
 
     setForm({
       name: pick(resource?.name),
-      resourceTypeId: selectedType?.id || initialTypeId,
-      type: selectedType?.name || initialTypeName,
+      resourceTypeId: selectedType?.id || fallbackTypeId,
+      type: selectedType?.name || fallbackTypeName,
       description: pick(resource?.description),
       location: pick(resource?.location),
       capacity: pick(resource?.capacity),
@@ -129,6 +131,38 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
     setSaving(true);
     setError("");
 
+    if (!form.name.trim()) {
+      setSaving(false);
+      setError("Name is required");
+      return;
+    }
+
+    if (!form.resourceTypeId) {
+      setSaving(false);
+      setError("Type is required");
+      return;
+    }
+
+    if (!form.location.trim()) {
+      setSaving(false);
+      setError("Location is required");
+      return;
+    }
+
+    if (form.capacity === "" || Number(form.capacity) <= 0) {
+      setSaving(false);
+      setError("Capacity must be greater than 0");
+      return;
+    }
+
+    const isCreate = !resource?.id;
+    const parsedCost =
+      form.cost === ""
+        ? isCreate
+          ? 0
+          : null
+        : Number(form.cost);
+
     const payload = {
       name: form.name.trim(),
       resourceTypeId: form.resourceTypeId || undefined,
@@ -136,7 +170,7 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
       description: form.description.trim() || undefined,
       location: form.location.trim(),
       capacity: form.capacity === "" ? null : Number(form.capacity),
-      cost: form.cost === "" ? null : Number(form.cost),
+      cost: parsedCost,
       warrantyExpiry: form.warrantyExpiry || null,
       assignedTechnicianId: form.assignedTechnicianId || null,
       serialNumber: form.serialNumber || null,
@@ -144,7 +178,6 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
       maintenanceDate: form.maintenanceDate || null,
       availabilityStart: form.availabilityStart || null,
       availabilityEnd: form.availabilityEnd || null,
-      availability: form.availability || null,
       status: form.status || null,
     };
 
@@ -175,7 +208,7 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
               Manage lecture halls, labs, meeting rooms, and equipment.
             </div>
           </div>
-          <button onClick={onClose} style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 20, color: "#94A3B8" }}>
+          <button type="button" onClick={onClose} style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 20, color: "#94A3B8" }}>
             ✕
           </button>
         </div>
@@ -183,7 +216,7 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
         {loading ? (
           <div style={{ padding: "24px 0", color: "#6B7280" }}>Loading form data...</div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14 }}>
+          <form onSubmit={handleSubmit} noValidate style={{ display: "grid", gap: 14 }}>
             {error && (
               <div style={{ color: "#B91C1C", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 12, padding: "10px 12px", fontSize: 13 }}>
                 {error}
@@ -193,11 +226,11 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
               <label>
                 <div style={{ marginBottom: 6, fontSize: 12, fontWeight: 700, color: "#475569" }}>Name</div>
-                <input style={fieldStyle} value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="Lecture Hall 101" required />
+                <input style={fieldStyle} value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="Lecture Hall 101" />
               </label>
               <label>
                 <div style={{ marginBottom: 6, fontSize: 12, fontWeight: 700, color: "#475569" }}>Type</div>
-                <select style={fieldStyle} value={form.resourceTypeId} onChange={(event) => update("resourceTypeId", event.target.value)} required>
+                <select style={fieldStyle} value={form.resourceTypeId} onChange={(event) => update("resourceTypeId", event.target.value)}>
                   <option value="">Select type</option>
                   {types.map((item) => (
                     <option key={item.id} value={item.id}>
@@ -216,11 +249,11 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
               <label>
                 <div style={{ marginBottom: 6, fontSize: 12, fontWeight: 700, color: "#475569" }}>Location</div>
-                <input style={fieldStyle} value={form.location} onChange={(event) => update("location", event.target.value)} placeholder="Building A, Floor 2" required />
+                <input style={fieldStyle} value={form.location} onChange={(event) => update("location", event.target.value)} placeholder="Building A, Floor 2" />
               </label>
               <label>
                 <div style={{ marginBottom: 6, fontSize: 12, fontWeight: 700, color: "#475569" }}>Capacity</div>
-                <input style={fieldStyle} type="number" min="1" value={form.capacity} onChange={(event) => update("capacity", event.target.value)} placeholder="120" required />
+                <input style={fieldStyle} type="number" min="1" value={form.capacity} onChange={(event) => update("capacity", event.target.value)} placeholder="120" />
               </label>
             </div>
 
@@ -275,8 +308,8 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
               <label>
-                <div style={{ marginBottom: 6, fontSize: 12, fontWeight: 700, color: "#475569" }}>Assigned Technician ID</div>
-                <input style={fieldStyle} value={form.assignedTechnicianId} onChange={(event) => update("assignedTechnicianId", event.target.value)} placeholder="tech-1" />
+                <div style={{ marginBottom: 6, fontSize: 12, fontWeight: 700, color: "#475569" }}>Assigned Technician ID (optional)</div>
+                <input style={fieldStyle} value={form.assignedTechnicianId} onChange={(event) => update("assignedTechnicianId", event.target.value)} placeholder="Paste existing technician id" />
               </label>
               <label>
                 <div style={{ marginBottom: 6, fontSize: 12, fontWeight: 700, color: "#475569" }}>Serial Number</div>
