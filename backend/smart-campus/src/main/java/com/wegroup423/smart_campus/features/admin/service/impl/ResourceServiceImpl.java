@@ -58,6 +58,7 @@ public class ResourceServiceImpl implements ResourceService {
                 .warrantyExpiry(request.warrantyExpiry())
                 .assignedTechnicianId(normalizedTechnicianId)
                 .serialNumber(request.serialNumber())
+                .usageInstructions(request.usageInstructions())
                 .condition(request.condition() != null ? 
                         ResourceCondition.valueOf(request.condition()) : ResourceCondition.EXCELLENT)
                 .maintenanceDate(request.maintenanceDate())
@@ -148,6 +149,9 @@ public class ResourceServiceImpl implements ResourceService {
         }
         if (request.serialNumber() != null) {
             resource.setSerialNumber(request.serialNumber());
+        }
+        if (request.usageInstructions() != null) {
+            resource.setUsageInstructions(request.usageInstructions());
         }
         if (request.condition() != null) {
             resource.setCondition(ResourceCondition.valueOf(request.condition()));
@@ -250,7 +254,7 @@ public class ResourceServiceImpl implements ResourceService {
         List<ResourceResponse> resources = searchResources(type, location, null, capacity);
 
         StringBuilder csv = new StringBuilder();
-        csv.append("id,name,type,location,capacity,status,availability,assignedTechnician,maintenanceDate,qrCode\n");
+        csv.append("id,name,type,location,capacity,status,availability,assignedTechnician,warrantyExpiry,maintenanceDate,usageInstructions,qrCode\n");
 
         for (ResourceResponse resource : resources) {
             csv.append(csvCell(resource.id())).append(',')
@@ -261,7 +265,9 @@ public class ResourceServiceImpl implements ResourceService {
                     .append(csvCell(resource.status())).append(',')
                     .append(csvCell(resource.availability())).append(',')
                     .append(csvCell(resource.assignedTechnicianName())).append(',')
+                    .append(csvCell(resource.warrantyExpiry())).append(',')
                     .append(csvCell(resource.maintenanceDate())).append(',')
+                    .append(csvCell(resource.usageInstructions())).append(',')
                     .append(csvCell(resource.qrCode()))
                     .append('\n');
         }
@@ -304,6 +310,7 @@ public class ResourceServiceImpl implements ResourceService {
                 resource.getAssignedTechnicianId(),
                 technicianName,
                 resource.getSerialNumber(),
+                resource.getUsageInstructions(),
                 resource.getCondition().name(),
                 resource.getMaintenanceDate(),
                 resource.getQrCode(),

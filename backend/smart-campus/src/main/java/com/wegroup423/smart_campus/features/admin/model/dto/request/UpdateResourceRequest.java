@@ -14,6 +14,7 @@ public record UpdateResourceRequest(
         LocalDate warrantyExpiry,
         String assignedTechnicianId,
         String serialNumber,
+        String usageInstructions,
         String condition,
         LocalDate maintenanceDate,
         LocalDateTime availabilityStart,
