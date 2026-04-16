@@ -20,51 +20,25 @@ public class ResourceTypeInitializer {
     @Bean
     public CommandLineRunner initializeResourceTypes() {
         return args -> {
-            // Check if default types already exist
-            if (resourceTypeRepository.findByIsDefault(true).isEmpty()) {
-                ResourceType lectureHall = ResourceType.builder()
-                        .name("LECTURE_HALL")
-                        .description("Lecture halls for classroom instruction")
-                        .isDefault(true)
-                        .createdAt(LocalDateTime.now())
-                        .build();
-
-                ResourceType lab = ResourceType.builder()
-                        .name("LAB")
-                        .description("Laboratory spaces for practical work")
-                        .isDefault(true)
-                        .createdAt(LocalDateTime.now())
-                        .build();
-
-                ResourceType meetingRoom = ResourceType.builder()
-                        .name("MEETING_ROOM")
-                        .description("Meeting rooms for discussions and conferences")
-                        .isDefault(true)
-                        .createdAt(LocalDateTime.now())
-                        .build();
-
-                ResourceType projector = ResourceType.builder()
-                        .name("PROJECTOR")
-                        .description("Projectors for presentations")
-                        .isDefault(true)
-                        .createdAt(LocalDateTime.now())
-                        .build();
-
-                ResourceType camera = ResourceType.builder()
-                        .name("CAMERA")
-                        .description("Cameras for recording and documentation")
-                        .isDefault(true)
-                        .createdAt(LocalDateTime.now())
-                        .build();
-
-                resourceTypeRepository.save(lectureHall);
-                resourceTypeRepository.save(lab);
-                resourceTypeRepository.save(meetingRoom);
-                resourceTypeRepository.save(projector);
-                resourceTypeRepository.save(camera);
-
-                System.out.println("Default resource types initialized successfully");
-            }
+            ensureType("LECTURE_HALL", "Lecture halls for classroom instruction");
+            ensureType("LAB", "Laboratory spaces for practical work");
+            ensureType("MEETING_ROOM", "Meeting rooms for discussions and conferences");
+            ensureType("EQUIPMENT", "General equipment and shared assets");
         };
+    }
+
+    private void ensureType(String name, String description) {
+        if (resourceTypeRepository.findByName(name).isPresent()) {
+            return;
+        }
+
+        ResourceType resourceType = ResourceType.builder()
+                .name(name)
+                .description(description)
+                .isDefault(true)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        resourceTypeRepository.save(resourceType);
     }
 }

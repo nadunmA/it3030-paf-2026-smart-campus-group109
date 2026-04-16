@@ -489,11 +489,11 @@ export default function UserDashboard() {
     }
   }, []);
 
-  const fetchHalls = useCallback(async () => {
+  const fetchResources = useCallback(async () => {
     try {
       setHallsLoading(true);
       setHallsError("");
-      const res = await apiGet("/admin/facilities?page=0&size=100");
+      const res = await apiGet("/resources");
       const list = Array.isArray(res)
         ? res
         : Array.isArray(res?.content)
@@ -560,10 +560,10 @@ export default function UserDashboard() {
   }, [location.state]);
 
   useEffect(() => {
-    if (activeTab === "halls" && halls.length === 0 && !hallsLoading) {
-      fetchHalls();
+    if (activeTab === "resources" && halls.length === 0 && !hallsLoading) {
+      fetchResources();
     }
-  }, [activeTab, halls.length, hallsLoading, fetchHalls]);
+  }, [activeTab, halls.length, hallsLoading, fetchResources]);
 
   /* ── single notification mark-as-read ── */
   const markOneRead = useCallback(async (id) => {
@@ -629,7 +629,7 @@ export default function UserDashboard() {
   const NAV = [
     { id: "overview", icon: "⊞", label: "Overview" },
     { id: "bookings", icon: "📅", label: "My Bookings" },
-    { id: "halls", icon: "🏛", label: "Halls" },
+    { id: "resources", icon: "🏛", label: "Resources" },
     { id: "tickets", icon: "🔧", label: "My Tickets" },
     {
       id: "notifications",
@@ -1089,8 +1089,8 @@ export default function UserDashboard() {
           </div>
         )}
 
-        {/* HALLS */}
-        {activeTab === "halls" && (
+        {/* RESOURCES */}
+        {activeTab === "resources" && (
           <div>
             <div
               style={{
@@ -1102,13 +1102,13 @@ export default function UserDashboard() {
               }}
             >
               <div>
-                <div style={pageTitle}>Halls & Facilities</div>
+                <div style={pageTitle}>Resources & Facilities</div>
                 <div style={pageSub}>
-                  Browse available halls, labs, and campus facilities
+                  Browse available resources, labs, and campus facilities
                 </div>
               </div>
               <button
-                onClick={fetchHalls}
+                onClick={fetchResources}
                 style={{
                   padding: "8px 18px",
                   borderRadius: 99,
