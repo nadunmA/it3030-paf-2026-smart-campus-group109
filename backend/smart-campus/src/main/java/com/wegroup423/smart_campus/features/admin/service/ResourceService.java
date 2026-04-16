@@ -17,6 +17,8 @@ public interface ResourceService {
 
     ResourceResponse updateResource(String id, UpdateResourceRequest request);
 
+    ResourceResponse updateResourceStatus(String id, String status);
+
     void deleteResource(String id);
 
     List<ResourceResponse> searchResources(String type, String location, String availability, Integer capacity);

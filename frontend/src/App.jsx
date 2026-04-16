@@ -6,6 +6,8 @@ import UserDashboard from "./features/user-dashboard/UserDashboard";
 import AdminDashboard from "./features/admin-dashboard/AdminDashboard";
 import TechnicianDashboard from "./features/technician-dashboard/TechnicianDashboard";
 import UserNotifications from "./features/notification/NotificationsPage";
+import ResourceListPage from "./features/resources/ResourceListPage";
+import ResourceDetailPage from "./features/resources/ResourceDetailPage";
 import ProtectedRoute from "./features/auth/components/ProtectedRoute";
 import CreateBookingPage from "./features/bookings/pages/CreateBookingPage";
 import MyBookingsPage from "./features/bookings/pages/MyBookingsPage";
@@ -55,6 +57,8 @@ export default function App() {
           }
         >
           <Route path="/notifications" element={<UserNotifications />} />
+          <Route path="/resources" element={<ResourceListPage />} />
+          <Route path="/resources/:id" element={<ResourceDetailPage />} />
         </Route>
 
         {/* TECHNICIAN only */}

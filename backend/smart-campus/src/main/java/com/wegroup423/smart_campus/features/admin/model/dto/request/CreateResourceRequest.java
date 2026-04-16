@@ -2,6 +2,7 @@ package com.wegroup423.smart_campus.features.admin.model.dto.request;
 
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record CreateResourceRequest(
         @NotBlank(message = "name is required")
@@ -9,6 +10,10 @@ public record CreateResourceRequest(
 
         @NotBlank(message = "resourceTypeId is required")
         String resourceTypeId,
+
+        String type,
+
+        String description,
 
         @NotBlank(message = "location is required")
         String location,
@@ -29,5 +34,11 @@ public record CreateResourceRequest(
 
         String condition,
 
-        LocalDate maintenanceDate
+        LocalDate maintenanceDate,
+
+        LocalDateTime availabilityStart,
+
+        LocalDateTime availabilityEnd,
+
+        String status
 ) {}

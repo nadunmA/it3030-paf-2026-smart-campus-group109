@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPatch } from "../../lib/api";
-import HallsTab from "./components/HallsTab";
 
 /* ─────────────────────────────────────────
    SHARED TOKENS
@@ -539,7 +538,6 @@ export default function AdminDashboard() {
     { id: "overview", icon: "⊞", label: "Overview" },
     { id: "bookings", icon: "📅", label: "Bookings", badge: pendingBookings },
     { id: "tickets", icon: "🔧", label: "Tickets" },
-    { id: "halls", icon: "🏛", label: "Halls" },
     { id: "resources", icon: "📦", label: "Resources" },
     { id: "users", icon: "👥", label: "Users" },
     { id: "activity", icon: "📋", label: "Activity Log" },
@@ -832,13 +830,6 @@ export default function AdminDashboard() {
                   tab: "tickets",
                 },
                 {
-                  icon: "🏛",
-                  label: "Manage Halls",
-                  sub: "Facilities & Assets",
-                  bg: C.purpleBg,
-                  tab: "halls",
-                },
-                {
                   icon: "📦",
                   label: "Manage Resources",
                   sub: "Equipment & inventory",
@@ -1128,9 +1119,6 @@ export default function AdminDashboard() {
             />
           </div>
         )}
-
-        {/* ── HALLS ── */}
-        {activeTab === "halls" && <HallsTab />}
 
         {/* ── RESOURCES ── */}
         {activeTab === "resources" && (
