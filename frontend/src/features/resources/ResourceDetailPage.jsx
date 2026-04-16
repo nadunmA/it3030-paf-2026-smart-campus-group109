@@ -31,18 +31,9 @@ function normalizeTypeKey(value) {
 }
 
 function buildEquipmentQrPayload(resource) {
-  const lines = [
-    `Resource: ${resource.name || ""}`,
-    `Type: ${resource.type || resource.resourceTypeName || ""}`,
-    `Location: ${resource.location || ""}`,
-    `Serial: ${resource.serialNumber || "N/A"}`,
-    `Usage: ${resource.usageInstructions || "N/A"}`,
-    `Warranty Expiry: ${resource.warrantyExpiry || "N/A"}`,
-    `Maintenance Date: ${resource.maintenanceDate || "N/A"}`,
-    `Condition: ${resource.condition || "N/A"}`,
-  ];
-
-  return lines.join("\n");
+  // Generate a scannable URL that displays resource details
+  const baseUrl = `${window.location.protocol}//${window.location.host}`;
+  return `${baseUrl}/qr/${resource.id}`;
 }
 
 export default function ResourceDetailPage() {
@@ -152,15 +143,13 @@ export default function ResourceDetailPage() {
               />
               <div>
                 <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".08em", color: C.muted, fontWeight: 700, marginBottom: 6 }}>
-                  {isEquipment ? "Equipment QR Details" : "QR Check-In Code"}
+                  Scannable QR Code
                 </div>
-                <div style={{ color: C.text, fontWeight: 700, maxWidth: 580, whiteSpace: "pre-wrap" }}>
+                <div style={{ color: C.text, fontWeight: 700, maxWidth: 580, wordBreak: "break-all", fontSize: 13 }}>
                   {qrPayload}
                 </div>
                 <div style={{ marginTop: 8, color: C.muted, fontSize: 13 }}>
-                  {isEquipment
-                    ? "Scanning this QR shows equipment usage and warranty information from this CRUD record."
-                    : "Use this code in the Resource Catalogue QR Lookup to open this resource quickly."}
+                  📱 Scan with your phone camera to view resource details instantly.
                 </div>
               </div>
             </div>

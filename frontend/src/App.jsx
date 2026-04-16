@@ -7,6 +7,8 @@ import TechnicianDashboard from "./features/technician-dashboard/TechnicianDashb
 import UserNotifications from "./features/notification/NotificationsPage";
 import ResourceListPage from "./features/resources/ResourceListPage";
 import ResourceDetailPage from "./features/resources/ResourceDetailPage";
+import QRScannerPage from "./features/resources/QRScannerPage";
+import PublicQRDetailPage from "./features/resources/PublicQRDetailPage";
 import ProtectedRoute from "./features/auth/components/ProtectedRoute";
 
 export default function App() {
@@ -15,6 +17,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<SmartCampusHome />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        {/* Public QR detail page - no authentication required */}
+        <Route path="/qr/:id" element={<PublicQRDetailPage />} />
 
         {/* USER only */}
         <Route element={<ProtectedRoute allowRoles={["USER"]} />}>
@@ -29,6 +33,7 @@ export default function App() {
           <Route path="/notifications" element={<UserNotifications />} />
           <Route path="/resources" element={<ResourceListPage />} />
           <Route path="/resources/:id" element={<ResourceDetailPage />} />
+          <Route path="/resources/scan/qr" element={<QRScannerPage />} />
         </Route>
 
         {/* TECHNICIAN only */}

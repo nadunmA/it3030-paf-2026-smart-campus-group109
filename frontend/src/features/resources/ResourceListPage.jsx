@@ -229,7 +229,7 @@ export default function ResourceListPage() {
         </div>
 
         <div style={{ ...cardStyle(), marginBottom: 18 }}>
-          <div style={{ display: "grid", gridTemplateColumns: isAdmin ? "2fr auto auto auto" : "2fr auto", gap: 10, alignItems: "end" }}>
+          <div style={{ display: "grid", gridTemplateColumns: isAdmin ? "2fr auto auto auto auto" : "2fr auto auto", gap: 10, alignItems: "end" }}>
             <label>
               <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".08em", color: C.hint, fontWeight: 700, marginBottom: 6 }}>QR Lookup</div>
               <input
@@ -241,6 +241,9 @@ export default function ResourceListPage() {
             </label>
             <button onClick={handleQrLookup} style={{ border: `1px solid ${C.border}`, background: "#fff", color: C.text, borderRadius: 12, padding: "11px 14px", fontWeight: 700, cursor: "pointer" }}>
               Find Resource
+            </button>
+            <button onClick={() => navigate("/resources/scan/qr")} style={{ border: `1px solid ${C.border}`, background: "#fff", color: C.text, borderRadius: 12, padding: "11px 14px", fontWeight: 700, cursor: "pointer" }}>
+              📱 QR Scanner
             </button>
             {isAdmin && (
               <button onClick={handleExportCsv} disabled={exportingCsv} style={{ border: "none", background: C.blue, color: "#fff", borderRadius: 12, padding: "11px 14px", fontWeight: 700, cursor: "pointer", opacity: exportingCsv ? 0.8 : 1 }}>
