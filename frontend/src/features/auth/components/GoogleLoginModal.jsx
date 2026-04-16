@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import GoogleIcon from "../components/Googleicon";
 
-const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || "http://127.0.0.1:8080";
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || "http://localhost:8080";
 
 export default function GoogleLoginModal({ isOpen, onClose }) {
   const [hov, setHov] = useState(false);

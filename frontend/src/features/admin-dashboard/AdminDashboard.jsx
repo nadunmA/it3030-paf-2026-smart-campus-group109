@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPatch } from "../../lib/api";
+import HallsTab from "./components/HallsTab";
 
 /* ─────────────────────────────────────────
    SHARED TOKENS
@@ -538,7 +539,8 @@ export default function AdminDashboard() {
     { id: "overview", icon: "⊞", label: "Overview" },
     { id: "bookings", icon: "📅", label: "Bookings", badge: pendingBookings },
     { id: "tickets", icon: "🔧", label: "Tickets" },
-    { id: "resources", icon: "🏛", label: "Resources" },
+    { id: "halls", icon: "🏛", label: "Halls" },
+    { id: "resources", icon: "📦", label: "Resources" },
     { id: "users", icon: "👥", label: "Users" },
     { id: "activity", icon: "📋", label: "Activity Log" },
   ];
@@ -809,7 +811,7 @@ export default function AdminDashboard() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(3,1fr)",
+                gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
                 gap: 10,
                 marginBottom: 20,
               }}
@@ -831,9 +833,16 @@ export default function AdminDashboard() {
                 },
                 {
                   icon: "🏛",
-                  label: "Manage Resources",
-                  sub: "42 facilities listed",
+                  label: "Manage Halls",
+                  sub: "Facilities & Assets",
                   bg: C.purpleBg,
+                  tab: "halls",
+                },
+                {
+                  icon: "📦",
+                  label: "Manage Resources",
+                  sub: "Equipment & inventory",
+                  bg: "#F3E8FF",
                   tab: "resources",
                 },
               ].map((q) => (
@@ -1119,6 +1128,9 @@ export default function AdminDashboard() {
             />
           </div>
         )}
+
+        {/* ── HALLS ── */}
+        {activeTab === "halls" && <HallsTab />}
 
         {/* ── RESOURCES ── */}
         {activeTab === "resources" && (

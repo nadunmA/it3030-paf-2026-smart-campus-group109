@@ -1,10 +1,14 @@
 package com.wegroup423.smart_campus.features.booking.service.impl;
 
+import com.wegroup423.smart_campus.features.admin.model.entity.Resource;
+import com.wegroup423.smart_campus.features.admin.model.enums.ResourceAvailability;
+import com.wegroup423.smart_campus.features.admin.repository.ResourceRepository;
 import com.wegroup423.smart_campus.features.booking.exception.BookingConflictException;
 import com.wegroup423.smart_campus.features.booking.exception.BookingNotFoundException;
 import com.wegroup423.smart_campus.features.booking.exception.CapacityExceededException;
 import com.wegroup423.smart_campus.features.booking.exception.InvalidBookingStateException;
 import com.wegroup423.smart_campus.features.booking.exception.InvalidBookingTimeException;
+import com.wegroup423.smart_campus.features.booking.exception.ResourceCapacityNotFoundException;
 import com.wegroup423.smart_campus.features.booking.exception.UnauthorizedBookingActionException;
 import com.wegroup423.smart_campus.features.booking.model.dto.request.BookingDecisionRequest;
 import com.wegroup423.smart_campus.features.booking.model.dto.request.CreateBookingRequest;
@@ -28,21 +32,25 @@ public class BookingServiceImpl implements BookingService {
     private static final List<BookingStatus> ACTIVE_STATUSES = List.of(BookingStatus.PENDING, BookingStatus.APPROVED);
 
     private final BookingRepository bookingRepository;
+    private final ResourceRepository resourceRepository;
     private final ResourceCapacityProvider resourceCapacityProvider;
     private final NotificationService notificationService;
 
     public BookingServiceImpl(
             BookingRepository bookingRepository,
+            ResourceRepository resourceRepository,
             ResourceCapacityProvider resourceCapacityProvider,
             NotificationService notificationService
     ) {
         this.bookingRepository = bookingRepository;
+        this.resourceRepository = resourceRepository;
         this.resourceCapacityProvider = resourceCapacityProvider;
         this.notificationService = notificationService;
     }
 
     @Override
     public BookingResponse createBooking(CreateBookingRequest request, String currentUserId) {
+        validateResourceIsBookable(request.resourceId());
         validateTimeRange(request.startTime(), request.endTime());
         validateCapacity(request.resourceId(), request.expectedAttendees());
         validateNoOverlap(request.resourceId(), request.bookingDate(), request.startTime(), request.endTime());
@@ -116,6 +124,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse approveBooking(String bookingId, String adminUserId, BookingDecisionRequest request) {
         Booking booking = findBookingOrThrow(bookingId);
+        validateResourceIsBookable(booking.getResourceId());
         transitionOrThrow(booking, BookingStatus.APPROVED);
 
         booking.setApprovedBy(adminUserId);
@@ -207,6 +216,19 @@ public class BookingServiceImpl implements BookingService {
         if (expectedAttendees != null && expectedAttendees > capacity) {
             throw new CapacityExceededException(
                     "Expected attendees exceed resource capacity. Capacity: " + capacity);
+        }
+    }
+
+    private void validateResourceIsBookable(String resourceId) {
+        Resource resource = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + resourceId));
+
+        if (resource.getAvailability() != ResourceAvailability.AVAILABLE) {
+            throw new BookingConflictException("Resource is not currently available for booking.");
+        }
+
+        if (resource.getCapacity() == null || resource.getCapacity() <= 0) {
+            throw new ResourceCapacityNotFoundException("Capacity is not configured for resource: " + resourceId);
         }
     }
 
