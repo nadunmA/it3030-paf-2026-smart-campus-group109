@@ -1,11 +1,16 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import SmartCampusHome from "./features/home/pages/SmartCampusHome";
+import "./App.css";
 import AuthCallback from "./features/auth/pages/AuthCallback";
 import UserDashboard from "./features/user-dashboard/UserDashboard";
 import AdminDashboard from "./features/admin-dashboard/AdminDashboard";
 import TechnicianDashboard from "./features/technician-dashboard/TechnicianDashboard";
 import UserNotifications from "./features/notification/NotificationsPage";
 import ProtectedRoute from "./features/auth/components/ProtectedRoute";
+import CreateBookingPage from "./features/bookings/pages/CreateBookingPage";
+import MyBookingsPage from "./features/bookings/pages/MyBookingsPage";
+import AdminBookingApprovalPage from "./features/bookings/pages/AdminBookingApprovalPage";
+import { RequireAuth, RequireRole } from "./features/auth/components/RouteGuards";
 
 export default function App() {
   return (
@@ -13,6 +18,31 @@ export default function App() {
       <Routes>
         <Route path="/" element={<SmartCampusHome />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+
+        <Route
+          path="/bookings/create"
+          element={
+            <RequireAuth>
+              <CreateBookingPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/bookings/me"
+          element={
+            <RequireAuth>
+              <MyBookingsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/bookings/admin"
+          element={
+            <RequireRole allowedRoles={["ADMIN"]}>
+              <AdminBookingApprovalPage />
+            </RequireRole>
+          }
+        />
 
         {/* USER only */}
         <Route element={<ProtectedRoute allowRoles={["USER"]} />}>

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Btn from "/src/components/ui/Btn";
-import { useNavigate } from "react-router-dom";
 import { apiGet, apiPatch } from "../../lib/api";
 
 const PLATFORM_ITEMS = [
@@ -16,7 +16,7 @@ const PLATFORM_ITEMS = [
     color: "#30D158",
     title: "Bookings",
     desc: "Manage your reservations",
-    path: "/dashboard",
+    path: "/bookings/me",
   },
   {
     icon: "🔧",
@@ -38,6 +38,13 @@ const PLATFORM_ITEMS = [
     title: "OAuth Login",
     desc: "Secure Google sign-in",
     path: "/",
+  },
+  {
+    icon: "📊",
+    color: "#64D2FF",
+    title: "Admin Dashboard",
+    desc: "Full campus oversight",
+    path: "/bookings/admin",
   },
 ];
 
@@ -348,6 +355,12 @@ function UserMenu({ onLogout, user }) {
 
   const handleItemClick = (item) => {
     setOpen(false);
+
+    if (item.path) {
+      navigate(item.path);
+      return;
+    }
+
     if (item.label === "Profile") {
       user?.role === "ADMIN"
         ? navigate("/admin/dashboard")
@@ -376,7 +389,9 @@ function UserMenu({ onLogout, user }) {
 
   const items = [
     { icon: "🏛️", label: "Browse Facilities" },
-    { icon: "📅", label: "My Bookings" },
+    { icon: "📅", label: "My Bookings", path: "/bookings/me" },
+    { icon: "📝", label: "Create Booking", path: "/bookings/create" },
+    { icon: "🛡️", label: "Admin Booking Dashboard", path: "/bookings/admin" },
     { icon: "🔧", label: "My Tickets" },
     { icon: "🔔", label: "Notifications", count: unreadCount },
     { icon: "👤", label: "Profile" },
@@ -662,6 +677,24 @@ export default function Navbar({
             </div>
           );
         })}
+
+        <Link
+          to="/bookings/me"
+          className="nav-pill"
+          style={{
+            padding: "5px 11px",
+            borderRadius: 8,
+            fontSize: ".83rem",
+            color: "rgba(255,255,255,.72)",
+            cursor: "pointer",
+            transition: "all .2s",
+            textDecoration: "none",
+            border: "1px solid rgba(48,209,88,.32)",
+            background: "rgba(48,209,88,.08)",
+          }}
+        >
+          Bookings
+        </Link>
       </div>
       <div
         style={{
