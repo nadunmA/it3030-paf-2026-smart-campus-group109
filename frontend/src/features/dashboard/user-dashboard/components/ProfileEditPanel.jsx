@@ -9,28 +9,24 @@ export default function ProfileEditPanel({
     <div
       style={{
         width: "100%",
-        maxWidth: 740,
+        maxWidth: 680,
         background: "#fff",
-        border: "1px solid #E8EBF0",
+        border: "1px solid #E8ECF0",
         borderRadius: 14,
         padding: "18px 20px",
         marginBottom: 12,
       }}
     >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr",
-          gap: 8,
-        }}
-      >
+      <div style={{ marginBottom: 12 }}>
         <label
           style={{
-            fontSize: 11,
-            color: "#64748B",
+            display: "block",
+            fontSize: 10,
+            color: "#9CA3AF",
             fontWeight: 700,
-            letterSpacing: ".04em",
+            letterSpacing: ".06em",
             textTransform: "uppercase",
+            marginBottom: 6,
           }}
         >
           Full Name
@@ -44,18 +40,21 @@ export default function ProfileEditPanel({
             boxSizing: "border-box",
             border: "1px solid #CBD5E1",
             borderRadius: 10,
-            padding: "10px 11px",
+            padding: "10px 12px",
             fontSize: 13,
             fontFamily: "inherit",
+            color: "#111827",
+            outline: "none",
           }}
         />
       </div>
-      <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button
           onClick={saveProfileChanges}
           disabled={profileSaving}
           style={{
-            padding: "9px 14px",
+            padding: "9px 16px",
             borderRadius: 10,
             border: "none",
             background: "#2563EB",
@@ -73,7 +72,7 @@ export default function ProfileEditPanel({
           onClick={cancelProfileEdit}
           disabled={profileSaving}
           style={{
-            padding: "9px 14px",
+            padding: "9px 16px",
             borderRadius: 10,
             border: "1px solid #CBD5E1",
             background: "#fff",
