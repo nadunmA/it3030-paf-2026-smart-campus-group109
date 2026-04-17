@@ -9,26 +9,17 @@ export default function ProfileSummaryCard({ user }) {
   ];
 
   return (
-    <div
-      style={{
-        width: "100%",
-        maxWidth: 740,
-        background: "#fff",
-        border: "1px solid #E8EBF0",
-        borderRadius: 14,
-        marginBottom: 12,
-        padding: 14,
-      }}
-    >
+    <div style={{ width: "100%", maxWidth: 680, marginBottom: 16 }}>
+      {/* Hero row */}
       <div
         style={{
+          background: "#fff",
+          border: "1px solid #E8ECF0",
+          borderRadius: 16,
+          padding: "18px 20px",
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          padding: "10px 12px",
-          borderRadius: 10,
-          background: "#F8FAFC",
-          border: "1px solid #E8EBF0",
+          gap: 16,
           marginBottom: 10,
         }}
       >
@@ -39,19 +30,20 @@ export default function ProfileSummaryCard({ user }) {
           }
           alt="avatar"
           style={{
-            width: 54,
-            height: 54,
+            width: 58,
+            height: 58,
             borderRadius: "50%",
             objectFit: "cover",
             border: "2px solid #BFDBFE",
+            flexShrink: 0,
           }}
         />
         <div style={{ minWidth: 0 }}>
           <div
             style={{
-              fontSize: 16,
-              fontWeight: 800,
-              color: "#1A1D23",
+              fontSize: 17,
+              fontWeight: 700,
+              color: "#111827",
               marginBottom: 2,
             }}
           >
@@ -73,10 +65,11 @@ export default function ProfileSummaryCard({ user }) {
         </div>
       </div>
 
+      {/* Account detail fields */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(145px,1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
           gap: 10,
         }}
       >
@@ -85,30 +78,31 @@ export default function ProfileSummaryCard({ user }) {
             key={field.label}
             style={{
               display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "10px 12px",
-              background: "#FAFBFC",
-              border: "1px solid #F1F5F9",
+              alignItems: "flex-start",
+              gap: 12,
+              padding: "14px 16px",
+              background: "#fff",
+              border: "1px solid #E8ECF0",
               borderRadius: 12,
             }}
           >
             <span
               style={{
-                width: 32,
-                height: 32,
+                width: 36,
+                height: 36,
                 borderRadius: 9,
                 background: "#F1F5F9",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 15,
+                fontSize: 16,
                 flexShrink: 0,
+                marginTop: 1,
               }}
             >
               {field.icon}
             </span>
-            <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <div
                 style={{
                   fontSize: 10,
@@ -116,7 +110,7 @@ export default function ProfileSummaryCard({ user }) {
                   fontWeight: 700,
                   letterSpacing: ".06em",
                   textTransform: "uppercase",
-                  marginBottom: 2,
+                  marginBottom: 4,
                 }}
               >
                 {field.label}
@@ -126,9 +120,8 @@ export default function ProfileSummaryCard({ user }) {
                   fontSize: 13,
                   fontWeight: 700,
                   color: "#111827",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
+                  wordBreak: "break-all",
+                  lineHeight: 1.4,
                 }}
               >
                 {field.value}

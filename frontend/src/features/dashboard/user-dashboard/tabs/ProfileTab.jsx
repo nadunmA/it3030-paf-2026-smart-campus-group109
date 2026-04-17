@@ -36,14 +36,15 @@ export default function ProfileTab({
         paddingTop: 8,
       }}
     >
+      {/* Header */}
       <div
         style={{
           width: "100%",
-          maxWidth: 740,
+          maxWidth: 680,
           marginBottom: 16,
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: "flex-start",
           gap: 10,
           flexWrap: "wrap",
         }}
@@ -51,16 +52,16 @@ export default function ProfileTab({
         <div>
           <div
             style={{
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: 700,
               letterSpacing: "-.03em",
-              color: "#1A1D23",
-              marginBottom: 6,
+              color: "#111827",
+              marginBottom: 3,
             }}
           >
             Profile
           </div>
-          <div style={{ fontSize: 13, color: "#6B7280" }}>
+          <div style={{ fontSize: 12, color: "#6B7280" }}>
             Your account details and activity summary
           </div>
         </div>
@@ -68,8 +69,8 @@ export default function ProfileTab({
           <button
             onClick={startProfileEdit}
             style={{
-              padding: "9px 14px",
-              borderRadius: 10,
+              padding: "8px 14px",
+              borderRadius: 8,
               border: "1px solid #BFDBFE",
               background: "#EFF6FF",
               color: "#2563EB",
@@ -77,6 +78,7 @@ export default function ProfileTab({
               fontSize: 12,
               cursor: "pointer",
               fontFamily: "inherit",
+              flexShrink: 0,
             }}
           >
             Edit Profile
@@ -84,15 +86,16 @@ export default function ProfileTab({
         )}
       </div>
 
+      {/* Notice banner */}
       {profileNotice.text && (
         <div
           style={{
             width: "100%",
-            maxWidth: 740,
+            maxWidth: 680,
             marginBottom: 12,
             fontSize: 12,
             borderRadius: 10,
-            padding: "9px 10px",
+            padding: "9px 12px",
             background:
               profileNotice.type === "success" ? "#ECFDF5" : "#FEF2F2",
             border:
@@ -106,6 +109,7 @@ export default function ProfileTab({
         </div>
       )}
 
+      {/* Edit panel */}
       {isProfileEditing && (
         <ProfileEditPanel
           profileName={profileName}
@@ -116,63 +120,88 @@ export default function ProfileTab({
         />
       )}
 
+      {/* Profile hero card */}
+      <ProfileSummaryCard user={user} />
+
+      {/* Activity stats */}
+      <div style={{ width: "100%", maxWidth: 680, marginBottom: 16 }}>
+        <div
+          style={{
+            fontSize: 10,
+            color: "#9CA3AF",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: ".08em",
+            marginBottom: 8,
+          }}
+        >
+          Activity
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+            gap: 10,
+          }}
+        >
+          {statCards.map((s) => (
+            <div
+              key={s.label}
+              style={{
+                background: "#fff",
+                border: "1px solid #E8ECF0",
+                borderRadius: 13,
+                padding: "16px 10px",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 26,
+                  fontWeight: 800,
+                  color: s.color,
+                  letterSpacing: "-.04em",
+                  marginBottom: 3,
+                }}
+              >
+                {s.value}
+              </div>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "#9CA3AF",
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: ".06em",
+                }}
+              >
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Divider */}
       <div
         style={{
           width: "100%",
-          maxWidth: 740,
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(155px,1fr))",
-          gap: 10,
-          marginBottom: 20,
+          maxWidth: 680,
+          height: 1,
+          background: "#E8ECF0",
+          marginBottom: 16,
         }}
-      >
-        {statCards.map((s) => (
-          <div
-            key={s.label}
-            style={{
-              background: "#fff",
-              border: "1px solid #E8EBF0",
-              borderRadius: 13,
-              padding: "18px 20px",
-              textAlign: "center",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 28,
-                fontWeight: 800,
-                color: s.color,
-                letterSpacing: "-.04em",
-                marginBottom: 4,
-              }}
-            >
-              {s.value}
-            </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: "#9CA3AF",
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: ".05em",
-              }}
-            >
-              {s.label}
-            </div>
-          </div>
-        ))}
-      </div>
+      />
 
-      <ProfileSummaryCard user={user} />
-
-      <div style={{ width: "100%", maxWidth: 740 }}>
+      {/* Action buttons */}
+      <div style={{ width: "100%", maxWidth: 680 }}>
         {suspendError && (
           <div
             style={{
               marginBottom: 10,
               fontSize: 12,
               borderRadius: 10,
-              padding: "9px 10px",
+              padding: "9px 12px",
               background: "#FEF2F2",
               border: "1px solid #FECACA",
               color: "#B91C1C",
@@ -186,13 +215,13 @@ export default function ProfileTab({
           disabled={suspendBusy}
           style={{
             width: "100%",
-            marginBottom: 10,
+            marginBottom: 8,
             padding: 13,
-            borderRadius: 24,
+            borderRadius: 22,
             background: suspendBusy ? "#FEE2E2" : "#DC2626",
-            border: "1px solid #DC2626",
+            border: "none",
             color: "#fff",
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: 700,
             cursor: suspendBusy ? "not-allowed" : "pointer",
             fontFamily: "inherit",
@@ -206,11 +235,11 @@ export default function ProfileTab({
           style={{
             width: "100%",
             padding: 13,
-            borderRadius: 24,
+            borderRadius: 22,
             background: "#FEF2F2",
             border: "1px solid #FECACA",
             color: "#DC2626",
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: 700,
             cursor: "pointer",
             fontFamily: "inherit",
