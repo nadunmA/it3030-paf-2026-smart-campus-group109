@@ -1,0 +1,14 @@
+# Environment secrets – never commit this
+.env
+
+# Backend build output
+backend/smart-campus/target/
+
+# Frontend dependencies and build
+frontend/node_modules/
+frontend/dist/
+
+# IDE files
+.idea/
+*.iml
+.vscode/

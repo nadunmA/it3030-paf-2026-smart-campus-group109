@@ -28,4 +28,6 @@ public interface TicketService {
     TicketResponse editComment(String ticketId, String commentId, EditCommentRequest request, String userId);
 
     TicketResponse deleteComment(String ticketId, String commentId, String userId);
+
+    TicketResponse assignTicket(String id, AssignTicketRequest request, String adminId);
 }

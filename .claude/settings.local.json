@@ -6,7 +6,16 @@
       "Bash(mvn compile:*)",
       "Read(//usr/local/lib/**)",
       "Read(//c/Program Files/Java/**)",
-      "Bash(powershell.exe -Command \"where.exe mvn 2>&1; where.exe mvn.cmd 2>&1\")"
+      "Bash(powershell.exe -Command \"where.exe mvn 2>&1; where.exe mvn.cmd 2>&1\")",
+      "Bash(\"C:/Users/Lakin/.m2/wrapper/dists/apache-maven-3.9.9/977a63e90f436cd6ade95b4c0e10c20c/bin/mvn\" compile:*)",
+      "Bash(JAVA_HOME=\"C:/Program Files/Java/jdk-22\" \"C:/Users/Lakin/.m2/wrapper/dists/apache-maven-3.9.9/977a63e90f436cd6ade95b4c0e10c20c/bin/mvn\" compile)",
+      "Bash(npm --version)",
+      "Bash(JAVA_HOME=\"C:/Program Files/Java/jdk-22\" MONGO_URI=\"mongodb+srv://SmartCampus423:djwqubFfE7oYQ4ef@smartcampuscluster423.ektubbf.mongodb.net/?appName=SmartCampusCluster423\" GOOGLE_CLIENT_ID=\"45348808560-5ql4e6gbkjbl3jt41lodoqugb643h1s6.apps.googleusercontent.com\" GOOGLE_CLIENT_SECRET=\"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\" \"C:/Users/Lakin/.m2/wrapper/dists/apache-maven-3.9.9/977a63e90f436cd6ade95b4c0e10c20c/bin/mvn\" spring-boot:run)",
+      "Bash(npm run:*)",
+      "Bash(netstat -ano)",
+      "Bash(xargs -r taskkill //F //PID)",
+      "Bash(cmd //c \"for /f \\\\\"tokens=5\\\\\" %a in \\('netstat -ano ^| findstr :8080 ^| findstr LISTENING'\\) do taskkill /F /PID %a\")",
+      "Bash(powershell -Command \"Get-Process -Name 'java' | Stop-Process -Force\")"
     ]
   }
 }

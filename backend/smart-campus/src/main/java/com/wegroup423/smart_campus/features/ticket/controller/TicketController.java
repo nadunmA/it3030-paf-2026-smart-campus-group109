@@ -92,6 +92,16 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.updateTicketStatus(id, request, userId));
     }
 
+    @PatchMapping("/{id}/assign")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<TicketResponse> assignTicket(
+            @AuthenticationPrincipal Object principal,
+            @PathVariable String id,
+            @Valid @RequestBody AssignTicketRequest request) {
+        String adminId = resolveUserId(principal);
+        return ResponseEntity.ok(ticketService.assignTicket(id, request, adminId));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteTicket(
             @AuthenticationPrincipal Object principal,

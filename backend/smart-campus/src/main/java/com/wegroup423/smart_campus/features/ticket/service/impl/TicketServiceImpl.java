@@ -204,6 +204,30 @@ public class TicketServiceImpl implements TicketService {
         return TicketResponse.from(ticketRepository.save(ticket));
     }
 
+    @Override
+    public TicketResponse assignTicket(String id, AssignTicketRequest request, String adminId) {
+        Ticket ticket = findTicketOrThrow(id);
+        ticket.setAssignedTechnicianId(request.technicianId());
+        ticket.setAssignedTechnicianName(request.technicianName());
+        if (ticket.getStatus() == TicketStatus.OPEN) {
+            ticket.setStatus(TicketStatus.IN_PROGRESS);
+        }
+        ticket.setUpdatedAt(LocalDateTime.now());
+        Ticket saved = ticketRepository.save(ticket);
+        // notify the assigned technician
+        notificationService.notifyTicketEvent(
+                request.technicianId(), saved.getId(), "TICKET_ASSIGNED",
+                "You have been assigned to: " + saved.getTitle());
+        // notify the reporter
+        if (saved.getCreatedBy() != null) {
+            notificationService.notifyTicketEvent(
+                    saved.getCreatedBy(), saved.getId(), "TICKET_ASSIGNED",
+                    "A technician has been assigned to your ticket: " + saved.getTitle());
+        }
+        log.info("Ticket {} assigned to technician {} by admin {}", id, request.technicianId(), adminId);
+        return TicketResponse.from(saved);
+    }
+
     private Ticket findTicketOrThrow(String id) {
         return ticketRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket not found: " + id));

@@ -196,6 +196,24 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleAssignTicket = async (ticketId, technicianId, technicianName) => {
+    try {
+      const updated = await apiPatch(`/tickets/${ticketId}/assign`, {
+        technicianId,
+        technicianName,
+      });
+      setTickets((prev) =>
+        prev.map((t) =>
+          t.id === ticketId
+            ? { ...t, assignedTechnicianId: technicianId, assignedTechnicianName: technicianName, assigned: technicianName, status: updated?.status || t.status }
+            : t
+        )
+      );
+    } catch (e) {
+      console.error("Assign failed:", e);
+    }
+  };
+
   const handleToggleActive = async (targetUser) => {
     try {
       setUserActionError("");
@@ -294,6 +312,8 @@ export default function AdminDashboard() {
             ticketFilter={ticketFilter}
             setTicketFilter={setTicketFilter}
             filteredTickets={filteredTickets}
+            technicians={users.filter((u) => u.role === "TECHNICIAN")}
+            onAssign={handleAssignTicket}
           />
         )}
 

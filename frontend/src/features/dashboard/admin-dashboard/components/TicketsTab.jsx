@@ -1,10 +1,27 @@
+import { useState } from "react";
 import { Badge, C, FilterPills, Table } from "./AdminUi";
 
 export default function TicketsTab({
   ticketFilter,
   setTicketFilter,
   filteredTickets,
+  technicians = [],
+  onAssign,
 }) {
+  const [assigning, setAssigning] = useState({});
+
+  const handleSelect = async (ticketId, value) => {
+    if (!value || !onAssign) return;
+    const tech = technicians.find((t) => t.id === value);
+    if (!tech) return;
+    setAssigning((prev) => ({ ...prev, [ticketId]: true }));
+    try {
+      await onAssign(ticketId, tech.id, tech.name || tech.email);
+    } finally {
+      setAssigning((prev) => ({ ...prev, [ticketId]: false }));
+    }
+  };
+
   const pgTitle = {
     fontSize: 22,
     fontWeight: 800,
@@ -25,14 +42,7 @@ export default function TicketsTab({
         activeColor={C.orange}
       />
       <Table
-        cols={[
-          "Title",
-          "Reporter",
-          "Priority",
-          "Status",
-          "Assigned To",
-          "Updated",
-        ]}
+        cols={["Title", "Reporter", "Priority", "Status", "Assign Technician", "Updated"]}
         rows={filteredTickets.map((t) => [
           <span style={{ fontWeight: 600 }}>{t.title}</span>,
           t.reporter,
@@ -40,9 +50,31 @@ export default function TicketsTab({
           <Badge type={t.status || "OPEN"}>
             {(t.status || "OPEN").replace("_", " ")}
           </Badge>,
-          t.assigned || (
-            <span style={{ fontSize: 12, color: C.hint }}>Unassigned</span>
-          ),
+          <select
+            disabled={assigning[t.id]}
+            value={t.assignedTechnicianId || t.assigned || ""}
+            onChange={(e) => handleSelect(t.id, e.target.value)}
+            style={{
+              fontSize: 12,
+              padding: "4px 8px",
+              borderRadius: 6,
+              border: `1px solid ${C.border}`,
+              background: C.surface,
+              color: C.text,
+              cursor: assigning[t.id] ? "wait" : "pointer",
+              minWidth: 140,
+              fontFamily: "inherit",
+            }}
+          >
+            <option value="">
+              {t.assignedTechnicianName || t.assigned || "Unassigned"}
+            </option>
+            {technicians.map((tech) => (
+              <option key={tech.id} value={tech.id}>
+                {tech.name || tech.email}
+              </option>
+            ))}
+          </select>,
           <span style={{ fontSize: 12, color: C.hint }}>{t.updated}</span>,
         ])}
       />
