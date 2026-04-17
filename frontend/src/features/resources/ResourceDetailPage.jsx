@@ -30,10 +30,21 @@ function normalizeTypeKey(value) {
     .replace(/\s+/g, "_");
 }
 
-function buildEquipmentQrPayload(resource) {
-  // Generate a scannable URL that displays resource details
-  const baseUrl = `${window.location.protocol}//${window.location.host}`;
-  return `${baseUrl}/qr/${resource.id}`;
+function getPublicAppOrigin() {
+  const configuredOrigin = import.meta.env.VITE_PUBLIC_APP_ORIGIN?.trim();
+  if (configuredOrigin) {
+    return configuredOrigin.replace(/\/+$/, "");
+  }
+
+  return window.location.origin.replace(/\/+$/, "");
+}
+
+function buildResourceQrPayload(resource) {
+  // Generate a scannable URL that opens the public resource details page.
+  const publicOrigin = getPublicAppOrigin();
+  const qrValue = resource.qrCode || resource.id;
+  const qrPath = `/qr/${qrValue}`;
+  return publicOrigin ? `${publicOrigin}${qrPath}` : qrPath;
 }
 
 export default function ResourceDetailPage() {
@@ -105,7 +116,7 @@ export default function ResourceDetailPage() {
   ];
 
   const isEquipment = normalizeTypeKey(resource.type || resource.resourceTypeName) === "EQUIPMENT";
-  const qrPayload = isEquipment ? buildEquipmentQrPayload(resource) : resource.qrCode;
+  const qrPayload = buildResourceQrPayload(resource);
 
   return (
     <ResourceAdminLayout>
@@ -149,7 +160,7 @@ export default function ResourceDetailPage() {
                   {qrPayload}
                 </div>
                 <div style={{ marginTop: 8, color: C.muted, fontSize: 13 }}>
-                  📱 Scan with your phone camera to view resource details instantly.
+                  📱 Scan with your phone camera to open the resource page directly. If you are testing on another device, set VITE_PUBLIC_APP_ORIGIN to the frontend URL that device can reach.
                 </div>
               </div>
             </div>

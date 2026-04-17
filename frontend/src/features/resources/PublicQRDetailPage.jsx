@@ -21,14 +21,14 @@ export default function PublicQRDetailPage() {
 
   useEffect(() => {
     let active = true;
-    // Try to fetch by ID first (if URL is /qr/:id)
-    apiGet(`/resources/${id}`)
+    // Try to fetch by ID first from the public API.
+    apiGet(`/public/resources/${id}`)
       .then((data) => {
         if (active) setResource(data);
       })
       .catch((err) => {
-        // If ID lookup fails, try QR code lookup
-        return apiGet(`/resources/lookup?qrCode=${encodeURIComponent(id)}`).then((data) => {
+        // If ID lookup fails, try QR code lookup from the public API.
+        return apiGet(`/public/resources/lookup?qrCode=${encodeURIComponent(id)}`).then((data) => {
           if (active) setResource(data);
         });
       })
