@@ -30,19 +30,21 @@ function normalizeTypeKey(value) {
     .replace(/\s+/g, "_");
 }
 
-function buildEquipmentQrPayload(resource) {
-  const lines = [
-    `Resource: ${resource.name || ""}`,
-    `Type: ${resource.type || resource.resourceTypeName || ""}`,
-    `Location: ${resource.location || ""}`,
-    `Serial: ${resource.serialNumber || "N/A"}`,
-    `Usage: ${resource.usageInstructions || "N/A"}`,
-    `Warranty Expiry: ${resource.warrantyExpiry || "N/A"}`,
-    `Maintenance Date: ${resource.maintenanceDate || "N/A"}`,
-    `Condition: ${resource.condition || "N/A"}`,
-  ];
+function getPublicAppOrigin() {
+  const configuredOrigin = import.meta.env.VITE_PUBLIC_APP_ORIGIN?.trim();
+  if (configuredOrigin) {
+    return configuredOrigin.replace(/\/+$/, "");
+  }
 
-  return lines.join("\n");
+  return window.location.origin.replace(/\/+$/, "");
+}
+
+function buildResourceQrPayload(resource) {
+  // Generate a scannable URL that opens the public resource details page.
+  const publicOrigin = getPublicAppOrigin();
+  const qrValue = resource.qrCode || resource.id;
+  const qrPath = `/qr/${qrValue}`;
+  return publicOrigin ? `${publicOrigin}${qrPath}` : qrPath;
 }
 
 export default function ResourceDetailPage() {
@@ -114,7 +116,7 @@ export default function ResourceDetailPage() {
   ];
 
   const isEquipment = normalizeTypeKey(resource.type || resource.resourceTypeName) === "EQUIPMENT";
-  const qrPayload = isEquipment ? buildEquipmentQrPayload(resource) : resource.qrCode;
+  const qrPayload = buildResourceQrPayload(resource);
 
   return (
     <ResourceAdminLayout>
@@ -159,7 +161,7 @@ export default function ResourceDetailPage() {
                 </div>
                 <div style={{ marginTop: 8, color: C.muted, fontSize: 13 }}>
                   {isEquipment
-                    ? "Scanning this QR shows equipment usage and warranty information from this CRUD record."
+                    ? "Scanning this QR opens the public resource page for equipment details."
                     : "Use this code in the Resource Catalogue QR Lookup to open this resource quickly."}
                 </div>
               </div>
