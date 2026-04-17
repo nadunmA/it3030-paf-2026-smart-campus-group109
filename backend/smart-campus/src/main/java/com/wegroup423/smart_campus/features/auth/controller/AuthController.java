@@ -1,78 +1,64 @@
 package com.wegroup423.smart_campus.features.auth.controller;
 
+import com.wegroup423.smart_campus.features.auth.dto.AuthResponse;
+import com.wegroup423.smart_campus.features.auth.dto.LoginRequest;
+import com.wegroup423.smart_campus.features.auth.dto.RegisterRequest;
+import com.wegroup423.smart_campus.features.auth.dto.UpdateProfileRequest;
+import com.wegroup423.smart_campus.features.auth.dto.UserDto;
+import com.wegroup423.smart_campus.features.auth.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import com.wegroup423.smart_campus.features.auth.model.User;
-import com.wegroup423.smart_campus.features.auth.repository.UserRepository;
 
 import java.util.Map;
 
 @CrossOrigin(origins = {"http://localhost:5173", "http://127.0.0.1:5173"}, allowCredentials = "true")
 @RestController
-@RequestMapping("/api/auth-legacy")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final UserRepository userRepository;
+    private final AuthService authService;
 
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+        AuthResponse response = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal Object principal) {
-
-        if (principal == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized - no principal"));
-        }
-
-        // principal is the full User entity already
-        if (principal instanceof User user) {
-            return ResponseEntity.ok(toSafeMap(user));
-        }
-
-        // principal is a Spring UserDetails (username = userId or email)
-        String identifier;
-        if (principal instanceof UserDetails ud) {
-            identifier = ud.getUsername();
-        } else {
-            // Case 3: plain String (userId or email)
-            identifier = principal.toString();
-        }
-
-        // Try by MongoDB id first, then by email as fallback
-        return userRepository.findById(identifier)
-                .or(() -> userRepository.findByEmail(identifier))
-                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(toSafeMap(u)))
-                .orElseGet(() -> ResponseEntity.status(404).body(Map.of(
-                        "error", "User not found",
-                        "identifier", identifier
-                )));
+    public ResponseEntity<UserDto> getCurrentUser(@AuthenticationPrincipal Object principal) {
+        UserDto user = authService.getCurrentUser(principal);
+        return ResponseEntity.ok(user);
     }
 
-    /** GET /api/auth/validate — lightweight token check */
+    @PutMapping("/me")
+    public ResponseEntity<UserDto> updateCurrentUser(
+            @AuthenticationPrincipal Object principal,
+            @Valid @RequestBody UpdateProfileRequest request
+    ) {
+        UserDto updatedUser = authService.updateCurrentUser(principal, request);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteCurrentUser(@AuthenticationPrincipal Object principal) {
+        authService.deleteCurrentUser(principal);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/validate")
-    public ResponseEntity<Map<String, Object>> validateToken(
-            @AuthenticationPrincipal Object principal) {
-
-        String id = (principal instanceof UserDetails ud)
-                ? ud.getUsername()
-                : (principal != null ? principal.toString() : "unknown");
-
-        return ResponseEntity.ok(Map.of("valid", true, "userId", id));
-    }
-
-    /** Return only safe fields — never expose password/googleId */
-    private Map<String, Object> toSafeMap(User user) {
-        return Map.of(
-                "id",        user.getId()    != null ? user.getId()    : "",
-                "name",      user.getName()  != null ? user.getName()  : "",
-                "email",     user.getEmail() != null ? user.getEmail() : "",
-                "picture",   user.getPicture() != null ? user.getPicture() : "",
-                "role",      user.getRole()  != null ? user.getRole().name() : "USER",
-                "active",    user.isActive(),
-                "createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : ""
-        );
+    public ResponseEntity<Map<String, Object>> validateToken(@AuthenticationPrincipal Object principal) {
+        Map<String, Object> result = authService.validateToken(principal);
+        return ResponseEntity.ok(result);
     }
 }
