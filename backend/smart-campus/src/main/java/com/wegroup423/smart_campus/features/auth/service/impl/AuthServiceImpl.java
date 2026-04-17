@@ -3,6 +3,7 @@ package com.wegroup423.smart_campus.features.auth.service.impl;
 import com.wegroup423.smart_campus.features.auth.dto.AuthResponse;
 import com.wegroup423.smart_campus.features.auth.dto.LoginRequest;
 import com.wegroup423.smart_campus.features.auth.dto.RegisterRequest;
+import com.wegroup423.smart_campus.features.auth.dto.UpdateProfileRequest;
 import com.wegroup423.smart_campus.features.auth.dto.UserDto;
 import com.wegroup423.smart_campus.features.auth.exception.InvalidCredentialsException;
 import com.wegroup423.smart_campus.features.auth.exception.UserNotFoundException;
@@ -100,8 +101,54 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = resolveUser(principal);
+        if (!user.isActive()) {
+            throw new InvalidCredentialsException("Account is inactive");
+        }
+
         log.info("User retrieved: {}", user.getEmail());
         return UserDto.from(user);
+    }
+
+    /**
+     * Update current authenticated user's profile
+     */
+    @Override
+    public UserDto updateCurrentUser(Object principal, UpdateProfileRequest request) {
+        if (principal == null) {
+            throw new UserNotFoundException("Unauthorized - no principal provided");
+        }
+
+        User user = resolveUser(principal);
+        if (!user.isActive()) {
+            throw new InvalidCredentialsException("Account is inactive");
+        }
+
+        if (request.name() != null) {
+            user.setName(request.name().trim());
+        }
+
+        if (request.picture() != null) {
+            user.setPicture(request.picture().trim());
+        }
+
+        User savedUser = userRepository.save(user);
+        log.info("User profile updated: {}", savedUser.getEmail());
+        return UserDto.from(savedUser);
+    }
+
+    /**
+     * Soft delete current authenticated user by deactivating the account
+     */
+    @Override
+    public void deleteCurrentUser(Object principal) {
+        if (principal == null) {
+            throw new UserNotFoundException("Unauthorized - no principal provided");
+        }
+
+        User user = resolveUser(principal);
+        user.setActive(false);
+        userRepository.save(user);
+        log.info("User account deactivated: {}", user.getEmail());
     }
 
     /**
