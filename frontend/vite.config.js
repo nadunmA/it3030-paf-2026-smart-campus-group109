@@ -9,9 +9,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     server: {
+      host: "0.0.0.0",
       watch: {
         usePolling: true,
-      },
       proxy: {
         "/oauth2": {
           target: apiTarget,
