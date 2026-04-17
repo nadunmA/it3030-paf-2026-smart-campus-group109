@@ -403,6 +403,24 @@ export default function UserProfilePage() {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const role = (user?.role || sessionUser?.role || "USER").toUpperCase();
+  const backPath =
+    role === "ADMIN"
+      ? "/admin/dashboard"
+      : role === "TECHNICIAN"
+        ? "/technician/dashboard"
+        : "/dashboard";
+  const roleStyles = {
+    USER: { bg: "#EFF6FF", color: "#1D4ED8", dot: "#2563EB", label: "USER" },
+    ADMIN: { bg: "#FEF2F2", color: "#DC2626", dot: "#DC2626", label: "ADMIN" },
+    TECHNICIAN: {
+      bg: "#F5F3FF",
+      color: "#7C3AED",
+      dot: "#7C3AED",
+      label: "TECHNICIAN",
+    },
+  };
+  const roleBadge = roleStyles[role] || roleStyles.USER;
 
   useEffect(() => {
     if (!sessionUser) {
@@ -551,8 +569,8 @@ export default function UserProfilePage() {
     <div style={S.page}>
       <div style={S.inner}>
         {/* Back button */}
-        <button onClick={() => navigate("/dashboard")} style={S.backBtn}>
-          ‹ Dashboard
+        <button onClick={() => navigate(backPath)} style={S.backBtn}>
+          ‹ Back to Dashboard
         </button>
 
         {/* Main card */}
@@ -600,17 +618,17 @@ export default function UserProfilePage() {
             <p style={S.userName}>{user?.name || "User"}</p>
             <p style={S.userEmail}>{user?.email}</p>
             <div style={S.badgeRow}>
-              <span style={S.badge("#EFF6FF", "#1D4ED8")}>
+              <span style={S.badge(roleBadge.bg, roleBadge.color)}>
                 <span
                   style={{
                     width: 6,
                     height: 6,
                     borderRadius: "50%",
-                    background: "#2563EB",
+                    background: roleBadge.dot,
                     display: "inline-block",
                   }}
                 />
-                USER
+                {roleBadge.label}
               </span>
               <span style={S.badge("#F0FDF4", "#166534")}>
                 <span
