@@ -6,6 +6,8 @@ import com.wegroup423.smart_campus.features.booking.model.dto.response.BookingRe
 import com.wegroup423.smart_campus.features.booking.service.BookingService;
 import com.wegroup423.smart_campus.features.notification.model.Notification;
 import com.wegroup423.smart_campus.features.notification.repository.NotificationRepository;
+import com.wegroup423.smart_campus.features.ticket.model.entity.Ticket;
+import com.wegroup423.smart_campus.features.ticket.repository.TicketRepository;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -35,15 +37,18 @@ public class AdminController {
     private final BookingService bookingService;
     private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
+    private final TicketRepository ticketRepository;
 
     public AdminController(
             BookingService bookingService,
             UserRepository userRepository,
-            NotificationRepository notificationRepository
+            NotificationRepository notificationRepository,
+            TicketRepository ticketRepository
     ) {
         this.bookingService = bookingService;
         this.userRepository = userRepository;
         this.notificationRepository = notificationRepository;
+        this.ticketRepository = ticketRepository;
     }
 
     @GetMapping("/bookings")
@@ -100,7 +105,9 @@ public class AdminController {
 
     @GetMapping("/tickets")
     public List<Map<String, Object>> getTickets() {
-        return List.of();
+        return ticketRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(this::toTicketView)
+                .toList();
     }
 
     @GetMapping("/activity")
@@ -110,6 +117,30 @@ public class AdminController {
                 .limit(25)
                 .map(this::toActivityView)
                 .toList();
+    }
+
+    private Map<String, Object> toTicketView(Ticket ticket) {
+        Map<String, Object> view = new LinkedHashMap<>();
+        view.put("id", nullSafe(ticket.getId()));
+        view.put("title", nullSafe(ticket.getTitle()));
+        view.put("description", nullSafe(ticket.getDescription()));
+        view.put("status", ticket.getStatus() != null ? ticket.getStatus().name() : "OPEN");
+        view.put("priority", ticket.getPriority() != null ? ticket.getPriority().name() : "MEDIUM");
+        view.put("category", ticket.getCategory() != null ? ticket.getCategory().name() : "OTHER");
+        view.put("location", nullSafe(ticket.getLocation()));
+        view.put("resourceName", nullSafe(ticket.getResourceName()));
+        view.put("reportedBy", nullSafe(ticket.getReportedBy()));
+        view.put("createdBy", nullSafe(ticket.getCreatedBy()));
+        view.put("assignedTechnicianId", nullSafe(ticket.getAssignedTechnicianId()));
+        view.put("assignedTechnicianName", nullSafe(ticket.getAssignedTechnicianName()));
+        view.put("resolutionNote", nullSafe(ticket.getResolutionNote()));
+        view.put("createdAt", ticket.getCreatedAt() != null ? ticket.getCreatedAt().toString() : "");
+        view.put("updatedAt", ticket.getUpdatedAt() != null ? ticket.getUpdatedAt().toString() : "");
+        // Aliases for admin dashboard frontend
+        view.put("reporter", nullSafe(ticket.getReportedBy()));
+        view.put("assigned", nullSafe(ticket.getAssignedTechnicianName()));
+        view.put("updated", ticket.getUpdatedAt() != null ? relativeTimeLocal(ticket.getUpdatedAt()) : "—");
+        return view;
     }
 
     private Map<String, Object> toBookingView(BookingResponse booking) {
@@ -138,7 +169,7 @@ public class AdminController {
         view.put("email", nullSafe(user.getEmail()));
         view.put("role", user.getRole() != null ? user.getRole().name() : "USER");
         view.put("bookings", bookingCount);
-        view.put("tickets", 0);
+        view.put("tickets", ticketRepository.countByCreatedBy(nullSafe(user.getId())));
         view.put("joined", formatDate(user.getCreatedAt()));
         view.put("active", user.isActive());
         return view;
@@ -158,6 +189,11 @@ public class AdminController {
             return "";
         }
         return DATE_FORMAT.format(createdAt);
+    }
+
+    private String relativeTimeLocal(LocalDateTime dt) {
+        if (dt == null) return "just now";
+        return relativeTime(dt);
     }
 
     private String relativeTime(LocalDateTime createdAt) {

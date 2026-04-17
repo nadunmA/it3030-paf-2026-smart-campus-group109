@@ -43,6 +43,7 @@ export default function UserDashboard() {
     setLiveUser,
     filteredBookings,
     filteredTickets,
+    ticketsLoading,
     filteredHalls,
     notificationFilters,
     filteredNotifications,
@@ -169,6 +170,7 @@ export default function UserDashboard() {
             ticketFilter={ticketFilter}
             setTicketFilter={setTicketFilter}
             filteredTickets={filteredTickets}
+            ticketsLoading={ticketsLoading}
           />
         )}
         {activeTab === "notifications" && (

@@ -1,7 +1,10 @@
 import { useState } from "react";
 import Badge from "./Badge";
 
-export default function TicketCard({ title, priority, status, updated }) {
+export default function TicketCard({ title, priority, status, updated, updatedAt, createdAt }) {
+  const displayTime = updated || (updatedAt || createdAt
+    ? new Date(updatedAt || createdAt).toLocaleDateString()
+    : "—");
   const [hov, setHov] = useState(false);
 
   return (
@@ -41,7 +44,7 @@ export default function TicketCard({ title, priority, status, updated }) {
       >
         <Badge type={status}>{status.replace("_", " ")}</Badge>
         <span style={{ fontSize: 11, color: "#9CA3AF" }}>
-          Updated {updated}
+          Updated {displayTime}
         </span>
       </div>
     </div>

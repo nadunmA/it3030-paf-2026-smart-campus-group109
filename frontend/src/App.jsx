@@ -17,6 +17,7 @@ import {
 } from "./features/auth/components/RouteGuards";
 import ResourceListPage from "./features/resources/ResourceListPage";
 import ResourceDetailPage from "./features/resources/ResourceDetailPage";
+import CreateTicketPage from "./features/tickets/pages/CreateTicketPage";
 
 export default function App() {
   return (
@@ -64,6 +65,7 @@ export default function App() {
           <Route path="/profile" element={<UserProfilePage />} />
           <Route path="/resources" element={<ResourceListPage />} />
           <Route path="/resources/:id" element={<ResourceDetailPage />} />
+          <Route path="/tickets/create" element={<CreateTicketPage />} />
         </Route>
 
         {/* TECHNICIAN only */}

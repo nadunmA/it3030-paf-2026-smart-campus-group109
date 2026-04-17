@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { apiGet, apiPatch } from "../../../../lib/api";
-import { MOCK_BOOKINGS, MOCK_TICKETS } from "../constants/mockData";
+import { MOCK_BOOKINGS } from "../constants/mockData";
 import { mapNotif } from "../utils/mapNotif";
 
 export default function useUserDashboardData({ activeTab, navigate }) {
@@ -15,6 +15,8 @@ export default function useUserDashboardData({ activeTab, navigate }) {
   const [halls, setHalls] = useState([]);
   const [hallsLoading, setHallsLoading] = useState(false);
   const [hallsError, setHallsError] = useState("");
+  const [tickets, setTickets] = useState([]);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
   const bootstrappedRef = useRef(false);
 
   const sessionUser = (() => {
@@ -61,6 +63,18 @@ export default function useUserDashboardData({ activeTab, navigate }) {
     }
   }, []);
 
+  const fetchTickets = useCallback(async () => {
+    try {
+      setTicketsLoading(true);
+      const res = await apiGet("/tickets/my");
+      setTickets(Array.isArray(res) ? res : []);
+    } catch {
+      setTickets([]);
+    } finally {
+      setTicketsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (bootstrappedRef.current) return;
     bootstrappedRef.current = true;
@@ -76,8 +90,9 @@ export default function useUserDashboardData({ activeTab, navigate }) {
         })
         .catch(() => {});
       fetchNotifs();
+      fetchTickets();
     }
-  }, [sessionUser, token, navigate, fetchNotifs]);
+  }, [sessionUser, token, navigate, fetchNotifs, fetchTickets]);
 
   useEffect(() => {
     if (activeTab === "resources" && halls.length === 0 && !hallsLoading)
@@ -130,10 +145,11 @@ export default function useUserDashboardData({ activeTab, navigate }) {
       bookingFilter === "All"
         ? MOCK_BOOKINGS
         : MOCK_BOOKINGS.filter((b) => b.status === bookingFilter),
+    ticketsLoading,
     filteredTickets:
       ticketFilter === "All"
-        ? MOCK_TICKETS
-        : MOCK_TICKETS.filter((t) => t.status === ticketFilter),
+        ? tickets
+        : tickets.filter((t) => t.status === ticketFilter),
     filteredHalls: halls.filter(
       (h) =>
         hallFilter === "ALL" ||

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find \"C:\\\\Users\\\\Lakin\\\\Downloads\\\\it3030-paf-2026-smart-campus-group423/backend/smart-campus/src/main/java\" -name \"*.java\" -type f -exec basename {} \\\\;)",
+      "Bash(grep \"\\\\.java$\")",
+      "Bash(mvn compile:*)",
+      "Read(//usr/local/lib/**)",
+      "Read(//c/Program Files/Java/**)",
+      "Bash(powershell.exe -Command \"where.exe mvn 2>&1; where.exe mvn.cmd 2>&1\")"
+    ]
+  }
+}

@@ -1,10 +1,13 @@
+import { useNavigate } from "react-router-dom";
 import TicketCard from "../components/TicketCard";
 
 export default function TicketsTab({
   ticketFilter,
   setTicketFilter,
   filteredTickets,
+  ticketsLoading,
 }) {
+  const navigate = useNavigate();
   const filterPillBase = {
     padding: "5px 14px",
     borderRadius: 99,
@@ -56,15 +59,18 @@ export default function TicketsTab({
         ))}
       </div>
 
-      {filteredTickets.length === 0 ? (
+      {ticketsLoading ? (
+        <div style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}>Loading tickets...</div>
+      ) : filteredTickets.length === 0 ? (
         <div style={{ color: "#9CA3AF", fontSize: 13, padding: "20px 0" }}>
           No tickets found.
         </div>
       ) : (
-        filteredTickets.map((t, i) => <TicketCard key={i} {...t} />)
+        filteredTickets.map((t, i) => <TicketCard key={t.id || i} {...t} />)
       )}
 
       <button
+        onClick={() => navigate("/tickets/create")}
         style={{
           padding: "10px 22px",
           borderRadius: 99,
