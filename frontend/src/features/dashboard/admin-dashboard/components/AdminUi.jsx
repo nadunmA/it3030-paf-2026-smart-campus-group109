@@ -198,6 +198,42 @@ export function StatCard({
   );
 }
 
+export function BackToHomeButton({ onClick, label = "Back to Home" }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: 7,
+        padding: "8px 11px",
+        borderRadius: 9,
+        cursor: "pointer",
+        background: C.surface,
+        border: `1px solid ${C.border}`,
+        color: C.text,
+        fontSize: 12,
+        fontWeight: 500,
+        fontFamily: "inherit",
+        transition: "all .15s",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "#F8FAFC";
+        e.currentTarget.style.borderColor = "#CBD5E1";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = C.surface;
+        e.currentTarget.style.borderColor = C.border;
+      }}
+    >
+      <span>🏠</span>
+      {label}
+    </button>
+  );
+}
+
 export function Panel({ title, action, onAction, children }) {
   return (
     <div

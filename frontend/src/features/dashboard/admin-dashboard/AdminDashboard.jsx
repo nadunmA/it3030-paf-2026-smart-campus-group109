@@ -7,6 +7,7 @@ import AdminSidebar from "./components/AdminSidebar";
 import { C } from "./components/AdminUi";
 import BookingsTab from "./components/BookingsTab";
 import OverviewTab from "./components/OverviewTab";
+import ProfileTab from "./components/ProfileTab";
 import ResourcesTab from "./components/ResourcesTab";
 import TicketsTab from "./components/TicketsTab";
 
@@ -91,7 +92,52 @@ export default function AdminDashboard() {
   }
 
   if (loading) {
-    return <div style={{ padding: 24 }}>Loading admin data...</div>;
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          background: C.bg,
+          display: "grid",
+          placeItems: "center",
+          padding: 24,
+          fontFamily:
+            "-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif",
+          color: C.text,
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 360,
+            background: C.surface,
+            border: `1px solid ${C.border}`,
+            borderRadius: 18,
+            padding: "26px 24px",
+            boxShadow: "0 10px 30px rgba(15,23,42,.08)",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: "50%",
+              margin: "0 auto 14px",
+              border: `3px solid ${C.blueBd}`,
+              borderTopColor: C.blue,
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+          <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6 }}>
+            Loading admin dashboard
+          </div>
+          <div style={{ fontSize: 13, color: C.muted }}>
+            Please wait while we load your data.
+          </div>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
   }
 
   const handleLogout = () => {
@@ -116,6 +162,13 @@ export default function AdminDashboard() {
     resourceFilter === "All"
       ? resources
       : resources.filter((r) => r.type === resourceFilter);
+
+  const profileCounts = {
+    bookings: bookings.length,
+    tickets: tickets.length,
+    resources: resources.length,
+    activity: activity.length,
+  };
 
   const updateUserInState = (userId, patch) => {
     setUsers((prev) =>
@@ -152,7 +205,8 @@ export default function AdminDashboard() {
         active: nextActive,
       });
       updateUserInState(targetUser.id, {
-        active: typeof updated?.active === "boolean" ? updated.active : nextActive,
+        active:
+          typeof updated?.active === "boolean" ? updated.active : nextActive,
         role: updated?.role || targetUser.role,
       });
     } catch (e) {
@@ -169,6 +223,7 @@ export default function AdminDashboard() {
     { id: "tickets", icon: "🔧", label: "Tickets" },
     { id: "resources", icon: "📦", label: "Resources" },
     { id: "users", icon: "👥", label: "Users" },
+    { id: "profile", icon: "👤", label: "Profile" },
     { id: "activity", icon: "📋", label: "Activity Log" },
   ];
 
@@ -259,6 +314,17 @@ export default function AdminDashboard() {
             onToggleActive={handleToggleActive}
             busyId={userActionBusyId}
             error={userActionError}
+          />
+        )}
+
+        {activeTab === "profile" && (
+          <ProfileTab
+            user={user}
+            bookingCount={profileCounts.bookings}
+            ticketCount={profileCounts.tickets}
+            resourceCount={profileCounts.resources}
+            activityCount={profileCounts.activity}
+            handleLogout={handleLogout}
           />
         )}
 

@@ -1,4 +1,4 @@
-import { C, NavItem } from "./AdminUi";
+import { BackToHomeButton, C, NavItem } from "./AdminUi";
 
 const initials = (name) =>
   name
@@ -130,6 +130,10 @@ export default function AdminSidebar({
               {user?.email}
             </div>
           </div>
+        </div>
+
+        <div style={{ marginBottom: 7 }}>
+          <BackToHomeButton onClick={onHome} />
         </div>
 
         <button

@@ -3,53 +3,70 @@ import { Link, useNavigate } from "react-router-dom";
 import Btn from "/src/components/ui/Btn";
 import { apiGet, apiPatch } from "../../lib/api";
 
-const PLATFORM_ITEMS = [
-  {
-    icon: "🏛️",
-    color: "#0A84FF",
-    title: "Facilities",
-    desc: "Browse all bookable resources",
-    path: "/dashboard",
-  },
-  {
-    icon: "📅",
-    color: "#30D158",
-    title: "Bookings",
-    desc: "Manage your reservations",
-    path: "/bookings/me",
-  },
-  {
-    icon: "🔧",
-    color: "#FF9F0A",
-    title: "Incident Tickets",
-    desc: "Report and track issues",
-    path: "/dashboard",
-  },
-  {
-    icon: "🔔",
-    color: "#BF5AF2",
-    title: "Notifications",
-    desc: "Stay updated instantly",
-    path: "/notifications",
-  },
-  {
-    icon: "🔐",
-    color: "#FF375F",
-    title: "OAuth Login",
-    desc: "Secure Google sign-in",
-    path: "/",
-  },
-];
+const getDashboardPath = (role) => {
+  const normalizedRole = (role || "USER").toUpperCase();
+  if (normalizedRole === "ADMIN") return "/admin/dashboard";
+  if (normalizedRole === "TECHNICIAN") return "/technician/dashboard";
+  return "/dashboard";
+};
 
-function PlatformMega({ onClose }) {
+const getProfilePath = () => "/profile";
+
+const getPlatformItems = (role) => {
+  const normalizedRole = (role || "USER").toUpperCase();
+  const dashboardPath = getDashboardPath(normalizedRole);
+
+  return [
+    {
+      icon: "🏛️",
+      color: "#0A84FF",
+      title: "Facilities",
+      desc: "Browse all bookable resources",
+      path: "/resources",
+    },
+    {
+      icon: "📅",
+      color: "#30D158",
+      title: "Bookings",
+      desc:
+        normalizedRole === "ADMIN"
+          ? "Review booking approvals"
+          : "Manage your reservations",
+      path: normalizedRole === "ADMIN" ? "/bookings/admin" : "/bookings/me",
+    },
+    {
+      icon: "🔧",
+      color: "#FF9F0A",
+      title: "Incident Tickets",
+      desc:
+        normalizedRole === "TECHNICIAN"
+          ? "Manage assigned work"
+          : "Report and track issues",
+      path: dashboardPath,
+    },
+    {
+      icon: "🔔",
+      color: "#BF5AF2",
+      title: "Notifications",
+      desc: "Stay updated instantly",
+      path: "/notifications",
+    },
+    {
+      icon: "🔐",
+      color: "#FF375F",
+      title: "OAuth Login",
+      desc: "Secure Google sign-in",
+      path: "/",
+    },
+  ];
+};
+
+function PlatformMega({ onClose, userRole }) {
   const navigate = useNavigate();
+  const platformItems = getPlatformItems(userRole);
 
   const handleItemClick = (path) => {
     onClose();
-    if (path === "/notifications") {
-      navigate("/dashboard", { state: { tab: "notifications" } });
-      return;
-    }
     navigate(path);
   };
 
@@ -69,7 +86,7 @@ function PlatformMega({ onClose }) {
       }}
     >
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
-        {PLATFORM_ITEMS.map((item) => (
+        {platformItems.map((item) => (
           <div
             key={item.title}
             onClick={() => handleItemClick(item.path)}
@@ -305,6 +322,9 @@ function UserMenu({ onLogout, user }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const menuRef = useRef(null);
   const notifRef = useRef(null);
+  const userRole = (user?.role || "USER").toUpperCase();
+  const dashboardPath = getDashboardPath(userRole);
+  const profilePath = getProfilePath();
 
   useEffect(() => {
     if (!user) return;
@@ -334,7 +354,7 @@ function UserMenu({ onLogout, user }) {
 
   const handleNotifClick = () => {
     setNotif(false);
-    navigate("/dashboard", { state: { tab: "notifications" } });
+    navigate("/notifications");
   };
 
   const handleMarkAllRead = async () => {
@@ -355,21 +375,7 @@ function UserMenu({ onLogout, user }) {
       return;
     }
 
-    if (item.label === "Profile") {
-      user?.role === "ADMIN"
-        ? navigate("/admin/dashboard")
-        : navigate("/dashboard");
-    } else if (item.label === "Notifications") {
-      navigate("/dashboard", { state: { tab: "notifications" } });
-    } else if (item.label === "Settings") {
-      navigate("/settings");
-    } else if (
-      item.label === "My Bookings" ||
-      item.label === "My Tickets" ||
-      item.label === "Browse Facilities"
-    ) {
-      navigate("/dashboard");
-    }
+    navigate(dashboardPath);
   };
 
   useEffect(() => {
@@ -382,19 +388,45 @@ function UserMenu({ onLogout, user }) {
   }, []);
 
   const items = [
-    { icon: "🏛️", label: "Browse Facilities" },
-    { icon: "📅", label: "My Bookings", path: "/bookings/me" },
-    { icon: "📝", label: "Create Booking", path: "/bookings/create" },
-    { icon: "🛡️", label: "Admin Booking Dashboard", path: "/bookings/admin" },
-    { icon: "🔧", label: "My Tickets" },
-    { icon: "🔔", label: "Notifications", count: unreadCount },
-    { icon: "👤", label: "Profile" },
-    { icon: "⚙️", label: "Settings" },
+    { icon: "🏛️", label: "Browse Facilities", path: "/resources" },
+    ...(userRole === "ADMIN"
+      ? [
+          { icon: "🛡️", label: "Admin Dashboard", path: "/admin/dashboard" },
+          {
+            icon: "📅",
+            label: "Admin Booking Dashboard",
+            path: "/bookings/admin",
+          },
+        ]
+      : []),
+    ...(userRole === "TECHNICIAN"
+      ? [
+          {
+            icon: "🔧",
+            label: "Technician Dashboard",
+            path: "/technician/dashboard",
+          },
+        ]
+      : []),
+    ...(userRole === "USER"
+      ? [
+          { icon: "📅", label: "My Bookings", path: "/bookings/me" },
+          { icon: "📝", label: "Create Booking", path: "/bookings/create" },
+        ]
+      : []),
+    { icon: "🔧", label: "My Tickets", path: dashboardPath },
+    {
+      icon: "🔔",
+      label: "Notifications",
+      path: "/notifications",
+      count: unreadCount,
+    },
+    { icon: "👤", label: "Profile", path: profilePath },
   ];
 
   const displayName = user?.name || "User";
   const displayEmail = user?.email || "-";
-  const displayRole = user?.role || "USER";
+  const displayRole = userRole;
   const initials = (displayName || "U")
     .split(" ")
     .map((w) => w[0])
@@ -449,7 +481,7 @@ function UserMenu({ onLogout, user }) {
             onNotifClick={handleNotifClick}
             onViewAll={() => {
               setNotif(false);
-              navigate("/dashboard", { state: { tab: "notifications" } });
+              navigate("/notifications");
             }}
           />
         )}
@@ -685,7 +717,10 @@ export default function Navbar({
                 zIndex: 300,
               }}
             >
-              <PlatformMega onClose={() => setMegaOpen(false)} />
+              <PlatformMega
+                onClose={() => setMegaOpen(false)}
+                userRole={user?.role}
+              />
             </div>
           )}
         </div>
