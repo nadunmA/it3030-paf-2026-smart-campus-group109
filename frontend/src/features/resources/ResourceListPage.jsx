@@ -4,6 +4,7 @@ import { apiDownload, apiGet } from "../../lib/api";
 import ResourceFormModal from "./ResourceFormModal";
 import ResourceAdminLayout from "./ResourceAdminLayout";
 import StatusBadge from "./StatusBadge";
+import { extractQrLookupValue } from "./qrUtils";
 
 const C = {
   bg: "#F5F7FA",
@@ -77,7 +78,13 @@ export default function ResourceListPage() {
 
     try {
       setQrError("");
-      const resource = await apiGet(`/resources/lookup?qrCode=${encodeURIComponent(qrCode.trim())}`);
+      const lookupValue = extractQrLookupValue(qrCode);
+      if (!lookupValue) {
+        setQrError("Invalid QR value. Paste the code or QR URL.");
+        return;
+      }
+
+      const resource = await apiGet(`/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
       if (resource?.id) {
         navigate(`/resources/${resource.id}`);
         return;

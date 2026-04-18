@@ -40,11 +40,19 @@ function getPublicAppOrigin() {
 }
 
 function buildResourceQrPayload(resource) {
-  // Generate a scannable URL that opens the public resource details page.
-  const publicOrigin = getPublicAppOrigin();
   const qrValue = resource.qrCode || resource.id;
+  const configuredOrigin = import.meta.env.VITE_PUBLIC_APP_ORIGIN?.trim();
+
+  // If no public origin is configured and app is local-only, use raw QR value
+  // so in-app scanner and manual lookup still work on any device.
+  const isLocalHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (!configuredOrigin && isLocalHost) {
+    return qrValue;
+  }
+
+  const publicOrigin = getPublicAppOrigin();
   const qrPath = `/qr/${qrValue}`;
-  return publicOrigin ? `${publicOrigin}${qrPath}` : qrPath;
+  return publicOrigin ? `${publicOrigin}${qrPath}` : qrValue;
 }
 
 export default function ResourceDetailPage() {
@@ -160,7 +168,8 @@ export default function ResourceDetailPage() {
                   {qrPayload}
                 </div>
                 <div style={{ marginTop: 8, color: C.muted, fontSize: 13 }}>
-                  📱 Scan with your phone camera to open the resource page directly. If you are testing on another device, set VITE_PUBLIC_APP_ORIGIN to the frontend URL that device can reach.
+                  📱 For real device scanning, set VITE_PUBLIC_APP_ORIGIN to a reachable host (for example your LAN URL).
+                  Without that setting on localhost, this QR stores the raw code value for reliable in-app scanning.
                 </div>
               </div>
             </div>

@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import QrScanner from "qr-scanner";
+import qrScannerWorkerPath from "qr-scanner/qr-scanner-worker.min?url";
 import { apiGet } from "../../lib/api";
 import ResourceAdminLayout from "./ResourceAdminLayout";
+import { extractQrLookupValue } from "./qrUtils";
+
+QrScanner.WORKER_PATH = qrScannerWorkerPath;
 
 const C = {
   bg: "#F5F7FA",
@@ -30,8 +35,9 @@ function parseQrText(text) {
 export default function QRScannerPage() {
   const navigate = useNavigate();
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
+  const qrScannerRef = useRef(null);
+  const processingRef = useRef(false);
   const [scanning, setScanning] = useState(false);
   const [scannedData, setScannedData] = useState(null);
   const [qrInput, setQrInput] = useState("");
@@ -45,8 +51,14 @@ export default function QRScannerPage() {
     setResource(null);
     setScannedData(null);
 
+    const lookupValue = extractQrLookupValue(data);
+    if (!lookupValue) {
+      setError("Invalid QR value. Paste the code or QR URL.");
+      return;
+    }
+
     // Try to parse as equipment QR format
-    const parsed = parseQrText(data);
+    const parsed = parseQrText(lookupValue);
     if (parsed.Resource) {
       setScannedData(parsed);
       return;
@@ -55,7 +67,7 @@ export default function QRScannerPage() {
     // Try to look up by QR code value in backend
     setLoading(true);
     try {
-      const res = await apiGet(`/resources/lookup?qrCode=${encodeURIComponent(data)}`);
+      const res = await apiGet(`/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
       if (res) {
         setResource(res);
       } else {
@@ -80,48 +92,73 @@ export default function QRScannerPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = async () => {
-        // For now, show a message that manual input is required
-        setError("File upload QR decoding requires a QR library. Use manual input or phone camera instead.");
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+    setError("");
+    setScannedData(null);
+    setResource(null);
+
+    try {
+      const result = await QrScanner.scanImage(file, { returnDetailedScanResult: true });
+      const decodedText = typeof result === "string" ? result : result?.data;
+      if (!decodedText) {
+        setError("No QR code detected in this image.");
+        return;
+      }
+
+      await handleQrData(decodedText);
+    } catch {
+      setError("Failed to decode QR image. Try a clearer image or manual input.");
+    }
   };
 
   const startCamera = async () => {
+    setError("");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setScanning(true);
+      if (!videoRef.current) return;
+
+      if (!qrScannerRef.current) {
+        qrScannerRef.current = new QrScanner(
+          videoRef.current,
+          async (scanResult) => {
+            const decodedText = typeof scanResult === "string" ? scanResult : scanResult?.data;
+            if (!decodedText || processingRef.current) return;
+
+            processingRef.current = true;
+            try {
+              stopCamera();
+              await handleQrData(decodedText);
+            } finally {
+              processingRef.current = false;
+            }
+          },
+          {
+            preferredCamera: "environment",
+            maxScansPerSecond: 8,
+            returnDetailedScanResult: true,
+            highlightScanRegion: true,
+            highlightCodeOutline: true,
+          },
+        );
       }
+
+      await qrScannerRef.current.start();
+      setScanning(true);
     } catch (err) {
-      setError("Camera access denied. Use manual input instead.");
+      setError("Unable to start camera scanner. Check camera permission or use manual input.");
     }
   };
 
   const stopCamera = () => {
-    if (videoRef.current?.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-    }
+    qrScannerRef.current?.stop();
     setScanning(false);
   };
 
-  // Simple frame capture (without external QR library, this is a fallback)
-  const captureFrame = () => {
-    if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext("2d");
-      context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-      // Note: Full QR decoding requires jsQR or similar library
-      setError("For best results, manually enter the QR code value or use a QR scanner app first.");
-    }
-  };
+  useEffect(
+    () => () => {
+      qrScannerRef.current?.destroy();
+      qrScannerRef.current = null;
+    },
+    [],
+  );
 
   return (
     <ResourceAdminLayout>
@@ -228,32 +265,11 @@ export default function QRScannerPage() {
                     marginBottom: 12,
                   }}
                 />
-                <canvas
-                  ref={canvasRef}
-                  style={{ display: "none" }}
-                  width={300}
-                  height={300}
-                />
                 <div style={{ display: "flex", gap: 10 }}>
-                  <button
-                    onClick={captureFrame}
-                    style={{
-                      flex: 1,
-                      border: `1px solid ${C.border}`,
-                      background: C.surface,
-                      color: C.text,
-                      borderRadius: 10,
-                      padding: "10px 14px",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Capture
-                  </button>
                   <button
                     onClick={stopCamera}
                     style={{
-                      flex: 1,
+                      width: "100%",
                       border: "none",
                       background: C.red,
                       color: "#fff",
