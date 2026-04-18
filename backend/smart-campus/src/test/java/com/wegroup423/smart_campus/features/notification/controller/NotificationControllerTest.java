@@ -3,6 +3,8 @@ package com.wegroup423.smart_campus.features.notification.controller;
 
 import com.wegroup423.smart_campus.features.notification.model.Notification;
 import com.wegroup423.smart_campus.features.notification.service.NotificationService;
+import com.wegroup423.smart_campus.features.auth.repository.UserRepository;
+import com.wegroup423.smart_campus.features.auth.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,12 @@ class NotificationControllerTest {
 
     @MockitoBean
     private NotificationService notificationService;
+
+        @MockitoBean
+        private JwtUtil jwtUtil;
+
+        @MockitoBean
+        private UserRepository userRepository;
 
     private Notification sampleNotif;
 
@@ -76,7 +84,8 @@ class NotificationControllerTest {
     @Test
     void getMyNotifications_unauthenticated_returns401() throws Exception {
         mockMvc.perform(get("/api/notifications/my"))
-                .andExpect(status().isUnauthorized());
+                                .andExpect(status().is3xxRedirection())
+                                .andExpect(redirectedUrl("http://localhost/oauth2/authorization/google"));
     }
 
     // POST /api/notifications/my
@@ -122,7 +131,8 @@ class NotificationControllerTest {
     @Test
     void markAsRead_unauthenticated_returns401() throws Exception {
         mockMvc.perform(patch("/api/notifications/notif-001/read").with(csrf()))
-                .andExpect(status().isUnauthorized());
+                                .andExpect(status().is3xxRedirection())
+                                .andExpect(redirectedUrl("http://localhost/oauth2/authorization/google"));
     }
 
     // PATCH /api/notifications/my/read-all

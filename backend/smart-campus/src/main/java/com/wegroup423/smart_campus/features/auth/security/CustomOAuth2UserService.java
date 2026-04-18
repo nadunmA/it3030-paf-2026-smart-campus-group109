@@ -24,7 +24,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oAuth2User = super.loadUser(userRequest);
+        OAuth2User oAuth2User = fetchOAuth2User(userRequest);
 
         String googleId = oAuth2User.getAttribute("sub");
         String email    = oAuth2User.getAttribute("email");
@@ -58,5 +58,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 });
 
         return oAuth2User;
+    }
+
+    // Extracted for testability so unit tests can avoid real remote OAuth calls.
+    protected OAuth2User fetchOAuth2User(OAuth2UserRequest userRequest) {
+        return super.loadUser(userRequest);
     }
 }
