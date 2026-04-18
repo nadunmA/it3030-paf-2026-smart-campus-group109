@@ -7,11 +7,13 @@ export default function FacilityCard({
   location,
   capacity,
   availability,
+  onClick,
 }) {
   const [hov, setHov] = useState(false);
 
   return (
     <div
+      onClick={onClick}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
@@ -21,6 +23,7 @@ export default function FacilityCard({
         borderRadius: 10,
         boxShadow: hov ? "0 2px 8px rgba(0,0,0,.05)" : "none",
         transition: "all .15s",
+        cursor: onClick ? "pointer" : "default",
       }}
     >
       <div
