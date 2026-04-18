@@ -1,6 +1,6 @@
 package com.wegroup423.smart_campus.features.auth.model;
 
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +27,9 @@ public class User {
     private String name;
     private String picture;
     private String googleId;
+
+    @JsonIgnore
+    private String password;
 
     @Builder.Default
     private Role role = Role.USER;

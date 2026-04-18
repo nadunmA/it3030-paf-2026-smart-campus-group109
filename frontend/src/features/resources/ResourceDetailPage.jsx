@@ -116,7 +116,6 @@ export default function ResourceDetailPage() {
       active = false;
     };
   }, [qrPayload]);
-
   const handleDelete = async () => {
     if (!window.confirm("Delete this resource?")) return;
     await apiDelete(`/resources/${id}`);
@@ -216,7 +215,7 @@ export default function ResourceDetailPage() {
               )}
               <div>
                 <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".08em", color: C.muted, fontWeight: 700, marginBottom: 6 }}>
-                  Scannable QR Code
+                  {isEquipment ? "Equipment QR Details" : "Scannable QR Code"}
                 </div>
                 <div style={{ color: C.text, fontWeight: 700, maxWidth: 580, wordBreak: "break-all", fontSize: 13 }}>
                   {qrPayload}

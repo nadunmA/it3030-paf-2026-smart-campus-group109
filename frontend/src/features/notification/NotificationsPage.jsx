@@ -1,5 +1,5 @@
 // src/features/notification/NotificationsPage.jsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPatch } from "../../lib/api";
 
@@ -237,6 +237,7 @@ export default function NotificationsPage() {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("ALL");
   const [loaded, setLoaded] = useState(false);
+  const bootstrappedRef = useRef(false);
 
   const sessionUser = (() => {
     try {
@@ -261,6 +262,8 @@ export default function NotificationsPage() {
   }, []);
 
   useEffect(() => {
+    if (bootstrappedRef.current) return;
+    bootstrappedRef.current = true;
     if (!sessionUser) {
       navigate("/");
       return;

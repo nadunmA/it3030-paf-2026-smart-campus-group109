@@ -5,7 +5,7 @@ import Navbar from "../../../components/layout/Navbar";
 import HeroSection from "../components/HeroSection";
 import StatsSection from "../components/StatsSection";
 import FeaturesSection from "../components/FeatureSection";
-import HowItWorksSection from "../components/Howitworkssection";
+import HowItWorksSection from "../components/HowItWorksSection";
 import CtaSection from "../components/CtaSection";
 import Footer from "../../../components/layout/Footer";
 import GoogleLoginModal from "../../auth/components/GoogleLoginModal";

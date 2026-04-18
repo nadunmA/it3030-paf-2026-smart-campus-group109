@@ -68,7 +68,7 @@ public class NotificationService {
         notificationRepository.delete(notification);
     }
 
-    // Create notification — called by other services (booking, ticket, etc.)
+    // Create notification — called by other services
     public Notification createNotification(String userId, String title, String message,
                                            Notification.NotificationType type,
                                            String relatedEntityId, String relatedEntityType) {

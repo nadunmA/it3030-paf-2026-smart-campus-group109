@@ -1,66 +1,70 @@
 import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Btn from "/src/components/ui/Btn";
-import { useNavigate } from "react-router-dom";
 import { apiGet, apiPatch } from "../../lib/api";
 
-const PLATFORM_ITEMS = [
-  {
-    icon: "🏛️",
-    color: "#0A84FF",
-    title: "Facilities",
-    desc: "Browse all bookable resources",
-    path: "/dashboard", // path එක මෙතනට එකතු කළා
-  },
-  {
-    icon: "📅",
-    color: "#30D158",
-    title: "Bookings",
-    desc: "Manage your reservations",
-    path: "/dashboard",
-  },
-  {
-    icon: "🔧",
-    color: "#FF9F0A",
-    title: "Incident Tickets",
-    desc: "Report and track issues",
-    path: "/dashboard",
-  },
-  {
-    icon: "🔔",
-    color: "#BF5AF2",
-    title: "Notifications",
-    desc: "Stay updated instantly",
-    path: "/notifications",
-  },
-  {
-    icon: "🔐",
-    color: "#FF375F",
-    title: "OAuth Login",
-    desc: "Secure Google sign-in",
-    path: "/",
-  },
-];
+const getDashboardPath = (role) => {
+  const normalizedRole = (role || "USER").toUpperCase();
+  if (normalizedRole === "ADMIN") return "/admin/dashboard";
+  if (normalizedRole === "TECHNICIAN") return "/technician/dashboard";
+  return "/dashboard";
+};
 
-function PlatformMega({ onClose }) {
+const getPlatformItems = (role) => {
+  const normalizedRole = (role || "USER").toUpperCase();
+  const dashboardPath = getDashboardPath(normalizedRole);
+
+  return [
+    {
+      icon: "🏛️",
+      color: "#0A84FF",
+      title: "Facilities",
+      desc: "Browse all bookable resources",
+      path: "/resources",
+    },
+    {
+      icon: "📅",
+      color: "#30D158",
+      title: "Bookings",
+      desc:
+        normalizedRole === "ADMIN"
+          ? "Review booking approvals"
+          : "Manage your reservations",
+      path: normalizedRole === "ADMIN" ? "/bookings/admin" : "/bookings/me",
+    },
+    {
+      icon: "🔧",
+      color: "#FF9F0A",
+      title: "Incident Tickets",
+      desc:
+        normalizedRole === "TECHNICIAN"
+          ? "Manage assigned work"
+          : "Report and track issues",
+      path: dashboardPath,
+    },
+    {
+      icon: "🔔",
+      color: "#BF5AF2",
+      title: "Notifications",
+      desc: "Stay updated instantly",
+      path: "/notifications",
+    },
+  ];
+};
+
+function PlatformMega({ onClose, userRole }) {
   const navigate = useNavigate();
+  const platformItems = getPlatformItems(userRole);
 
   const handleItemClick = (path) => {
-    onClose(); // dropdown එක වහන්න
-    if (path === "/notifications") {
-      navigate("/dashboard", { state: { tab: "notifications" } });
-      return;
-    }
-    navigate(path); // අදාළ පේජ් එකට යන්න
+    onClose();
+    navigate(path);
   };
 
   return (
     <div
-      onMouseLeave={onClose}
       style={{
-        position: "absolute",
-        top: "calc(100% + 10px)",
-        left: "50%",
-        transform: "translateX(-50%)",
+        // Position styles removed as requested
         background: "rgba(14,14,18,.97)",
         backdropFilter: "blur(28px)",
         border: "1px solid rgba(255,255,255,.1)",
@@ -73,7 +77,7 @@ function PlatformMega({ onClose }) {
       }}
     >
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
-        {PLATFORM_ITEMS.map((item) => (
+        {platformItems.map((item) => (
           <div
             key={item.title}
             onClick={() => handleItemClick(item.path)}
@@ -122,6 +126,7 @@ function PlatformMega({ onClose }) {
           </div>
         ))}
       </div>
+
       <div
         style={{
           margin: "6px 6px 2px",
@@ -134,15 +139,6 @@ function PlatformMega({ onClose }) {
       >
         <span style={{ fontSize: ".72rem", color: "rgba(255,255,255,.3)" }}>
           IT3030 · Smart Campus Hub
-        </span>
-        <span
-          style={{ fontSize: ".72rem", color: "#0A84FF", cursor: "pointer" }}
-          onClick={() => {
-            onClose();
-            navigate("/dashboard", { state: { tab: "notifications" } });
-          }}
-        >
-          View all →
         </span>
       </div>
     </div>
@@ -195,6 +191,7 @@ function NotifPanel({ notifications, onMarkAllRead, onViewAll, onNotifClick }) {
         animation: "dropIn .2s ease",
       }}
     >
+      {/* NotifPanel content */}
       <div
         style={{
           padding: "13px 16px 10px",
@@ -307,10 +304,13 @@ function UserMenu({ onLogout, user }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const menuRef = useRef(null);
   const notifRef = useRef(null);
+  const userRole = (user?.role || "USER").toUpperCase();
+  const dashboardPath = getDashboardPath(userRole);
 
   useEffect(() => {
     if (!user) return;
     let active = true;
+
     const loadNotifications = async () => {
       try {
         const res = await apiGet("/notifications/my");
@@ -323,8 +323,10 @@ function UserMenu({ onLogout, user }) {
         console.error("Failed to load navbar notifications", err);
       }
     };
+
     loadNotifications();
     const intervalId = setInterval(loadNotifications, 30000);
+
     return () => {
       active = false;
       clearInterval(intervalId);
@@ -333,7 +335,7 @@ function UserMenu({ onLogout, user }) {
 
   const handleNotifClick = () => {
     setNotif(false);
-    navigate("/dashboard", { state: { tab: "notifications" } });
+    navigate("/notifications");
   };
 
   const handleMarkAllRead = async () => {
@@ -348,21 +350,13 @@ function UserMenu({ onLogout, user }) {
 
   const handleItemClick = (item) => {
     setOpen(false);
-    if (item.label === "Profile") {
-      user?.role === "ADMIN"
-        ? navigate("/admin/dashboard")
-        : navigate("/dashboard");
-    } else if (item.label === "Notifications") {
-      navigate("/dashboard", { state: { tab: "notifications" } });
-    } else if (item.label === "Settings") {
-      navigate("/settings");
-    } else if (
-      item.label === "My Bookings" ||
-      item.label === "My Tickets" ||
-      item.label === "Browse Facilities"
-    ) {
-      navigate("/dashboard");
+
+    if (item.path) {
+      navigate(item.path, item.state || undefined);
+      return;
     }
+
+    navigate(dashboardPath);
   };
 
   useEffect(() => {
@@ -375,17 +369,50 @@ function UserMenu({ onLogout, user }) {
   }, []);
 
   const items = [
-    { icon: "🏛️", label: "Browse Facilities" },
-    { icon: "📅", label: "My Bookings" },
-    { icon: "🔧", label: "My Tickets" },
-    { icon: "🔔", label: "Notifications", count: unreadCount },
-    { icon: "👤", label: "Profile" },
-    { icon: "⚙️", label: "Settings" },
+    { icon: "🏛️", label: "Browse Facilities", path: "/resources" },
+    ...(userRole === "ADMIN"
+      ? [
+          { icon: "🛡️", label: "Admin Dashboard", path: "/admin/dashboard" },
+          {
+            icon: "📅",
+            label: "Admin Booking Dashboard",
+            path: "/bookings/admin",
+          },
+        ]
+      : []),
+    ...(userRole === "TECHNICIAN"
+      ? [
+          {
+            icon: "🔧",
+            label: "Technician Dashboard",
+            path: "/technician/dashboard",
+          },
+        ]
+      : []),
+    ...(userRole === "USER"
+      ? [
+          { icon: "📅", label: "My Bookings", path: "/bookings/me" },
+          { icon: "📝", label: "Create Booking", path: "/bookings/create" },
+        ]
+      : []),
+    { icon: "🔧", label: "My Tickets", path: dashboardPath },
+    {
+      icon: "🔔",
+      label: "Notifications",
+      path: "/notifications",
+      count: unreadCount,
+    },
+    {
+      icon: "👤",
+      label: "Profile",
+      path: dashboardPath,
+      state: { tab: "profile" },
+    },
   ];
 
   const displayName = user?.name || "User";
   const displayEmail = user?.email || "-";
-  const displayRole = user?.role || "USER";
+  const displayRole = userRole;
   const initials = (displayName || "U")
     .split(" ")
     .map((w) => w[0])
@@ -395,6 +422,7 @@ function UserMenu({ onLogout, user }) {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      {/* Notification Bell & Panel */}
       <div ref={notifRef} style={{ position: "relative" }}>
         <div
           onClick={() => setNotif((o) => !o)}
@@ -412,6 +440,7 @@ function UserMenu({ onLogout, user }) {
             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 01-3.46 0" />
           </svg>
+
           {unreadCount > 0 && (
             <span
               style={{
@@ -430,6 +459,7 @@ function UserMenu({ onLogout, user }) {
             </span>
           )}
         </div>
+
         {notif && (
           <NotifPanel
             notifications={notifications}
@@ -437,12 +467,13 @@ function UserMenu({ onLogout, user }) {
             onNotifClick={handleNotifClick}
             onViewAll={() => {
               setNotif(false);
-              navigate("/dashboard", { state: { tab: "notifications" } });
+              navigate("/notifications");
             }}
           />
         )}
       </div>
 
+      {/* User Menu */}
       <div ref={menuRef} style={{ position: "relative" }}>
         <div
           onClick={() => setOpen((o) => !o)}
@@ -464,6 +495,7 @@ function UserMenu({ onLogout, user }) {
         >
           {initials}
         </div>
+
         {open && (
           <div
             style={{
@@ -481,6 +513,7 @@ function UserMenu({ onLogout, user }) {
               animation: "dropIn .2s ease",
             }}
           >
+            {/* User menu content */}
             <div
               style={{
                 padding: "10px 12px 9px",
@@ -526,6 +559,7 @@ function UserMenu({ onLogout, user }) {
                 </span>
               </div>
             </div>
+
             {items.map((item) => (
               <div
                 key={item.label}
@@ -552,6 +586,7 @@ function UserMenu({ onLogout, user }) {
                 )}
               </div>
             ))}
+
             <div
               style={{
                 height: 1,
@@ -559,6 +594,7 @@ function UserMenu({ onLogout, user }) {
                 margin: "4px 6px",
               }}
             />
+
             <div className="drop-item drop-danger" onClick={onLogout}>
               <span style={{ fontSize: ".95rem" }}>🚪</span> Sign out
             </div>
@@ -579,6 +615,12 @@ export default function Navbar({
   onGoTo,
 }) {
   const [megaOpen, setMegaOpen] = useState(false);
+  const megaCloseRef = useRef(null);
+
+  useEffect(() => {
+    return () => clearTimeout(megaCloseRef.current);
+  }, []);
+
   return (
     <nav
       style={{
@@ -594,7 +636,9 @@ export default function Navbar({
         padding: "0 max(28px,5vw)",
         background: scrolled ? "rgba(0,0,0,.82)" : "transparent",
         backdropFilter: scrolled ? "blur(20px) saturate(180%)" : "none",
-        borderBottom: `1px solid ${scrolled ? "rgba(255,255,255,.08)" : "transparent"}`,
+        borderBottom: `1px solid ${
+          scrolled ? "rgba(255,255,255,.08)" : "transparent"
+        }`,
         transition: "all .4s ease",
       }}
     >
@@ -610,13 +654,21 @@ export default function Navbar({
       >
         Smart<span style={{ color: "#0A84FF" }}>Campus</span>
       </div>
+
       <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
         <div
           style={{ position: "relative" }}
-          onMouseLeave={() => setMegaOpen(false)}
+          onMouseEnter={() => {
+            clearTimeout(megaCloseRef.current);
+            setMegaOpen(true);
+          }}
+          onMouseLeave={() => {
+            megaCloseRef.current = setTimeout(() => {
+              setMegaOpen(false);
+            }, 180);
+          }}
         >
           <div
-            onMouseEnter={() => setMegaOpen(true)}
             className="nav-pill"
             style={{
               display: "flex",
@@ -633,8 +685,32 @@ export default function Navbar({
           >
             Platform
           </div>
-          {megaOpen && <PlatformMega onClose={() => setMegaOpen(false)} />}
+
+          {megaOpen && (
+            <div
+              onMouseEnter={() => clearTimeout(megaCloseRef.current)}
+              onMouseLeave={() => {
+                megaCloseRef.current = setTimeout(() => {
+                  setMegaOpen(false);
+                }, 180);
+              }}
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                marginTop: 6,
+                zIndex: 300,
+              }}
+            >
+              <PlatformMega
+                onClose={() => setMegaOpen(false)}
+                userRole={user?.role}
+              />
+            </div>
+          )}
         </div>
+
         {[
           ["About", "stats"],
           ["Features", "features"],
@@ -662,7 +738,28 @@ export default function Navbar({
             </div>
           );
         })}
+
+        <div
+          onClick={() => onGoTo("bookings")}
+          className="nav-pill"
+          style={{
+            padding: "5px 11px",
+            borderRadius: 8,
+            fontSize: ".83rem",
+            color:
+              activeSection === "bookings" ? "#fff" : "rgba(255,255,255,.58)",
+            cursor: "pointer",
+            transition: "all .2s",
+            background:
+              activeSection === "bookings"
+                ? "rgba(255,255,255,.07)"
+                : "transparent",
+          }}
+        >
+          Bookings
+        </div>
       </div>
+
       <div
         style={{
           display: "flex",
