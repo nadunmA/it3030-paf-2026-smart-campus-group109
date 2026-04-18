@@ -41,7 +41,7 @@ public class ResourceApiController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','USER','TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<List<ResourceResponse>> getResources(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String location,
@@ -50,13 +50,13 @@ public class ResourceApiController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','USER','TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<ResourceResponse> getResource(@PathVariable String id) {
         return ResponseEntity.ok(resourceService.getResource(id));
     }
 
     @GetMapping("/lookup")
-    @PreAuthorize("hasAnyRole('ADMIN','USER','TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<ResourceResponse> getResourceByQrCode(@RequestParam String qrCode) {
         return ResponseEntity.ok(resourceService.getResourceByQrCode(qrCode));
     }
