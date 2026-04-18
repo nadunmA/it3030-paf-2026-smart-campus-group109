@@ -73,11 +73,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./frontend
-        env:
-          npm_config_optional: "true"
-        run: |
-          npm ci --include=optional --no-audit --no-fund
-          npm ls @rolldown/binding-linux-x64-gnu || npm i -D --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.10
+        run: npm ci --include=optional --no-audit --no-fund
 
       - name: Build React app
         working-directory: ./frontend
