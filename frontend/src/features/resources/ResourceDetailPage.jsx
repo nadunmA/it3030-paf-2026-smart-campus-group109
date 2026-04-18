@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiDelete, apiGet } from "../../lib/api";
+import QRCode from "qrcode";
 import ResourceAdminLayout from "./ResourceAdminLayout";
 import StatusBadge from "./StatusBadge";
 import ResourceFormModal from "./ResourceFormModal";
@@ -64,6 +65,8 @@ export default function ResourceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
+  const [qrImageUrl, setQrImageUrl] = useState("");
+  const [qrImageError, setQrImageError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -82,6 +85,46 @@ export default function ResourceDetailPage() {
       active = false;
     };
   }, [id]);
+
+  const qrPayload = resource ? buildResourceQrPayload(resource) : "";
+
+  useEffect(() => {
+    let active = true;
+
+    if (!qrPayload) {
+      setQrImageUrl("");
+      setQrImageError("");
+      return () => {
+        active = false;
+      };
+    }
+
+    setQrImageError("");
+    QRCode.toDataURL(qrPayload, {
+      width: 280,
+      margin: 1,
+      errorCorrectionLevel: "M",
+      color: {
+        dark: "#111827",
+        light: "#FFFFFF",
+      },
+    })
+      .then((dataUrl) => {
+        if (active) {
+          setQrImageUrl(dataUrl);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setQrImageUrl("");
+          setQrImageError("Failed to render QR code");
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [qrPayload]);
 
   const handleDelete = async () => {
     if (!window.confirm("Delete this resource?")) return;
@@ -124,7 +167,6 @@ export default function ResourceDetailPage() {
   ];
 
   const isEquipment = normalizeTypeKey(resource.type || resource.resourceTypeName) === "EQUIPMENT";
-  const qrPayload = buildResourceQrPayload(resource);
 
   return (
     <ResourceAdminLayout>
@@ -153,13 +195,34 @@ export default function ResourceDetailPage() {
 
           {qrPayload && (
             <div style={{ marginTop: 16, border: `1px solid ${C.border}`, borderRadius: 16, padding: 16, background: "#FAFBFC", display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(qrPayload)}`}
-                alt="Resource QR"
-                width={140}
-                height={140}
-                style={{ borderRadius: 10, border: `1px solid ${C.border}`, background: "#fff" }}
-              />
+              {qrImageUrl ? (
+                <img
+                  src={qrImageUrl}
+                  alt="Resource QR"
+                  width={140}
+                  height={140}
+                  style={{ borderRadius: 10, border: `1px solid ${C.border}`, background: "#fff" }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 140,
+                    height: 140,
+                    borderRadius: 10,
+                    border: `1px solid ${C.border}`,
+                    background: "#fff",
+                    display: "grid",
+                    placeItems: "center",
+                    color: C.muted,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    textAlign: "center",
+                    padding: 10,
+                  }}
+                >
+                  {qrImageError || "Rendering QR..."}
+                </div>
+              )}
               <div>
                 <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".08em", color: C.muted, fontWeight: 700, marginBottom: 6 }}>
                   Scannable QR Code
