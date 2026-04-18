@@ -246,9 +246,33 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
       return;
     }
 
-    if (isHallOrLab && (!form.availabilityStart || !form.availabilityEnd)) {
+    if (isMeetingRoom && !form.description.trim()) {
       setSaving(false);
-      setError("Availability start and end are required for halls and labs");
+      setError("Room facilities are required for meeting rooms");
+      return;
+    }
+
+    if (isMeetingRoom && form.description.trim().length < 10) {
+      setSaving(false);
+      setError("Room facilities must be at least 10 characters");
+      return;
+    }
+
+    if (isMeetingRoom && Number(form.capacity) < 2) {
+      setSaving(false);
+      setError("Meeting room capacity must be at least 2");
+      return;
+    }
+
+    if ((isHallOrLab || isMeetingRoom) && (!form.availabilityStart || !form.availabilityEnd)) {
+      setSaving(false);
+      setError("Availability start and end are required for halls, labs, and meeting rooms");
+      return;
+    }
+
+    if (isMeetingRoom && new Date(form.availabilityStart) >= new Date(form.availabilityEnd)) {
+      setSaving(false);
+      setError("Availability start must be before availability end for meeting rooms");
       return;
     }
 
@@ -406,7 +430,7 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
             {(isHallOrLab || isMeetingRoom) && (
               <label>
                 <div style={{ marginBottom: 6, fontSize: 12, fontWeight: 700, color: C.muted }}>
-                  {isLab ? "Lab Purpose" : isMeetingRoom ? "Room Facilities" : "Hall Description"}
+                  {isLab ? "Lab Purpose" : isMeetingRoom ? "Room Facilities (required)" : "Hall Description"}
                 </div>
                 <textarea
                   style={{ ...fieldStyle, minHeight: 92, resize: "vertical" }}

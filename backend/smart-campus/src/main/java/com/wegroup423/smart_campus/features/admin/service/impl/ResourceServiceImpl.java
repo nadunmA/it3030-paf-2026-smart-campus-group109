@@ -22,6 +22,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Locale;
 import java.util.Map;
 import java.util.List;
@@ -42,6 +44,12 @@ public class ResourceServiceImpl implements ResourceService {
     public ResourceResponse createResource(CreateResourceRequest request) {
         // Validate resource type exists
         ResourceType resourceType = resolveResourceType(request.resourceTypeId(), request.type());
+        validateMeetingRoomFields(
+            resourceType.getName(),
+            request.description(),
+            request.availabilityStart(),
+            request.availabilityEnd(),
+            request.capacity());
 
         String normalizedTechnicianId = normalizeTechnicianId(request.assignedTechnicianId());
         String technicianName = resolveTechnicianName(normalizedTechnicianId);
@@ -172,6 +180,13 @@ public class ResourceServiceImpl implements ResourceService {
             resource.setAvailability(mapStatusToAvailability(resource.getStatus()));
         }
 
+        validateMeetingRoomFields(
+            resource.getType(),
+            resource.getDescription(),
+            resource.getAvailabilityStart(),
+            resource.getAvailabilityEnd(),
+            resource.getCapacity());
+
         resource.setUpdatedAt(Instant.now());
         Resource updated = resourceRepository.save(resource);
         return enrichResourceResponse(updated);
@@ -241,8 +256,16 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public String exportResourcesAsCsv(String type, String location, Integer capacity) {
-        List<ResourceResponse> resources = searchResources(type, location, null, capacity);
+    public String exportResourcesAsCsv(
+            String type,
+            String location,
+            Integer capacity,
+            LocalDate reportDate,
+            LocalDate fromDate,
+            LocalDate toDate) {
+        List<ResourceResponse> resources = searchResources(type, location, null, capacity).stream()
+                .filter(resource -> matchesReportDate(resource.createdAt(), reportDate, fromDate, toDate))
+                .collect(Collectors.toList());
 
         StringBuilder csv = new StringBuilder();
         csv.append("id,name,type,location,capacity,status,availability,assignedTechnician,warrantyExpiry,maintenanceDate,usageInstructions,qrCode\n");
@@ -264,6 +287,28 @@ public class ResourceServiceImpl implements ResourceService {
         }
 
         return csv.toString();
+    }
+
+    private boolean matchesReportDate(Instant createdAt, LocalDate reportDate, LocalDate fromDate, LocalDate toDate) {
+        if (createdAt == null) {
+            return false;
+        }
+
+        LocalDate createdDate = createdAt.atZone(ZoneId.systemDefault()).toLocalDate();
+
+        if (reportDate != null) {
+            return createdDate.equals(reportDate);
+        }
+
+        if (fromDate != null && createdDate.isBefore(fromDate)) {
+            return false;
+        }
+
+        if (toDate != null && createdDate.isAfter(toDate)) {
+            return false;
+        }
+
+        return true;
     }
 
     private ResourceResponse enrichResourceResponse(Resource resource) {
@@ -324,6 +369,37 @@ public class ResourceServiceImpl implements ResourceService {
         }
 
         throw new ResourceTypeNotFoundException("Resource type is required");
+    }
+
+    private void validateMeetingRoomFields(
+            String resourceTypeName,
+            String description,
+            LocalDateTime availabilityStart,
+            LocalDateTime availabilityEnd,
+            Integer capacity) {
+        if (!"MEETING_ROOM".equals(normalizeTypeToken(resourceTypeName))) {
+            return;
+        }
+
+        if (description == null || description.isBlank()) {
+            throw new IllegalArgumentException("Meeting room room facilities are required");
+        }
+
+        if (description.trim().length() < 10) {
+            throw new IllegalArgumentException("Meeting room facilities must be at least 10 characters");
+        }
+
+        if (capacity == null || capacity < 2) {
+            throw new IllegalArgumentException("Meeting room capacity must be at least 2");
+        }
+
+        if (availabilityStart == null || availabilityEnd == null) {
+            throw new IllegalArgumentException("Meeting room availability start and end are required");
+        }
+
+        if (!availabilityStart.isBefore(availabilityEnd)) {
+            throw new IllegalArgumentException("Meeting room availability start must be before availability end");
+        }
     }
 
     private String normalizeTypeToken(String type) {
