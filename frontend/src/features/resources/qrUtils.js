@@ -8,6 +8,10 @@ export function extractQrLookupValue(input) {
   return raw;
 }
 
+export function isLikelyResourceId(value) {
+  return /^[a-f\d]{24}$/i.test(String(value || "").trim());
+}
+
 function extractFromQrUrl(value) {
   try {
     const parsed = value.startsWith("http://") || value.startsWith("https://")

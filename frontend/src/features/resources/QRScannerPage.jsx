@@ -4,7 +4,7 @@ import QrScanner from "qr-scanner";
 import qrScannerWorkerPath from "qr-scanner/qr-scanner-worker.min?url";
 import { apiGet } from "../../lib/api";
 import ResourceAdminLayout from "./ResourceAdminLayout";
-import { extractQrLookupValue } from "./qrUtils";
+import { extractQrLookupValue, isLikelyResourceId } from "./qrUtils";
 
 QrScanner.WORKER_PATH = qrScannerWorkerPath;
 
@@ -67,16 +67,30 @@ export default function QRScannerPage() {
     // Try to look up by QR code value in backend
     setLoading(true);
     try {
-      const res = await apiGet(`/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
-      if (res) {
-        setResource(res);
-      } else {
-        setError("No resource found for this QR code");
+      try {
+        const res = await apiGet(`/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
+        if (res) {
+          setResource(res);
+          return;
+        }
+      } catch {
+        // Fallback below for ID-based QR payloads.
       }
+
+      if (isLikelyResourceId(lookupValue)) {
+        const byId = await apiGet(`/resources/${lookupValue}`);
+        if (byId) {
+          setResource(byId);
+          return;
+        }
+      }
+
+      setError("No resource found for this QR code");
     } catch (err) {
       setError(err.message || "Failed to look up QR code");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleManualInput = () => {

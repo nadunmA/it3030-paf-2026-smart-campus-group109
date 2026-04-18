@@ -4,7 +4,7 @@ import { apiDownload, apiGet } from "../../lib/api";
 import ResourceFormModal from "./ResourceFormModal";
 import ResourceAdminLayout from "./ResourceAdminLayout";
 import StatusBadge from "./StatusBadge";
-import { extractQrLookupValue } from "./qrUtils";
+import { extractQrLookupValue, isLikelyResourceId } from "./qrUtils";
 
 const C = {
   bg: "#F5F7FA",
@@ -84,12 +84,25 @@ export default function ResourceListPage() {
         return;
       }
 
-      const resource = await apiGet(`/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
-      if (resource?.id) {
-        navigate(`/resources/${resource.id}`);
-        return;
+      try {
+        const resource = await apiGet(`/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
+        if (resource?.id) {
+          navigate(`/resources/${resource.id}`);
+          return;
+        }
+      } catch {
+        // Fallback below for ID-based QR payloads.
       }
-      setQrError("Resource lookup failed");
+
+      if (isLikelyResourceId(lookupValue)) {
+        const byId = await apiGet(`/resources/${lookupValue}`);
+        if (byId?.id) {
+          navigate(`/resources/${byId.id}`);
+          return;
+        }
+      }
+
+      setQrError("No resource found for this QR code");
     } catch {
       setQrError("No resource found for this QR code");
     }
