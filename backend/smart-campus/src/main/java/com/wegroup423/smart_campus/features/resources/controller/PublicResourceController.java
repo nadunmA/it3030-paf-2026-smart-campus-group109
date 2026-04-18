@@ -1,4 +1,4 @@
-package com.wegroup423.smart_campus.features.publicapi.controller;
+package com.wegroup423.smart_campus.features.resources.controller;
 
 import com.wegroup423.smart_campus.features.admin.model.dto.response.ResourceResponse;
 import com.wegroup423.smart_campus.features.admin.service.ResourceService;

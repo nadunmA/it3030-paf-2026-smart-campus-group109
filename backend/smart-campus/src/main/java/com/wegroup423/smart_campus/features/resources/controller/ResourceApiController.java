@@ -1,4 +1,4 @@
-package com.wegroup423.smart_campus.features.admin.controller;
+package com.wegroup423.smart_campus.features.resources.controller;
 
 import com.wegroup423.smart_campus.features.admin.model.dto.request.CreateResourceRequest;
 import com.wegroup423.smart_campus.features.admin.model.dto.request.UpdateResourceRequest;

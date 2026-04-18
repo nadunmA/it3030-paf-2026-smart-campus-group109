@@ -13,7 +13,6 @@
   "dependencies": {
     "@react-oauth/google": "^0.13.4",
     "@tailwindcss/vite": "^4.2.2",
-    "it3030-paf-2026-smart-campus-group423": "file:",
     "qr-scanner": "^1.4.2",
     "qrcode": "^1.5.4",
     "react": "^19.2.4",
