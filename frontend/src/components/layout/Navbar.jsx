@@ -10,8 +10,6 @@ const getDashboardPath = (role) => {
   return "/dashboard";
 };
 
-const getProfilePath = () => "/profile";
-
 const getPlatformItems = (role) => {
   const normalizedRole = (role || "USER").toUpperCase();
   const dashboardPath = getDashboardPath(normalizedRole);
@@ -50,13 +48,6 @@ const getPlatformItems = (role) => {
       title: "Notifications",
       desc: "Stay updated instantly",
       path: "/notifications",
-    },
-    {
-      icon: "🔐",
-      color: "#FF375F",
-      title: "OAuth Login",
-      desc: "Secure Google sign-in",
-      path: "/",
     },
   ];
 };
@@ -148,15 +139,6 @@ function PlatformMega({ onClose, userRole }) {
       >
         <span style={{ fontSize: ".72rem", color: "rgba(255,255,255,.3)" }}>
           IT3030 · Smart Campus Hub
-        </span>
-        <span
-          style={{ fontSize: ".72rem", color: "#0A84FF", cursor: "pointer" }}
-          onClick={() => {
-            onClose();
-            navigate("/dashboard", { state: { tab: "notifications" } });
-          }}
-        >
-          View all →
         </span>
       </div>
     </div>
@@ -324,7 +306,6 @@ function UserMenu({ onLogout, user }) {
   const notifRef = useRef(null);
   const userRole = (user?.role || "USER").toUpperCase();
   const dashboardPath = getDashboardPath(userRole);
-  const profilePath = getProfilePath();
 
   useEffect(() => {
     if (!user) return;
@@ -371,7 +352,7 @@ function UserMenu({ onLogout, user }) {
     setOpen(false);
 
     if (item.path) {
-      navigate(item.path);
+      navigate(item.path, item.state || undefined);
       return;
     }
 
@@ -421,7 +402,12 @@ function UserMenu({ onLogout, user }) {
       path: "/notifications",
       count: unreadCount,
     },
-    { icon: "👤", label: "Profile", path: profilePath },
+    {
+      icon: "👤",
+      label: "Profile",
+      path: dashboardPath,
+      state: { tab: "profile" },
+    },
   ];
 
   const displayName = user?.name || "User";
