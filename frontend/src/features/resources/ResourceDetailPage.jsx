@@ -31,29 +31,20 @@ function normalizeTypeKey(value) {
     .replace(/\s+/g, "_");
 }
 
-function getPublicAppOrigin() {
-  const configuredOrigin = import.meta.env.VITE_PUBLIC_APP_ORIGIN?.trim();
-  if (configuredOrigin) {
-    return configuredOrigin.replace(/\/+$/, "");
-  }
-
-  return window.location.origin.replace(/\/+$/, "");
-}
-
 function buildResourceQrPayload(resource) {
   const qrValue = resource.qrCode || resource.id;
-  const configuredOrigin = import.meta.env.VITE_PUBLIC_APP_ORIGIN?.trim();
+  const currentOrigin = window.location.origin.replace(/\/+$/, "");
 
-  // If no public origin is configured and app is local-only, use raw QR value
-  // so in-app scanner and manual lookup still work on any device.
+  // Prefer the currently used host if this page is already opened on a LAN/domain URL.
+  // This avoids stale hardcoded IPs in .env causing broken scanned links.
   const isLocalHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-  if (!configuredOrigin && isLocalHost) {
-    return qrValue;
+  const qrPath = `/qr/${encodeURIComponent(qrValue)}`;
+
+  if (!isLocalHost) {
+    return `${currentOrigin}${qrPath}`;
   }
 
-  const publicOrigin = getPublicAppOrigin();
-  const qrPath = `/qr/${qrValue}`;
-  return publicOrigin ? `${publicOrigin}${qrPath}` : qrValue;
+  return qrValue;
 }
 
 export default function ResourceDetailPage() {
@@ -231,8 +222,8 @@ export default function ResourceDetailPage() {
                   {qrPayload}
                 </div>
                 <div style={{ marginTop: 8, color: C.muted, fontSize: 13 }}>
-                  📱 For real device scanning, set VITE_PUBLIC_APP_ORIGIN to a reachable host (for example your LAN URL).
-                  Without that setting on localhost, this QR stores the raw code value for reliable in-app scanning.
+                  📱 On LAN/domain access, this QR stores a public URL using the current host.
+                  On localhost, it stores the raw code value for reliable in-app scanning and manual lookup.
                 </div>
               </div>
             </div>
