@@ -1,4 +1,3 @@
-// src/features/notification/NotificationsPage.jsx
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPatch } from "../../lib/api";
