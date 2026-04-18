@@ -6,6 +6,7 @@ import com.wegroup423.smart_campus.features.admin.model.dto.response.ResourceRes
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface ResourceService {
@@ -31,5 +32,11 @@ public interface ResourceService {
 
     List<ResourceResponse> getAssignedResources(String technicianId);
 
-    String exportResourcesAsCsv(String type, String location, Integer capacity);
+    String exportResourcesAsCsv(
+            String type,
+            String location,
+            Integer capacity,
+            LocalDate reportDate,
+            LocalDate fromDate,
+            LocalDate toDate);
 }
