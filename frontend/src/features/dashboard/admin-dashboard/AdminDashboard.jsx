@@ -11,6 +11,33 @@ import ProfileTab from "./components/ProfileTab";
 import ResourcesTab from "./components/ResourcesTab";
 import TicketsTab from "./components/TicketsTab";
 
+function normalizeResourceType(value) {
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "_");
+}
+
+function matchesResourceSection(resource, section) {
+  const type = normalizeResourceType(resource?.type || resource?.resourceTypeName);
+
+  if (section === "All") return true;
+  if (section === "Room") {
+    return ["ROOM", "MEETING_ROOM"].includes(type);
+  }
+  if (section === "Lab") {
+    return ["LAB", "LABORATORY"].includes(type);
+  }
+  if (section === "Equipment") {
+    return ["EQUIPMENT", "ASSET"].includes(type);
+  }
+  if (section === "Hall") {
+    return ["HALL", "LECTURE_HALL"].includes(type);
+  }
+
+  return false;
+}
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
@@ -158,10 +185,9 @@ export default function AdminDashboard() {
       ? tickets
       : tickets.filter((t) => t.status === ticketFilter);
 
-  const filteredResources =
-    resourceFilter === "All"
-      ? resources
-      : resources.filter((r) => r.type === resourceFilter);
+  const filteredResources = resources.filter((resource) =>
+    matchesResourceSection(resource, resourceFilter),
+  );
 
   const profileCounts = {
     bookings: bookings.length,
