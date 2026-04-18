@@ -1,7 +1,7 @@
 package com.wegroup423.smart_campus.features.resources.controller;
 
-import com.wegroup423.smart_campus.features.resources.model.dto.response.ResourceResponse;
-import com.wegroup423.smart_campus.features.resources.service.ResourceService;
+import com.wegroup423.smart_campus.features.admin.model.dto.response.ResourceResponse;
+import com.wegroup423.smart_campus.features.admin.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

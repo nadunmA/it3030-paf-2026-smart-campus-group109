@@ -1,9 +1,9 @@
 package com.wegroup423.smart_campus.features.resources.controller;
 
-import com.wegroup423.smart_campus.features.resources.model.dto.request.CreateResourceRequest;
-import com.wegroup423.smart_campus.features.resources.model.dto.request.UpdateResourceRequest;
-import com.wegroup423.smart_campus.features.resources.model.dto.response.ResourceResponse;
-import com.wegroup423.smart_campus.features.resources.service.ResourceService;
+import com.wegroup423.smart_campus.features.admin.model.dto.request.CreateResourceRequest;
+import com.wegroup423.smart_campus.features.admin.model.dto.request.UpdateResourceRequest;
+import com.wegroup423.smart_campus.features.admin.model.dto.response.ResourceResponse;
+import com.wegroup423.smart_campus.features.admin.service.ResourceService;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
