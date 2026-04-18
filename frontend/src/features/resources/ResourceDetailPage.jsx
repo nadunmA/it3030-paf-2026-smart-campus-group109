@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiDelete, apiGet } from "../../lib/api";
+import QRCode from "qrcode";
 import ResourceAdminLayout from "./ResourceAdminLayout";
 import StatusBadge from "./StatusBadge";
 import ResourceFormModal from "./ResourceFormModal";
@@ -30,21 +31,20 @@ function normalizeTypeKey(value) {
     .replace(/\s+/g, "_");
 }
 
-function getPublicAppOrigin() {
-  const configuredOrigin = import.meta.env.VITE_PUBLIC_APP_ORIGIN?.trim();
-  if (configuredOrigin) {
-    return configuredOrigin.replace(/\/+$/, "");
+function buildResourceQrPayload(resource) {
+  const qrValue = resource.qrCode || resource.id;
+  const currentOrigin = window.location.origin.replace(/\/+$/, "");
+
+  // Prefer the currently used host if this page is already opened on a LAN/domain URL.
+  // This avoids stale hardcoded IPs in .env causing broken scanned links.
+  const isLocalHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const qrPath = `/qr/${encodeURIComponent(qrValue)}`;
+
+  if (!isLocalHost) {
+    return `${currentOrigin}${qrPath}`;
   }
 
-  return window.location.origin.replace(/\/+$/, "");
-}
-
-function buildResourceQrPayload(resource) {
-  // Generate a scannable URL that opens the public resource details page.
-  const publicOrigin = getPublicAppOrigin();
-  const qrValue = resource.qrCode || resource.id;
-  const qrPath = `/qr/${qrValue}`;
-  return publicOrigin ? `${publicOrigin}${qrPath}` : qrPath;
+  return qrValue;
 }
 
 export default function ResourceDetailPage() {
@@ -56,6 +56,8 @@ export default function ResourceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
+  const [qrImageUrl, setQrImageUrl] = useState("");
+  const [qrImageError, setQrImageError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -75,6 +77,45 @@ export default function ResourceDetailPage() {
     };
   }, [id]);
 
+  const qrPayload = resource ? buildResourceQrPayload(resource) : "";
+
+  useEffect(() => {
+    let active = true;
+
+    if (!qrPayload) {
+      setQrImageUrl("");
+      setQrImageError("");
+      return () => {
+        active = false;
+      };
+    }
+
+    setQrImageError("");
+    QRCode.toDataURL(qrPayload, {
+      width: 280,
+      margin: 1,
+      errorCorrectionLevel: "M",
+      color: {
+        dark: "#111827",
+        light: "#FFFFFF",
+      },
+    })
+      .then((dataUrl) => {
+        if (active) {
+          setQrImageUrl(dataUrl);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setQrImageUrl("");
+          setQrImageError("Failed to render QR code");
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [qrPayload]);
   const handleDelete = async () => {
     if (!window.confirm("Delete this resource?")) return;
     await apiDelete(`/resources/${id}`);
@@ -116,7 +157,6 @@ export default function ResourceDetailPage() {
   ];
 
   const isEquipment = normalizeTypeKey(resource.type || resource.resourceTypeName) === "EQUIPMENT";
-  const qrPayload = buildResourceQrPayload(resource);
 
   return (
     <ResourceAdminLayout>
@@ -145,24 +185,44 @@ export default function ResourceDetailPage() {
 
           {qrPayload && (
             <div style={{ marginTop: 16, border: `1px solid ${C.border}`, borderRadius: 16, padding: 16, background: "#FAFBFC", display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(qrPayload)}`}
-                alt="Resource QR"
-                width={140}
-                height={140}
-                style={{ borderRadius: 10, border: `1px solid ${C.border}`, background: "#fff" }}
-              />
+              {qrImageUrl ? (
+                <img
+                  src={qrImageUrl}
+                  alt="Resource QR"
+                  width={140}
+                  height={140}
+                  style={{ borderRadius: 10, border: `1px solid ${C.border}`, background: "#fff" }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 140,
+                    height: 140,
+                    borderRadius: 10,
+                    border: `1px solid ${C.border}`,
+                    background: "#fff",
+                    display: "grid",
+                    placeItems: "center",
+                    color: C.muted,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    textAlign: "center",
+                    padding: 10,
+                  }}
+                >
+                  {qrImageError || "Rendering QR..."}
+                </div>
+              )}
               <div>
                 <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".08em", color: C.muted, fontWeight: 700, marginBottom: 6 }}>
-                  {isEquipment ? "Equipment QR Details" : "QR Check-In Code"}
+                  {isEquipment ? "Equipment QR Details" : "Scannable QR Code"}
                 </div>
-                <div style={{ color: C.text, fontWeight: 700, maxWidth: 580, whiteSpace: "pre-wrap" }}>
+                <div style={{ color: C.text, fontWeight: 700, maxWidth: 580, wordBreak: "break-all", fontSize: 13 }}>
                   {qrPayload}
                 </div>
                 <div style={{ marginTop: 8, color: C.muted, fontSize: 13 }}>
-                  {isEquipment
-                    ? "Scanning this QR opens the public resource page for equipment details."
-                    : "Use this code in the Resource Catalogue QR Lookup to open this resource quickly."}
+                  📱 On LAN/domain access, this QR stores a public URL using the current host.
+                  On localhost, it stores the raw code value for reliable in-app scanning and manual lookup.
                 </div>
               </div>
             </div>

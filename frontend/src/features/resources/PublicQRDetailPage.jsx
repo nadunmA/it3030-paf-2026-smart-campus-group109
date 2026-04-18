@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiGet } from "../../lib/api";
+import { extractQrLookupValue } from "./qrUtils";
 
 const C = {
   bg: "#F5F7FA",
@@ -21,23 +22,40 @@ export default function PublicQRDetailPage() {
 
   useEffect(() => {
     let active = true;
-    // Try to fetch by ID first from the public API.
-    apiGet(`/public/resources/${id}`)
-      .then((data) => {
-        if (active) setResource(data);
-      })
-      .catch((err) => {
-        // If ID lookup fails, try QR code lookup from the public API.
-        return apiGet(`/public/resources/lookup?qrCode=${encodeURIComponent(id)}`).then((data) => {
-          if (active) setResource(data);
-        });
-      })
-      .catch((err) => {
-        if (active) setError(err.message || "Resource not found");
-      })
-      .finally(() => {
+    const rawId = decodeURIComponent(String(id || "").trim());
+    const lookupValue = extractQrLookupValue(rawId) || rawId;
+    const looksLikeMongoId = /^[a-f\d]{24}$/i.test(lookupValue);
+
+    setLoading(true);
+    setError("");
+    setResource(null);
+
+    const loadResource = async () => {
+      try {
+        // QR values are the most common public entry point.
+        if (!looksLikeMongoId) {
+          const byQr = await apiGet(`/public/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
+          if (active) setResource(byQr);
+          return;
+        }
+
+        const byId = await apiGet(`/public/resources/${lookupValue}`);
+        if (active) setResource(byId);
+      } catch {
+        try {
+          const fallback = looksLikeMongoId
+            ? await apiGet(`/public/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`)
+            : await apiGet(`/public/resources/${lookupValue}`);
+          if (active) setResource(fallback);
+        } catch (err) {
+          if (active) setError(err.message || "Resource not found");
+        }
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    loadResource();
 
     return () => {
       active = false;
