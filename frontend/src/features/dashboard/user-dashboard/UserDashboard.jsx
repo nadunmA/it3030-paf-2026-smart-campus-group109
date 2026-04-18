@@ -157,6 +157,7 @@ export default function UserDashboard() {
         {activeTab === "resources" && (
           <ResourcesTab
             fetchResources={fetchResources}
+            navigate={navigate}
             hallFilter={hallFilter}
             setHallFilter={setHallFilter}
             hallsError={hallsError}

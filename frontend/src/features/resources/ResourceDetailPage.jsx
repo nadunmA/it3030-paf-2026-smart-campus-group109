@@ -34,17 +34,11 @@ function normalizeTypeKey(value) {
 function buildResourceQrPayload(resource) {
   const qrValue = resource.qrCode || resource.id;
   const currentOrigin = window.location.origin.replace(/\/+$/, "");
-
-  // Prefer the currently used host if this page is already opened on a LAN/domain URL.
-  // This avoids stale hardcoded IPs in .env causing broken scanned links.
-  const isLocalHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const publicAppUrl = String(import.meta.env.VITE_PUBLIC_APP_URL || "").trim().replace(/\/+$/, "");
   const qrPath = `/qr/${encodeURIComponent(qrValue)}`;
 
-  if (!isLocalHost) {
-    return `${currentOrigin}${qrPath}`;
-  }
-
-  return qrValue;
+  // Always encode a URL so native phone scanners open the app directly.
+  return `${publicAppUrl || currentOrigin}${qrPath}`;
 }
 
 export default function ResourceDetailPage() {

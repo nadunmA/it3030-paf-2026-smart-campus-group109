@@ -2,6 +2,7 @@ import FacilityCard from "../components/FacilityCard";
 
 export default function ResourcesTab({
   fetchResources,
+  navigate,
   hallFilter,
   setHallFilter,
   hallsError,
@@ -125,6 +126,7 @@ export default function ResourcesTab({
               location={h.location}
               capacity={h.capacity}
               availability={h.availability}
+              onClick={() => navigate(`/resources/${h.id}`)}
             />
           ))}
         </div>

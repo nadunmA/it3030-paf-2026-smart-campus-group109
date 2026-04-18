@@ -101,6 +101,28 @@ export default function PublicQRDetailPage() {
     );
   }
 
+  const detailRows = [
+    ["Resource Name", resource.name],
+    ["Type", resource.type || resource.resourceTypeName],
+    ["Description", resource.description],
+    ["How to Use", resource.usageInstructions],
+    ["Location", resource.location],
+    ["Capacity", resource.capacity],
+    ["Status", resource.status],
+    ["Availability", resource.availability],
+    ["Condition", resource.condition],
+    ["Serial Number", resource.serialNumber],
+    ["Warranty Expiry", resource.warrantyExpiry],
+    ["Maintenance Date", resource.maintenanceDate],
+    ["Assigned Technician", resource.assignedTechnicianName || resource.assignedTechnicianId],
+    ["Availability Start", resource.availabilityStart],
+    ["Availability End", resource.availabilityEnd],
+    ["QR Code", resource.qrCode],
+    ["Resource ID", resource.id],
+    ["Created At", resource.createdAt],
+    ["Updated At", resource.updatedAt],
+  ].filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== "");
+
   return (
     <div style={{ background: C.bg, minHeight: "100vh", padding: "16px 0" }}>
       {/* Header */}
@@ -214,6 +236,27 @@ export default function PublicQRDetailPage() {
             </div>
           )}
 
+          {/* Complete Resource Details */}
+          {detailRows.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", fontWeight: 700, marginBottom: 10, letterSpacing: ".05em" }}>
+                Full Resource Details
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {detailRows.map(([label, value]) => (
+                  <div key={label} style={{ background: "#F8FAFC", borderRadius: 10, padding: 10 }}>
+                    <div style={{ fontSize: 10, color: C.muted, textTransform: "uppercase", fontWeight: 700, marginBottom: 4, letterSpacing: ".05em" }}>
+                      {label}
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text, wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
+                      {String(value)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Equipment Details */}
           {(resource.serialNumber || resource.warrantyExpiry || resource.maintenanceDate) && (
             <div style={{ background: "#FEF5F5", borderRadius: 12, padding: 14, marginBottom: 16, borderLeft: `4px solid ${C.red}` }}>
@@ -273,7 +316,7 @@ export default function PublicQRDetailPage() {
         {/* Footer */}
         <div style={{ textAlign: "center", color: C.muted, fontSize: 12 }}>
           <div>Resource ID: {resource.id}</div>
-          <div style={{ marginTop: 4, fontSize: 11 }}>Last updated: {resource.updatedAt}</div>
+          <div style={{ marginTop: 4, fontSize: 11 }}>Last updated: {resource.updatedAt || "N/A"}</div>
         </div>
       </div>
     </div>

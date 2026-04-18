@@ -246,9 +246,33 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
       return;
     }
 
-    if (isHallOrLab && (!form.availabilityStart || !form.availabilityEnd)) {
+    if (isMeetingRoom && !form.description.trim()) {
       setSaving(false);
-      setError("Availability start and end are required for halls and labs");
+      setError("Room facilities are required for meeting rooms");
+      return;
+    }
+
+    if (isMeetingRoom && form.description.trim().length < 10) {
+      setSaving(false);
+      setError("Room facilities must be at least 10 characters");
+      return;
+    }
+
+    if (isMeetingRoom && Number(form.capacity) < 2) {
+      setSaving(false);
+      setError("Meeting room capacity must be at least 2");
+      return;
+    }
+
+    if ((isHallOrLab || isMeetingRoom) && (!form.availabilityStart || !form.availabilityEnd)) {
+      setSaving(false);
+      setError("Availability start and end are required for halls, labs, and meeting rooms");
+      return;
+    }
+
+    if (isMeetingRoom && new Date(form.availabilityStart) >= new Date(form.availabilityEnd)) {
+      setSaving(false);
+      setError("Availability start must be before availability end for meeting rooms");
       return;
     }
 
@@ -264,9 +288,27 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
       return;
     }
 
+    if (isEquipment && new Date(form.warrantyExpiry) < new Date(new Date().toDateString())) {
+      setSaving(false);
+      setError("Warranty expiry cannot be in the past for equipment");
+      return;
+    }
+
+    if (isEquipment && !form.maintenanceDate) {
+      setSaving(false);
+      setError("Maintenance date is required for equipment");
+      return;
+    }
+
     if (isEquipment && !form.usageInstructions.trim()) {
       setSaving(false);
       setError("How to use is required for equipment QR details");
+      return;
+    }
+
+    if (isEquipment && form.usageInstructions.trim().length < 10) {
+      setSaving(false);
+      setError("How to use must be at least 10 characters for equipment");
       return;
     }
 
@@ -406,7 +448,7 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
             {(isHallOrLab || isMeetingRoom) && (
               <label>
                 <div style={{ marginBottom: 6, fontSize: 12, fontWeight: 700, color: C.muted }}>
-                  {isLab ? "Lab Purpose" : isMeetingRoom ? "Room Facilities" : "Hall Description"}
+                  {isLab ? "Lab Purpose" : isMeetingRoom ? "Room Facilities (required)" : "Hall Description"}
                 </div>
                 <textarea
                   style={{ ...fieldStyle, minHeight: 92, resize: "vertical" }}

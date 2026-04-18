@@ -41,7 +41,7 @@ public class ResourceApiController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','USER','TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<List<ResourceResponse>> getResources(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String location,
@@ -50,13 +50,13 @@ public class ResourceApiController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','USER','TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<ResourceResponse> getResource(@PathVariable String id) {
         return ResponseEntity.ok(resourceService.getResource(id));
     }
 
     @GetMapping("/lookup")
-    @PreAuthorize("hasAnyRole('ADMIN','USER','TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<ResourceResponse> getResourceByQrCode(@RequestParam String qrCode) {
         return ResponseEntity.ok(resourceService.getResourceByQrCode(qrCode));
     }
@@ -66,10 +66,24 @@ public class ResourceApiController {
     public ResponseEntity<byte[]> exportResourcesCsv(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String location,
-            @RequestParam(required = false) Integer capacity) {
-        String csv = resourceService.exportResourcesAsCsv(type, location, capacity);
-        String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-        String fileName = "resources-report-" + date + ".csv";
+            @RequestParam(required = false) Integer capacity,
+            @RequestParam(required = false) LocalDate reportDate,
+            @RequestParam(required = false) LocalDate fromDate,
+            @RequestParam(required = false) LocalDate toDate) {
+        String csv = resourceService.exportResourcesAsCsv(type, location, capacity, reportDate, fromDate, toDate);
+
+        String fileNameSuffix;
+        if (reportDate != null) {
+            fileNameSuffix = reportDate.format(DateTimeFormatter.BASIC_ISO_DATE);
+        } else if (fromDate != null || toDate != null) {
+            String from = fromDate != null ? fromDate.format(DateTimeFormatter.BASIC_ISO_DATE) : "start";
+            String to = toDate != null ? toDate.format(DateTimeFormatter.BASIC_ISO_DATE) : "end";
+            fileNameSuffix = from + "-to-" + to;
+        } else {
+            fileNameSuffix = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        }
+
+        String fileName = "resources-report-" + fileNameSuffix + ".csv";
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")

@@ -64,6 +64,13 @@ export default function App() {
           }
         >
           <Route path="/notifications" element={<UserNotifications />} />
+        </Route>
+
+        <Route
+          element={
+            <ProtectedRoute allowRoles={["USER", "ADMIN"]} />
+          }
+        >
           <Route path="/resources" element={<ResourceListPage />} />
           <Route path="/resources/:id" element={<ResourceDetailPage />} />
           <Route path="/resources/scan/qr" element={<QRScannerPage />} />
