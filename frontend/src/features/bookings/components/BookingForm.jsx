@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Btn from "../../../components/ui/Btn";
+import { apiGet } from "../../../lib/api";
 
 const initialForm = {
   resourceId: "",
@@ -14,8 +15,60 @@ const initialForm = {
 export default function BookingForm({ onSubmit, submitting }) {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState("");
+  const [resources, setResources] = useState([]);
+  const [resourcesLoading, setResourcesLoading] = useState(false);
 
   const setField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+
+  const normalizeType = (value) =>
+    String(value || "")
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, "_");
+
+  const filteredResources = useMemo(
+    () =>
+      resources.filter(
+        (resource) =>
+          normalizeType(resource.type || resource.resourceTypeName) ===
+          normalizeType(form.resourceType),
+      ),
+    [resources, form.resourceType],
+  );
+
+  useEffect(() => {
+    let active = true;
+
+    const loadResources = async () => {
+      setResourcesLoading(true);
+      setError("");
+      try {
+        const data = await apiGet("/resources");
+        const list = Array.isArray(data) ? data : data?.content || [];
+        if (!active) return;
+        setResources(list);
+      } catch {
+        if (!active) return;
+        setResources([]);
+        setError("Failed to load available resources. Please refresh.");
+      } finally {
+        if (active) setResourcesLoading(false);
+      }
+    };
+
+    loadResources();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setForm((prev) => {
+      const hasSelected = filteredResources.some((item) => item.id === prev.resourceId);
+      return hasSelected ? prev : { ...prev, resourceId: "" };
+    });
+  }, [filteredResources]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -45,13 +98,40 @@ export default function BookingForm({ onSubmit, submitting }) {
   return (
     <form onSubmit={submit} style={{ display: "grid", gap: 12, maxWidth: 760 }}>
       <div style={gridStyle}>
-        <Input label="Resource ID" required value={form.resourceId} onChange={(v) => setField("resourceId", v)} />
         <Select
           label="Resource Type"
           value={form.resourceType}
-          onChange={(v) => setField("resourceType", v)}
+          onChange={(v) =>
+            setForm((prev) => ({
+              ...prev,
+              resourceType: v,
+              resourceId: "",
+            }))
+          }
           options={["LECTURE_HALL", "LAB", "MEETING_ROOM", "EQUIPMENT"]}
         />
+        <label style={{ display: "grid", gap: 6 }}>
+          <span style={labelStyle}>Resource *</span>
+          <select
+            value={form.resourceId}
+            onChange={(e) => setField("resourceId", e.target.value)}
+            style={inputStyle}
+            disabled={resourcesLoading || filteredResources.length === 0}
+          >
+            <option value="">
+              {resourcesLoading
+                ? "Loading resources..."
+                : filteredResources.length === 0
+                  ? "No resources available"
+                  : "Select a resource"}
+            </option>
+            {filteredResources.map((resource) => (
+              <option key={resource.id} value={resource.id} style={{ color: "#000" }}>
+                {resource.type || resource.resourceTypeName} - {resource.name} ({resource.location || "N/A"})
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div style={gridStyle}>

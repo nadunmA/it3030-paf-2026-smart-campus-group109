@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import BookingFilter from "../components/BookingFilter";
 import BookingTableList from "../components/BookingTableList";
@@ -25,10 +25,12 @@ export default function AdminBookingApprovalPage() {
   const role = useMemo(() => getRole(), []);
   const isAdmin = role === "ADMIN";
 
-  const { bookings, loading, error, load } = useBookings((params) => {
-    const effective = params || filters;
+  const fetchBookings = useCallback((params) => {
+    const effective = params || { status: "PENDING", date: undefined };
     return bookingApi.getAll({ date: effective.date, status: effective.status });
-  });
+  }, []);
+
+  const { bookings, loading, error, load } = useBookings(fetchBookings);
 
   const applyFilters = async (nextFilters) => {
     const merged = {
