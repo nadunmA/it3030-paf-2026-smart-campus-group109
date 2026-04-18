@@ -50,6 +50,13 @@ public class ResourceServiceImpl implements ResourceService {
             request.availabilityStart(),
             request.availabilityEnd(),
             request.capacity());
+        validateElectricalEquipmentFields(
+            resourceType.getName(),
+            request.serialNumber(),
+            request.warrantyExpiry(),
+            request.usageInstructions(),
+            request.maintenanceDate(),
+            request.capacity());
 
         String normalizedTechnicianId = normalizeTechnicianId(request.assignedTechnicianId());
         String technicianName = resolveTechnicianName(normalizedTechnicianId);
@@ -185,6 +192,13 @@ public class ResourceServiceImpl implements ResourceService {
             resource.getDescription(),
             resource.getAvailabilityStart(),
             resource.getAvailabilityEnd(),
+            resource.getCapacity());
+        validateElectricalEquipmentFields(
+            resource.getType(),
+            resource.getSerialNumber(),
+            resource.getWarrantyExpiry(),
+            resource.getUsageInstructions(),
+            resource.getMaintenanceDate(),
             resource.getCapacity());
 
         resource.setUpdatedAt(Instant.now());
@@ -399,6 +413,46 @@ public class ResourceServiceImpl implements ResourceService {
 
         if (!availabilityStart.isBefore(availabilityEnd)) {
             throw new IllegalArgumentException("Meeting room availability start must be before availability end");
+        }
+    }
+
+    private void validateElectricalEquipmentFields(
+            String resourceTypeName,
+            String serialNumber,
+            LocalDate warrantyExpiry,
+            String usageInstructions,
+            LocalDate maintenanceDate,
+            Integer capacity) {
+        if (!"EQUIPMENT".equals(normalizeTypeToken(resourceTypeName))) {
+            return;
+        }
+
+        if (serialNumber == null || serialNumber.isBlank()) {
+            throw new IllegalArgumentException("Equipment serial number is required");
+        }
+
+        if (capacity == null || capacity < 1) {
+            throw new IllegalArgumentException("Equipment quantity must be at least 1");
+        }
+
+        if (warrantyExpiry == null) {
+            throw new IllegalArgumentException("Equipment warranty expiry is required");
+        }
+
+        if (warrantyExpiry.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Equipment warranty expiry cannot be in the past");
+        }
+
+        if (maintenanceDate == null) {
+            throw new IllegalArgumentException("Equipment maintenance date is required");
+        }
+
+        if (usageInstructions == null || usageInstructions.isBlank()) {
+            throw new IllegalArgumentException("Equipment usage instructions are required");
+        }
+
+        if (usageInstructions.trim().length() < 10) {
+            throw new IllegalArgumentException("Equipment usage instructions must be at least 10 characters");
         }
     }
 

@@ -288,9 +288,27 @@ export default function ResourceFormModal({ isOpen, resource, onClose, onSaved }
       return;
     }
 
+    if (isEquipment && new Date(form.warrantyExpiry) < new Date(new Date().toDateString())) {
+      setSaving(false);
+      setError("Warranty expiry cannot be in the past for equipment");
+      return;
+    }
+
+    if (isEquipment && !form.maintenanceDate) {
+      setSaving(false);
+      setError("Maintenance date is required for equipment");
+      return;
+    }
+
     if (isEquipment && !form.usageInstructions.trim()) {
       setSaving(false);
       setError("How to use is required for equipment QR details");
+      return;
+    }
+
+    if (isEquipment && form.usageInstructions.trim().length < 10) {
+      setSaving(false);
+      setError("How to use must be at least 10 characters for equipment");
       return;
     }
 
