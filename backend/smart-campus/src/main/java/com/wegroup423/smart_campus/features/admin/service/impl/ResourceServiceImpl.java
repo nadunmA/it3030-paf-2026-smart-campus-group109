@@ -22,8 +22,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Locale;
+import java.util.Map;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
 @Service
@@ -197,30 +201,17 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public List<ResourceResponse> searchResources(String type, String location, String availability, Integer capacity) {
-        List<Resource> resources;
-        String resolvedType = resolveTypeFilter(type);
+        String normalizedSection = normalizeTypeToken(type);
+        String normalizedLocation = location == null ? "" : location.trim().toLowerCase(Locale.ROOT);
+        ResourceAvailability availabilityEnum = parseAvailability(availability);
+        Map<String, String> typeById = resourceTypeRepository.findAll().stream()
+                .collect(Collectors.toMap(ResourceType::getId, rt -> normalizeTypeToken(rt.getName())));
 
-        if (resolvedType != null && location != null && !location.isEmpty() && availability != null) {
-            ResourceAvailability availabilityEnum = ResourceAvailability.valueOf(availability);
-            resources = resourceRepository.findByTypeLocationAvailability(resolvedType, location, availabilityEnum);
-        } else if (resolvedType != null && availability != null) {
-            ResourceAvailability availabilityEnum = ResourceAvailability.valueOf(availability);
-            resources = resourceRepository.findByTypeAndAvailability(resolvedType, availabilityEnum);
-        } else if (location != null && !location.isEmpty() && availability != null) {
-            ResourceAvailability availabilityEnum = ResourceAvailability.valueOf(availability);
-            resources = resourceRepository.findByLocationAndAvailability(location, availabilityEnum);
-        } else if (resolvedType != null) {
-            resources = resourceRepository.findByResourceTypeId(resolvedType);
-        } else if (location != null && !location.isEmpty()) {
-            resources = resourceRepository.findByLocation(location);
-        } else if (availability != null) {
-            ResourceAvailability availabilityEnum = ResourceAvailability.valueOf(availability);
-            resources = resourceRepository.findByAvailability(availabilityEnum);
-        } else {
-            resources = resourceRepository.findAll();
-        }
-
-        return resources.stream()
+        return resourceRepository.findAll().stream()
+                .filter(resource -> matchesTypeSection(resource, normalizedSection, typeById))
+                .filter(resource -> matchesLocation(resource, normalizedLocation))
+                .filter(resource -> availabilityEnum == null || availabilityEnum == resource.getAvailability())
+                .filter(resource -> capacity == null || capacity < 0 || (resource.getCapacity() != null && resource.getCapacity().equals(capacity)))
                 .map(this::enrichResourceResponse)
                 .collect(Collectors.toList());
     }
@@ -335,14 +326,66 @@ public class ResourceServiceImpl implements ResourceService {
         throw new ResourceTypeNotFoundException("Resource type is required");
     }
 
-    private String resolveTypeFilter(String type) {
+    private String normalizeTypeToken(String type) {
         if (type == null || type.isBlank()) {
             return null;
         }
 
-        return resourceTypeRepository.findByName(type)
-                .map(ResourceType::getId)
-                .orElse(type);
+        return type.trim().toUpperCase(Locale.ROOT).replace(' ', '_');
+    }
+
+    private ResourceAvailability parseAvailability(String availability) {
+        if (availability == null || availability.isBlank()) {
+            return null;
+        }
+
+        try {
+            return ResourceAvailability.valueOf(availability.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    private boolean matchesLocation(Resource resource, String normalizedLocation) {
+        if (normalizedLocation == null || normalizedLocation.isEmpty()) {
+            return true;
+        }
+
+        String resourceLocation = resource.getLocation() == null
+                ? ""
+                : resource.getLocation().toLowerCase(Locale.ROOT);
+
+        return resourceLocation.contains(normalizedLocation);
+    }
+
+    private boolean matchesTypeSection(Resource resource, String normalizedSection, Map<String, String> typeById) {
+        if (normalizedSection == null || normalizedSection.isBlank()) {
+            return true;
+        }
+
+        String normalizedType = Stream.of(
+                        normalizeTypeToken(resource.getType()),
+                        typeById.get(resource.getResourceTypeId()))
+                .filter(value -> value != null && !value.isBlank())
+                .findFirst()
+                .orElse("");
+
+        if (normalizedType.isBlank()) {
+            return false;
+        }
+
+        Set<String> allowedTypes = mapSectionToTypes(normalizedSection);
+        return allowedTypes.contains(normalizedType);
+    }
+
+    private Set<String> mapSectionToTypes(String normalizedSection) {
+        return switch (normalizedSection) {
+            case "ROOM" -> Set.of("ROOM", "MEETING_ROOM");
+            case "LAB" -> Set.of("LAB", "LABORATORY");
+            case "EQUIPMENT" -> Set.of("EQUIPMENT", "ASSET");
+            case "HALL" -> Set.of("HALL", "LECTURE_HALL");
+            default -> Set.of(normalizedSection);
+        };
     }
 
     private String normalizeTechnicianId(String technicianId) {

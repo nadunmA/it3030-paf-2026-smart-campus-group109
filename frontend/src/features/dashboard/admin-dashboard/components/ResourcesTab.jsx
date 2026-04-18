@@ -48,7 +48,13 @@ export default function ResourcesTab({
       <Table
         cols={["Name", "Type", "Location", "Capacity", "Status", "Action"]}
         rows={filteredResources.map((r) => [
-          <span style={{ fontWeight: 600 }}>{r.name}</span>,
+          <span
+            onClick={() => navigate(`/resources/${r.id}`)}
+            style={{ fontWeight: 700, color: C.blue, cursor: "pointer" }}
+            title="Open resource details"
+          >
+            {r.name}
+          </span>,
           r.type,
           r.location,
           r.capacity,
@@ -61,10 +67,10 @@ export default function ResourcesTab({
               fontSize: 12,
               color: C.blue,
               cursor: "pointer",
-              fontWeight: 500,
+              fontWeight: 700,
             }}
           >
-            Edit
+            View Details
           </span>,
         ])}
       />
