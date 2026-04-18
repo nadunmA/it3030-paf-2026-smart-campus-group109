@@ -6,7 +6,6 @@ import UserDashboard from "./features/dashboard/user-dashboard/UserDashboard";
 import AdminDashboard from "./features/dashboard/admin-dashboard/AdminDashboard";
 import TechnicianDashboard from "./features/dashboard/technician-dashboard/TechnicianDashboard";
 import UserNotifications from "./features/notification/pages/NotificationsPage";
-
 import ProtectedRoute from "./features/auth/components/ProtectedRoute";
 import CreateBookingPage from "./features/bookings/pages/CreateBookingPage";
 import MyBookingsPage from "./features/bookings/pages/MyBookingsPage";
@@ -17,6 +16,8 @@ import {
 } from "./features/auth/components/RouteGuards";
 import ResourceListPage from "./features/resources/ResourceListPage";
 import ResourceDetailPage from "./features/resources/ResourceDetailPage";
+import QRScannerPage from "./features/resources/QRScannerPage";
+import PublicQRDetailPage from "./features/resources/PublicQRDetailPage";
 
 export default function App() {
   return (
@@ -24,6 +25,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<SmartCampusHome />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        {/* Public QR detail page - no authentication required */}
+        <Route path="/qr/:id" element={<PublicQRDetailPage />} />
 
         <Route
           path="/bookings/create"
@@ -61,9 +64,9 @@ export default function App() {
           }
         >
           <Route path="/notifications" element={<UserNotifications />} />
-
           <Route path="/resources" element={<ResourceListPage />} />
           <Route path="/resources/:id" element={<ResourceDetailPage />} />
+          <Route path="/resources/scan/qr" element={<QRScannerPage />} />
         </Route>
 
         {/* TECHNICIAN only */}

@@ -1,4 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS || 8000);
 
 async function apiRequest(method, path, payload) {
   const token = sessionStorage.getItem("token");
@@ -10,12 +11,26 @@ async function apiRequest(method, path, payload) {
     headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    credentials: "include",
-    body: payload === undefined ? undefined : JSON.stringify(payload),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let res;
+
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      method,
+      headers,
+      credentials: "include",
+      body: payload === undefined ? undefined : JSON.stringify(payload),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(`${method} ${path} timed out after ${REQUEST_TIMEOUT_MS}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const contentType = res.headers.get("content-type") || "";
   const body = contentType.includes("application/json")
@@ -58,11 +73,25 @@ export async function apiDownload(path) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: "GET",
-    headers,
-    credentials: "include",
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let res;
+
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      method: "GET",
+      headers,
+      credentials: "include",
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(`GET ${path} timed out after ${REQUEST_TIMEOUT_MS}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!res.ok) {
     const text = await res.text();
@@ -70,8 +99,7 @@ export async function apiDownload(path) {
   }
 
   const contentDisposition = res.headers.get("content-disposition") || "";
-
-  const fileNameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+  const fileNameMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i);
   const fileName = fileNameMatch?.[1] || "download.bin";
   const blob = await res.blob();
 

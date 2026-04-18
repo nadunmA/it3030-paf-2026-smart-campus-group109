@@ -65,6 +65,7 @@ public class Resource {
 
     private LocalDate maintenanceDate;
 
+    @Indexed(unique = true)
     private String qrCode;
 
     @Builder.Default
