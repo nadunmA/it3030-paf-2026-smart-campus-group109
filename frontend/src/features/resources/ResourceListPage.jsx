@@ -34,6 +34,12 @@ function cardStyle() {
   };
 }
 
+function toListOrNull(value) {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.content)) return value.content;
+  return null;
+}
+
 export default function ResourceListPage() {
   const navigate = useNavigate();
   const user = readUser();
@@ -49,16 +55,37 @@ export default function ResourceListPage() {
   const [qrError, setQrError] = useState("");
   const [exportingCsv, setExportingCsv] = useState(false);
 
+  const resourceQuery = `/resources?type=${encodeURIComponent(filters.type)}&location=${encodeURIComponent(filters.location)}&capacity=${encodeURIComponent(filters.capacity)}`;
+  const publicResourceQuery = `/public/resources?type=${encodeURIComponent(filters.type)}&location=${encodeURIComponent(filters.location)}&capacity=${encodeURIComponent(filters.capacity)}`;
+
   useEffect(() => {
     let active = true;
-    Promise.all([apiGet("/resources/types"), apiGet(`/resources?type=${encodeURIComponent(filters.type)}&location=${encodeURIComponent(filters.location)}&capacity=${encodeURIComponent(filters.capacity)}`)])
+    setError("");
+    Promise.all([apiGet("/resources/types"), apiGet(resourceQuery)])
       .then(([typeData, resourceData]) => {
         if (!active) return;
-        setTypes(Array.isArray(typeData) ? typeData : typeData?.content || []);
-        setResources(Array.isArray(resourceData) ? resourceData : resourceData?.content || resourceData || []);
+        const resolvedTypes = toListOrNull(typeData);
+        const resolvedResources = toListOrNull(resourceData);
+        if (!resolvedTypes || !resolvedResources) {
+          throw new Error("Primary resource API returned unexpected payload");
+        }
+        setTypes(resolvedTypes);
+        setResources(resolvedResources);
       })
-      .catch((err) => {
-        if (active) setError(err.message || "Failed to load resources");
+      .catch(async () => {
+        try {
+          const [typeData, resourceData] = await Promise.all([apiGet("/public/resources/types"), apiGet(publicResourceQuery)]);
+          if (!active) return;
+          const resolvedTypes = toListOrNull(typeData);
+          const resolvedResources = toListOrNull(resourceData);
+          if (!resolvedTypes || !resolvedResources) {
+            throw new Error("Public resource API returned unexpected payload");
+          }
+          setTypes(resolvedTypes);
+          setResources(resolvedResources);
+        } catch (err) {
+          if (active) setError(err.message || "Failed to load resources");
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -66,7 +93,7 @@ export default function ResourceListPage() {
     return () => {
       active = false;
     };
-  }, [filters.type, filters.location, filters.capacity]);
+  }, [filters.type, filters.location, filters.capacity, resourceQuery, publicResourceQuery]);
 
   const typeOptions = useMemo(() => types, [types]);
 
@@ -85,20 +112,36 @@ export default function ResourceListPage() {
       }
 
       try {
-        const resource = await apiGet(`/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
+        const resource = await apiGet(`/public/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
         if (resource?.id) {
           navigate(`/resources/${resource.id}`);
           return;
         }
       } catch {
-        // Fallback below for ID-based QR payloads.
+        try {
+          const resource = await apiGet(`/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
+          if (resource?.id) {
+            navigate(`/resources/${resource.id}`);
+            return;
+          }
+        } catch {
+          // Fallback below for ID-based QR payloads.
+        }
       }
 
       if (isLikelyResourceId(lookupValue)) {
-        const byId = await apiGet(`/resources/${lookupValue}`);
-        if (byId?.id) {
-          navigate(`/resources/${byId.id}`);
-          return;
+        try {
+          const byId = await apiGet(`/public/resources/${lookupValue}`);
+          if (byId?.id) {
+            navigate(`/resources/${byId.id}`);
+            return;
+          }
+        } catch {
+          const byId = await apiGet(`/resources/${lookupValue}`);
+          if (byId?.id) {
+            navigate(`/resources/${byId.id}`);
+            return;
+          }
         }
       }
 
@@ -308,8 +351,17 @@ export default function ResourceListPage() {
           isOpen={editing}
           onClose={() => setEditing(false)}
           onSaved={async () => {
-            const resourceData = await apiGet(`/resources?type=${encodeURIComponent(filters.type)}&location=${encodeURIComponent(filters.location)}&capacity=${encodeURIComponent(filters.capacity)}`);
-            setResources(Array.isArray(resourceData) ? resourceData : resourceData?.content || resourceData || []);
+            try {
+              const resourceData = await apiGet(resourceQuery);
+              const resolvedResources = toListOrNull(resourceData);
+              if (!resolvedResources) throw new Error("Primary resource API returned unexpected payload");
+              setResources(resolvedResources);
+            } catch {
+              const resourceData = await apiGet(publicResourceQuery);
+              const resolvedResources = toListOrNull(resourceData);
+              if (!resolvedResources) throw new Error("Public resource API returned unexpected payload");
+              setResources(resolvedResources);
+            }
           }}
         />
       )}

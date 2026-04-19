@@ -6,6 +6,9 @@ export default function BookingsTab({
   setBookingFilter,
   filteredBookings,
   btnPrimary,
+  onApproveBooking,
+  onRejectBooking,
+  bookingActionBusyId,
 }) {
   const pgTitle = {
     fontSize: 22,
@@ -60,12 +63,15 @@ export default function BookingsTab({
           b.status === "PENDING" ? (
             <div style={{ display: "flex", gap: 6 }}>
               <button
+                type="button"
                 style={{
                   ...btnPrimary,
                   background: C.green,
                   padding: "5px 14px",
                   fontSize: 11,
                 }}
+                disabled={bookingActionBusyId === b.id}
+                onClick={() => onApproveBooking?.(b)}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.background = "#047857")
                 }
@@ -73,21 +79,24 @@ export default function BookingsTab({
                   (e.currentTarget.style.background = C.green)
                 }
               >
-                Approve
+                {bookingActionBusyId === b.id ? "Processing..." : "Approve"}
               </button>
               <button
+                type="button"
                 style={{
                   ...btnPrimary,
                   background: C.red,
                   padding: "5px 14px",
                   fontSize: 11,
                 }}
+                disabled={bookingActionBusyId === b.id}
+                onClick={() => onRejectBooking?.(b)}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.background = "#B91C1C")
                 }
                 onMouseLeave={(e) => (e.currentTarget.style.background = C.red)}
               >
-                Reject
+                {bookingActionBusyId === b.id ? "Processing..." : "Reject"}
               </button>
             </div>
           ) : (

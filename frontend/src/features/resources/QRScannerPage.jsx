@@ -68,20 +68,36 @@ export default function QRScannerPage() {
     setLoading(true);
     try {
       try {
-        const res = await apiGet(`/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
+        const res = await apiGet(`/public/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
         if (res) {
           setResource(res);
           return;
         }
       } catch {
-        // Fallback below for ID-based QR payloads.
+        try {
+          const res = await apiGet(`/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
+          if (res) {
+            setResource(res);
+            return;
+          }
+        } catch {
+          // Fallback below for ID-based QR payloads.
+        }
       }
 
       if (isLikelyResourceId(lookupValue)) {
-        const byId = await apiGet(`/resources/${lookupValue}`);
-        if (byId) {
-          setResource(byId);
-          return;
+        try {
+          const byId = await apiGet(`/public/resources/${lookupValue}`);
+          if (byId) {
+            setResource(byId);
+            return;
+          }
+        } catch {
+          const byId = await apiGet(`/resources/${lookupValue}`);
+          if (byId) {
+            setResource(byId);
+            return;
+          }
         }
       }
 

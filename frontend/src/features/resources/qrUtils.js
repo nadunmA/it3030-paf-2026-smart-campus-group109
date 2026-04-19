@@ -12,6 +12,14 @@ export function isLikelyResourceId(value) {
   return /^[a-f\d]{24}$/i.test(String(value || "").trim());
 }
 
+function safeDecode(value) {
+  try {
+    return decodeURIComponent(String(value || "")).trim();
+  } catch {
+    return String(value || "").trim();
+  }
+}
+
 function extractFromQrUrl(value) {
   try {
     const parsed = value.startsWith("http://") || value.startsWith("https://")
@@ -20,7 +28,7 @@ function extractFromQrUrl(value) {
 
     if (parsed) {
       const fromQuery = parsed.searchParams.get("qrCode");
-      if (fromQuery) return decodeURIComponent(fromQuery).trim();
+      if (fromQuery) return safeDecode(fromQuery);
 
       const fromPath = extractFromPathname(parsed.pathname);
       if (fromPath) return fromPath;
@@ -31,7 +39,7 @@ function extractFromQrUrl(value) {
 
   const qrPathMatch = value.match(/\/qr\/([^/?#]+)/i);
   if (qrPathMatch?.[1]) {
-    return decodeURIComponent(qrPathMatch[1]).trim();
+    return safeDecode(qrPathMatch[1]);
   }
 
   return "";
@@ -40,5 +48,5 @@ function extractFromQrUrl(value) {
 function extractFromPathname(pathname) {
   const match = String(pathname || "").match(/^\/?qr\/([^/?#]+)/i);
   if (!match?.[1]) return "";
-  return decodeURIComponent(match[1]).trim();
+  return safeDecode(match[1]);
 }

@@ -1,10 +1,12 @@
 import BookingCard from "../components/BookingCard";
+import { useNavigate } from "react-router-dom";
 
 export default function BookingsTab({
   bookingFilter,
   setBookingFilter,
   filteredBookings,
 }) {
+  const navigate = useNavigate();
   const filterPillBase = {
     padding: "5px 14px",
     borderRadius: 99,
@@ -75,7 +77,9 @@ export default function BookingsTab({
         filteredBookings.map((b, i) => <BookingCard key={i} {...b} />)
       )}
 
-      <button style={btnPrimary}>+ New Booking</button>
+      <button type="button" style={btnPrimary} onClick={() => navigate("/bookings/create")}>
+        + New Booking
+      </button>
     </div>
   );
 }

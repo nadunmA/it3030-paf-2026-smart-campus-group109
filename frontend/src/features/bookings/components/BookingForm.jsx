@@ -17,6 +17,7 @@ export default function BookingForm({ onSubmit, submitting }) {
   const [error, setError] = useState("");
   const [resources, setResources] = useState([]);
   const [resourcesLoading, setResourcesLoading] = useState(false);
+  const todayDate = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   const setField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -135,13 +136,35 @@ export default function BookingForm({ onSubmit, submitting }) {
       </div>
 
       <div style={gridStyle}>
-        <Input label="Booking Date" type="date" required value={form.bookingDate} onChange={(v) => setField("bookingDate", v)} />
+        <Input
+          label="Booking Date"
+          type="date"
+          required
+          min={todayDate}
+          value={form.bookingDate}
+          onChange={(v) => setField("bookingDate", v)}
+        />
         <Input label="Expected Attendees" type="number" min={1} required value={form.expectedAttendees} onChange={(v) => setField("expectedAttendees", v)} />
       </div>
 
       <div style={gridStyle}>
-        <Input label="Start Time" type="time" required value={form.startTime} onChange={(v) => setField("startTime", v)} />
-        <Input label="End Time" type="time" required value={form.endTime} onChange={(v) => setField("endTime", v)} />
+        <Input
+          label="Start Time"
+          type="time"
+          required
+          step={900}
+          value={form.startTime}
+          onChange={(v) => setField("startTime", v)}
+        />
+        <Input
+          label="End Time"
+          type="time"
+          required
+          step={900}
+          min={form.startTime || undefined}
+          value={form.endTime}
+          onChange={(v) => setField("endTime", v)}
+        />
       </div>
 
       <label style={{ display: "grid", gap: 6 }}>
@@ -165,12 +188,23 @@ export default function BookingForm({ onSubmit, submitting }) {
 }
 
 function Input({ label, onChange, ...props }) {
+  const shouldTriggerPicker = props.type === "date" || props.type === "time";
+  const openNativePicker = (event) => {
+    if (!shouldTriggerPicker) return;
+    const input = event.currentTarget;
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+    }
+  };
+
   return (
     <label style={{ display: "grid", gap: 6 }}>
       <span style={labelStyle}>{label}</span>
       <input
         {...props}
         onChange={(e) => onChange(e.target.value)}
+        onFocus={openNativePicker}
+        onClick={openNativePicker}
         style={inputStyle}
       />
     </label>

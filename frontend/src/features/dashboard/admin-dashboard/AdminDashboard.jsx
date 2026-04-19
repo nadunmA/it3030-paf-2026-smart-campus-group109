@@ -10,6 +10,7 @@ import OverviewTab from "./components/OverviewTab";
 import ProfileTab from "./components/ProfileTab";
 import ResourcesTab from "./components/ResourcesTab";
 import TicketsTab from "./components/TicketsTab";
+import { bookingApi } from "../../bookings/services/bookingApi";
 
 function normalizeResourceType(value) {
   return String(value || "")
@@ -50,6 +51,7 @@ export default function AdminDashboard() {
   const [loadError, setLoadError] = useState("");
   const [userActionError, setUserActionError] = useState("");
   const [userActionBusyId, setUserActionBusyId] = useState("");
+  const [bookingActionBusyId, setBookingActionBusyId] = useState("");
 
   const [bookingFilter, setBookingFilter] = useState("All");
   const [ticketFilter, setTicketFilter] = useState("All");
@@ -243,6 +245,51 @@ export default function AdminDashboard() {
     }
   };
 
+  const refreshBookings = async () => {
+    const result = await apiGet("/admin/bookings");
+    setBookings(Array.isArray(result) ? result : Array.isArray(result?.data) ? result.data : []);
+  };
+
+  const handleApproveBooking = async (booking) => {
+    const confirmed = window.confirm(
+      `Approve booking for ${booking.resource || booking.resourceId} on ${booking.date || booking.bookingDate}?`,
+    );
+    if (!confirmed) return;
+
+    try {
+      setLoadError("");
+      setBookingActionBusyId(booking.id);
+      await bookingApi.approve(booking.id);
+      await refreshBookings();
+    } catch (error) {
+      console.error(error);
+      setLoadError(error.message || "Failed to approve booking.");
+    } finally {
+      setBookingActionBusyId("");
+    }
+  };
+
+  const handleRejectBooking = async (booking) => {
+    const confirmed = window.confirm(
+      `Reject booking for ${booking.resource || booking.resourceId} on ${booking.date || booking.bookingDate}?`,
+    );
+    if (!confirmed) return;
+
+    const reason = window.prompt("Optional rejection reason:", "") || "";
+
+    try {
+      setLoadError("");
+      setBookingActionBusyId(booking.id);
+      await bookingApi.reject(booking.id, reason);
+      await refreshBookings();
+    } catch (error) {
+      console.error(error);
+      setLoadError(error.message || "Failed to reject booking.");
+    } finally {
+      setBookingActionBusyId("");
+    }
+  };
+
   const navItems = [
     { id: "overview", icon: "⊞", label: "Overview" },
     { id: "bookings", icon: "📅", label: "Bookings", badge: pendingBookings },
@@ -312,6 +359,9 @@ export default function AdminDashboard() {
             setBookingFilter={setBookingFilter}
             filteredBookings={filteredBookings}
             btnPrimary={btnPrimary}
+            onApproveBooking={handleApproveBooking}
+            onRejectBooking={handleRejectBooking}
+            bookingActionBusyId={bookingActionBusyId}
           />
         )}
 

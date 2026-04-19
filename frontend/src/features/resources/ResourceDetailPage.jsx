@@ -33,12 +33,9 @@ function normalizeTypeKey(value) {
 
 function buildResourceQrPayload(resource) {
   const qrValue = resource.qrCode || resource.id;
-  const currentOrigin = window.location.origin.replace(/\/+$/, "");
-  const publicAppUrl = String(import.meta.env.VITE_PUBLIC_APP_URL || "").trim().replace(/\/+$/, "");
-  const qrPath = `/qr/${encodeURIComponent(qrValue)}`;
-
-  // Always encode a URL so native phone scanners open the app directly.
-  return `${publicAppUrl || currentOrigin}${qrPath}`;
+  const backendBase = String(import.meta.env.VITE_PUBLIC_API_ORIGIN || "").trim().replace(/\/+$/, "")
+    || `${window.location.protocol}//${window.location.hostname}:8080`;
+  return `${backendBase}/api/public/resources/view?qrCode=${encodeURIComponent(qrValue)}`;
 }
 
 export default function ResourceDetailPage() {

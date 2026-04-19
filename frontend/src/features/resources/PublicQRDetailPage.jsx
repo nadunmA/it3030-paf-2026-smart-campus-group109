@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { apiGet } from "../../lib/api";
 import { extractQrLookupValue } from "./qrUtils";
 
 const C = {
@@ -22,30 +21,67 @@ export default function PublicQRDetailPage() {
 
   useEffect(() => {
     let active = true;
-    const rawId = decodeURIComponent(String(id || "").trim());
+    let rawId = String(id || "").trim();
+    try {
+      rawId = decodeURIComponent(rawId);
+    } catch {
+      // Keep raw route value if it's not a valid URI component.
+    }
     const lookupValue = extractQrLookupValue(rawId) || rawId;
     const looksLikeMongoId = /^[a-f\d]{24}$/i.test(lookupValue);
+    const backendOrigin = String(import.meta.env.VITE_PUBLIC_API_ORIGIN || "").trim()
+      || `${window.location.protocol}//${window.location.hostname}:8080`;
 
     setLoading(true);
     setError("");
     setResource(null);
 
+    const fetchJson = async (url) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return await response.json();
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
+
+    const fetchWithFallback = async (relativePath) => {
+      try {
+        return await fetchJson(`/api${relativePath}`);
+      } catch {
+        return await fetchJson(`${backendOrigin}/api${relativePath}`);
+      }
+    };
+
     const loadResource = async () => {
       try {
         // QR values are the most common public entry point.
         if (!looksLikeMongoId) {
-          const byQr = await apiGet(`/public/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
+          const byQr = await fetchWithFallback(`/public/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`);
           if (active) setResource(byQr);
           return;
         }
 
-        const byId = await apiGet(`/public/resources/${lookupValue}`);
+        const byId = await fetchWithFallback(`/public/resources/${lookupValue}`);
         if (active) setResource(byId);
       } catch {
         try {
           const fallback = looksLikeMongoId
-            ? await apiGet(`/public/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`)
-            : await apiGet(`/public/resources/${lookupValue}`);
+            ? await fetchWithFallback(`/public/resources/lookup?qrCode=${encodeURIComponent(lookupValue)}`)
+            : await fetchWithFallback(`/public/resources/${lookupValue}`);
           if (active) setResource(fallback);
         } catch (err) {
           if (active) setError(err.message || "Resource not found");
