@@ -232,7 +232,7 @@ function NotifCard({ notif, onMarkRead }) {
 export default function NotificationsPage() {
   const navigate = useNavigate();
   const [notifs, setNotifs] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("ALL");
   const [loaded, setLoaded] = useState(false);
@@ -246,30 +246,40 @@ export default function NotificationsPage() {
     }
   })();
 
-  const fetchNotifs = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const res = await apiGet("/notifications/my");
-      const list = Array.isArray(res?.notifications) ? res.notifications : [];
-      setNotifs(list.map(mapNotif));
-    } catch {
-      setError("Failed to load notifications.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     if (bootstrappedRef.current) return;
     bootstrappedRef.current = true;
+
     if (!sessionUser) {
       navigate("/");
       return;
     }
-    fetchNotifs();
-    setTimeout(() => setLoaded(true), 80);
-  }, []);
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (!cancelled) setLoaded(true);
+    }, 80);
+
+    apiGet("/notifications/my")
+      .then((res) => {
+        if (cancelled) return;
+        const list = Array.isArray(res?.notifications) ? res.notifications : [];
+        setNotifs(list.map(mapNotif));
+        setError("");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setError("Failed to load notifications.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [navigate, sessionUser]);
 
   const markOneRead = useCallback(async (id) => {
     try {
