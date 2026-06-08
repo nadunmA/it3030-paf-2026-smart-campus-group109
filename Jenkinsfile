@@ -4,6 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = 'smart-campus-app'
         APP_PORT   = '8081'
+        MONGO_URI  = credentials('MONGODB_ATLAS_URI')
     }
 
     stages {
@@ -31,7 +32,7 @@ pipeline {
                     sh "docker stop ${IMAGE_NAME} || true"
                     sh "docker rm ${IMAGE_NAME} || true"
                     
-                    sh "docker run -d --name ${IMAGE_NAME} -p ${APP_PORT}:${APP_PORT} -e SERVER_PORT=${APP_PORT} --restart always ${IMAGE_NAME}:latest"
+                    sh "docker run -d --name ${IMAGE_NAME} -p ${APP_PORT}:${APP_PORT} -e SERVER_PORT=${APP_PORT} -e SPRING_DATA_MONGODB_URI='${MONGO_URI}' --restart always ${IMAGE_NAME}:latest"
                     
                     echo "Application successfully deployed on port ${APP_PORT}!"
                 }
