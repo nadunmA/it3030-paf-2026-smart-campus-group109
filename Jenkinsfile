@@ -60,7 +60,7 @@ pipeline {
                     sh "docker stop ${FE_IMAGE_NAME} || true"
                     sh "docker rm ${FE_IMAGE_NAME} || true"
                
-                    sh "docker run -d --name ${FE_IMAGE_NAME} -p 80:80 --network='host' --restart always ${FE_IMAGE_NAME}:latest"
+                    sh "docker run -d --name ${FE_IMAGE_NAME} -p 80:80 --restart always ${FE_IMAGE_NAME}:latest"
                     echo "Frontend successfully deployed on port 80!"
                 }
             }
