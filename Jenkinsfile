@@ -18,7 +18,7 @@ pipeline {
                 script {
                     echo "Building Docker Image from backend directory..."
                   
-                    sh "docker build -t ${IMAGE_NAME}:latest backend/smart-campus/"
+                    sh "docker build -f Dockerfile -t ${IMAGE_NAME}:latest backend/smart-campus/"
                 }
             }
         }
