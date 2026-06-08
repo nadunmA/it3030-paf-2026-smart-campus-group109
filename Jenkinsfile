@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'smart-campus-app'
-        APP_PORT   = '8080'
+        APP_PORT   = '8081'
     }
 
     stages {
