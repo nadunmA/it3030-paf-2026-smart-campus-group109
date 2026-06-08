@@ -31,7 +31,7 @@ pipeline {
                     sh "docker stop ${IMAGE_NAME} || true"
                     sh "docker rm ${IMAGE_NAME} || true"
                     
-                    sh "docker run -d --name ${IMAGE_NAME} -p ${APP_PORT}:${APP_PORT} --restart always ${IMAGE_NAME}:latest"
+                    sh "docker run -d --name ${IMAGE_NAME} -p ${APP_PORT}:${APP_PORT} -e SERVER_PORT=${APP_PORT} --restart always ${IMAGE_NAME}:latest"
                     
                     echo "Application successfully deployed on port ${APP_PORT}!"
                 }
